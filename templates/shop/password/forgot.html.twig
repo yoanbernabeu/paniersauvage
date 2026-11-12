@@ -1,0 +1,21 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Mot de passe oublié{% endblock %}
+{% block auth_title %}Mot de passe oublié ?{% endblock %}
+{% block auth_intro %}Indique l'adresse e-mail de ton compte producteur : on t'envoie un lien pour en choisir un nouveau.{% endblock %}
+
+{% block content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.email) }}
+        <twig:Button type="submit" class="mt-1 w-full">
+            Recevoir le lien
+            <twig:ux:icon name="lucide:mail" />
+        </twig:Button>
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block auth_footer %}
+    Tu t'en souviens finalement ?
+    <a href="{{ path('pro_login') }}" class="link">Retour à la connexion</a>
+{% endblock %}

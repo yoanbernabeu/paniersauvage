@@ -1,0 +1,15 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Invitation expirée{% endblock %}
+{% block auth_title %}Ce lien d'invitation ne marche plus{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-3 text-sm text-ink" data-invitation-invalid>
+        <p>Une invitation est valable {{ days }} jours et ne sert qu'une fois. Celle-ci a expiré, a déjà servi, ou a été remplacée par une invitation plus récente.</p>
+        <p>Demande à la personne qui t'a invité de t'envoyer un nouveau lien depuis sa page « Équipe ».</p>
+    </div>
+{% endblock %}
+
+{% block auth_footer %}
+    <a href="{{ path('pro_login') }}" class="link">Aller à la connexion</a>
+{% endblock %}

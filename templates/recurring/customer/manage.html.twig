@@ -1,0 +1,183 @@
+{% extends 'layout/customer.html.twig' %}
+
+{#
+    A subscription in "Mon compte". Variables: recurring_order, plan, shop, form (changes for the
+    next deliveries), upcoming (list of App\Recurring\Model\UpcomingDelivery), history (past
+    occurrences), today.
+#}
+
+{% block title %}{{ plan.title }} · Mon abonnement{% endblock %}
+
+{% block content %}
+    <header class="mb-8">
+        <a href="{{ path('customer_account') }}" class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-sage-dark underline-offset-4 hover:underline">
+            <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+            Mon compte
+        </a>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+            <twig:Badge variant="{{ recurring_order.status.badge }}" data-recurring-status>{{ recurring_order.ending ? 'Résilié' : recurring_order.status.label }}</twig:Badge>
+            <twig:Badge variant="outline">{{ plan.term.label }}</twig:Badge>
+        </div>
+        <h1 class="mt-3 text-3xl leading-tight font-semibold text-balance text-ink sm:text-4xl">{{ plan.title }}</h1>
+        <p class="mt-2 text-ink-soft">Chez <a href="{{ path('shop_show', {slug: shop.slug}) }}" class="link">{{ shop.name }}</a>, chaque {{ plan.weekdayName }}.</p>
+    </header>
+
+    {% if recurring_order.suspended %}
+        <twig:Alert variant="warning" class="mb-6" data-recurring-suspended>
+            <twig:ux:icon name="lucide:triangle-alert" />
+            <twig:Alert:Title>{{ shop.name }} a suspendu ton abonnement</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">Aucune commande n'est créée pour l'instant. Une question ? Contacte {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.</twig:Alert:Description>
+        </twig:Alert>
+    {% elseif recurring_order.ended %}
+        <twig:Alert variant="info" class="mb-6" data-recurring-ended>
+            <twig:ux:icon name="lucide:info" />
+            <twig:Alert:Title>Abonnement terminé</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">{{ recurring_order.endReason ? recurring_order.endReason.label ~ ', ' }}dernière livraison le {{ recurring_order.endsOn|date_long }}.</twig:Alert:Description>
+        </twig:Alert>
+    {% elseif recurring_order.ending %}
+        <twig:Alert variant="info" class="mb-6" data-recurring-ending>
+            <twig:ux:icon name="lucide:info" />
+            <twig:Alert:Title>Résiliation enregistrée</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">Les livraisons jusqu'au {{ recurring_order.endsOn|date_long }} restent prévues, puis l'abonnement s'arrête.</twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    <section aria-labelledby="chaque-livraison" class="mb-10 rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6" data-section="recurring-summary">
+        <h2 id="chaque-livraison" class="font-display text-xl font-semibold text-ink">À chaque livraison</h2>
+        <ul class="mt-3 divide-y divide-line-soft">
+            {% if plan.basket %}
+                <li class="py-2 font-semibold text-ink">{{ recurring_order.shares }} × {{ plan.title }}</li>
+            {% endif %}
+            {% for entry in recurring_order.wantedQuantities %}
+                <li class="py-2 text-ink">{{ entry[1]|line_quantity(entry[0].unit) }} {{ entry[0].name }}</li>
+            {% endfor %}
+        </ul>
+        <p class="mt-3 text-ink">
+            Environ <strong class="amount font-semibold" data-estimated-price>{{ recurring_order.estimatedPriceCents|money }}</strong> par livraison, à régler au retrait
+            · {{ recurring_order.deliveryPoint.name }}
+        </p>
+        {% set remaining = recurring_order.remainingDeliveryCount(today) %}
+        {% if remaining is not null and not recurring_order.ended %}
+            <p class="mt-2 rounded-lg bg-sage-soft p-3 text-sm text-sage-deep" data-contract-total>
+                {{ remaining }} livraison{{ remaining > 1 ? 's' }} à venir jusqu'au {{ recurring_order.endsOn|date_long(true) }},
+                soit environ <span class="amount font-semibold">{{ recurring_order.remainingTotalCents(today)|money }}</span> au total, à titre indicatif.
+                Rien n'est payé d'avance : tu règles chaque livraison au retrait.
+            </p>
+        {% endif %}
+    </section>
+
+    {% if not recurring_order.ended %}
+        <section aria-labelledby="livraisons-titre" id="livraisons" class="mb-10 scroll-mt-6" data-section="upcoming-deliveries">
+            <h2 id="livraisons-titre" class="font-display mb-1 text-2xl font-semibold text-ink">Tes prochaines livraisons</h2>
+            <p class="mb-4 text-sm text-ink-soft">
+                Absent ? Mets une livraison en pause avant sa date limite.
+                {% if plan.maxPauses is not null %}
+                    Absences utilisées : {{ recurring_order.pausedDates|length }} sur {{ plan.maxPauses }}.
+                {% endif %}
+            </p>
+            {% if upcoming is empty %}
+                <p class="rounded-xl border border-dashed border-line bg-white/60 p-5 text-ink-soft">Aucune livraison prévue pour l'instant.</p>
+            {% else %}
+                <ul class="flex flex-col gap-3">
+                    {% for delivery in upcoming %}
+                        {% set outcome = delivery.occurrence ? delivery.occurrence.outcome.value : null %}
+                        <li class="flex flex-col gap-3 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:flex-row sm:items-center sm:justify-between sm:p-5" data-upcoming="{{ delivery.date|date('Y-m-d') }}">
+                            <div>
+                                <p class="font-display text-lg font-semibold text-ink">{{ delivery.date|date_long|capitalize }}</p>
+                                <p class="mt-0.5 text-sm text-ink-soft" data-upcoming-state>
+                                    {% if delivery.cancelled %}
+                                        Livraison annulée par {{ shop.name }}.
+                                    {% elseif delivery.paused %}
+                                        En pause : pas de commande ce jour-là.
+                                    {% elseif delivery.order %}
+                                        {{ outcome == 'partial' ? 'Commande créée, incomplète' : 'Commande créée' }} · {{ delivery.order.estimated ? 'environ ' }}{{ delivery.order.totalCents|money }}
+                                    {% elseif outcome %}
+                                        {{ delivery.occurrence.outcome.label }}.
+                                    {% elseif recurring_order.active %}
+                                        Commande créée à l'ouverture de la vente{% if delivery.sale and delivery.sale.scheduled %}, le {{ delivery.sale.opensAt|datetime_long }}{% endif %}.
+                                    {% else %}
+                                        Pas de commande tant que l'abonnement est suspendu.
+                                    {% endif %}
+                                    {% if delivery.canPause or delivery.canResume %}
+                                        <span class="block">Jusqu'au {{ delivery.cutoffAt|datetime_long }} pour changer d'avis.</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                {% if delivery.order %}
+                                    <twig:Button as="a" href="{{ path('customer_order_show', {reference: delivery.order.reference}) }}" variant="secondary" size="sm" class="h-11">Voir la commande</twig:Button>
+                                {% endif %}
+                                {% if delivery.canPause %}
+                                    <form method="post" action="{{ path('customer_recurring_pause', {id: recurring_order.id}) }}">
+                                        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                                        <input type="hidden" name="date" value="{{ delivery.date|date('Y-m-d') }}">
+                                        <twig:Button type="submit" variant="outline" size="sm" class="h-11" aria-label="Mettre en pause la livraison du {{ delivery.date|date_long }}">Mettre en pause</twig:Button>
+                                    </form>
+                                {% elseif delivery.canResume %}
+                                    <form method="post" action="{{ path('customer_recurring_unpause', {id: recurring_order.id}) }}">
+                                        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                                        <input type="hidden" name="date" value="{{ delivery.date|date('Y-m-d') }}">
+                                        <twig:Button type="submit" variant="sage" size="sm" class="h-11" aria-label="Reprendre la livraison du {{ delivery.date|date_long }}">Reprendre</twig:Button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+
+        <section aria-labelledby="changer" class="mb-10" data-section="recurring-change">
+            <h2 id="changer" class="font-display mb-1 text-2xl font-semibold text-ink">Changer pour les prochaines livraisons</h2>
+            <p class="mb-4 text-sm text-ink-soft">Tes changements s'appliquent aux commandes créées à partir de maintenant. Une commande déjà créée se modifie depuis sa page.</p>
+            <div class="rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6">
+                {{ form_start(form, {attr: {novalidate: 'novalidate'}, action: path('customer_recurring_show', {id: recurring_order.id})}) }}
+                    {{ include('recurring/_order_fields.html.twig') }}
+                    <twig:Button type="submit" variant="secondary" class="w-full sm:w-auto">Enregistrer</twig:Button>
+                {{ form_end(form) }}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if plan.conditions %}
+        <section aria-labelledby="conditions" class="mb-10" data-section="recurring-conditions">
+            <h2 id="conditions" class="font-display mb-3 text-2xl font-semibold text-ink">Les conditions de {{ shop.name }}</h2>
+            <p class="rounded-xl border border-line-soft bg-white p-5 text-ink">{{ plan.conditions|nl2br }}</p>
+        </section>
+    {% endif %}
+
+    {% if history is not empty %}
+        <section aria-labelledby="historique" class="mb-10" data-section="recurring-history">
+            <h2 id="historique" class="font-display mb-3 text-2xl font-semibold text-ink">Livraisons passées</h2>
+            <ul class="divide-y divide-line-soft rounded-xl bg-white shadow-card ring-1 ring-line">
+                {% for occurrence in history %}
+                    <li class="flex items-center justify-between gap-3 p-4 sm:px-5">
+                        <span class="text-ink">{{ occurrence.deliveryDate|date_long|capitalize }}</span>
+                        <twig:Badge variant="{{ occurrence.outcome.badge }}">{{ occurrence.outcome.label }}</twig:Badge>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% if not recurring_order.ended and not recurring_order.ending %}
+        <section aria-labelledby="resilier" class="border-t border-line-soft pt-6" data-section="recurring-cancel">
+            <h2 id="resilier" class="font-display mb-2 text-xl font-semibold text-ink">Arrêter l'abonnement</h2>
+            {% if plan.season %}
+                <p class="text-ink-soft">Ton contrat de saison t'engage jusqu'au {{ recurring_order.endsOn|date_long }}. Pour l'arrêter avant, parles-en directement à {{ shop.name }}{% if shop.phone %} ({{ shop.phone }}){% endif %}.</p>
+            {% else %}
+                <p class="mb-3 text-ink-soft">
+                    {% if plan.noticeDays > 0 %}
+                        Préavis de {{ plan.noticeDays }} jour{{ plan.noticeDays > 1 ? 's' }} : les livraisons de ce délai restent prévues.
+                    {% else %}
+                        Plus aucune commande ne sera créée. Les commandes déjà créées restent prévues : annule-les depuis leur page si besoin.
+                    {% endif %}
+                </p>
+                <form method="post" action="{{ path('customer_recurring_cancel', {id: recurring_order.id}) }}">
+                    <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                    <twig:Button type="submit" variant="destructive" class="w-full sm:w-auto">Résilier mon abonnement</twig:Button>
+                </form>
+            {% endif %}
+        </section>
+    {% endif %}
+{% endblock %}

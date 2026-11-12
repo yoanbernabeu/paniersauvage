@@ -1,0 +1,63 @@
+{#
+    Common e-mail layout. Mail clients ignore stylesheets: every style is inline, the structure is
+    made of tables, fonts are system fallbacks (Georgia for Fraunces, Helvetica for Inter).
+    Blocks: preheader, title, content, footer. Style variables below are available in child blocks.
+#}
+{% set font_text = "font-family:Inter,'Helvetica Neue',Helvetica,Arial,sans-serif;" %}
+{% set font_display = "font-family:Fraunces,Georgia,'Times New Roman',serif;" %}
+{% set p_css = font_text ~ 'margin:0 0 16px 0;font-size:16px;line-height:24px;color:#1F2A24;' %}
+{% set muted_css = font_text ~ 'margin:0 0 16px 0;font-size:14px;line-height:21px;color:#56635B;' %}
+{# Accent of the instance (INSTANCE_ACCENT): the sage of Panier Sauvage by default. #}
+{% set accent_dark = instance.accent.darkHex() %}
+{% set accent_deep = instance.accent.deepHex() %}
+{% set h2_css = font_display ~ 'margin:24px 0 10px 0;font-size:18px;line-height:24px;font-weight:600;color:' ~ accent_deep ~ ';' %}
+{% set link_css = 'color:' ~ accent_dark ~ ';text-decoration:underline;' %}
+{% set box_css = 'background-color:' ~ instance.accent.softHex() ~ ';border-radius:12px;padding:16px 18px;' %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light only">
+    <title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FAF8F3;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;color:#FAF8F3;font-size:1px;line-height:1px;">{% block preheader %}{% endblock %}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FAF8F3;">
+    <tr>
+        <td align="center" style="padding:24px 12px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+                <tr>
+                    <td style="padding:0 8px 14px 8px;{{ font_display }}font-size:22px;line-height:28px;font-weight:600;color:{{ accent_dark }};letter-spacing:-0.2px;">
+                        {% if instance.isRenamed() %}<span style="color:{{ accent_deep }};border-bottom:3px solid #E8B931;">{{ instance.name }}</span>{% else %}Panier <span style="color:#2F4337;border-bottom:3px solid #E8B931;">Sauvage</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color:#FFFFFF;border:1px solid #E6E1D6;border-radius:16px;padding:28px 24px 12px 24px;">
+                        <h1 style="{{ font_display }}margin:0 0 16px 0;font-size:24px;line-height:30px;font-weight:600;color:{{ accent_deep }};">{% block title %}{{ subject }}{% endblock %}</h1>
+                        {% block content %}{% endblock %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:18px 8px 0 8px;{{ font_text }}font-size:13px;line-height:20px;color:#56635B;">
+                        {% block footer %}{% endblock %}
+                        <p style="margin:12px 0 0 0;">{{ instance.name }} · les précommandes des producteurs près de chez toi.</p>
+                        {% if instance.isRenamed() %}
+                            <p style="margin:6px 0 0 0;" data-powered-by>
+                                {% if instance.hasCarrier() %}Un service porté par {{ instance.carrierName }}. {% endif %}Propulsé par <a href="{{ legal_publisher().sourceCodeUrl }}" style="{{ link_css }}">Panier Sauvage</a>, logiciel libre (AGPL).
+                            </p>
+                        {% endif %}
+                        <p style="margin:6px 0 0 0;" data-legal-links>
+                            <a href="{{ url('legal_notice') }}" style="{{ link_css }}">Mentions légales</a> ·
+                            <a href="{{ url('legal_terms') }}" style="{{ link_css }}">CGU</a> ·
+                            <a href="{{ url('legal_privacy') }}" style="{{ link_css }}">Confidentialité</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

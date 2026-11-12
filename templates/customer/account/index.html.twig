@@ -1,0 +1,113 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}Mon compte{% endblock %}
+
+{% block content %}
+    <header class="mb-10">
+        <h1 class="text-3xl leading-tight font-semibold text-ink sm:text-4xl">
+            {% if customer.firstName %}Bonjour {{ customer.firstName }}{% else %}Bonjour{% endif %}
+        </h1>
+        <p class="mt-2 text-ink-soft">Tes commandes, tes producteurs et tes infos, au même endroit.</p>
+    </header>
+
+    <section aria-labelledby="commandes-a-venir" class="mb-12" data-section="upcoming-orders">
+        <h2 id="commandes-a-venir" class="font-display mb-4 text-2xl font-semibold text-ink">Tes commandes à venir</h2>
+        {% if upcoming_orders is empty %}
+            <twig:Empty class="border border-line bg-white/60 py-10">
+                <twig:Empty:Media><twig:Illustration name="basket" class="w-40" /></twig:Empty:Media>
+                <twig:Empty:Header>
+                    <twig:Empty:Title class="font-display text-xl">Rien de prévu pour l'instant</twig:Empty:Title>
+                    <twig:Empty:Description class="text-ink-soft">
+                        Dès que tu passes commande chez un producteur, elle apparaît ici.
+                    </twig:Empty:Description>
+                </twig:Empty:Header>
+            </twig:Empty>
+        {% else %}
+            <ul class="flex flex-col gap-3">
+                {% for order in upcoming_orders %}
+                    {{ include('customer/account/_order.html.twig', {order: order, upcoming: true}) }}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    {{ include('recurring/_account_section.html.twig', {customer: customer}, ignore_missing = true) }}
+
+    {% if past_orders is not empty %}
+        <section aria-labelledby="commandes-passees" class="mb-12" data-section="past-orders">
+            <h2 id="commandes-passees" class="font-display mb-4 text-2xl font-semibold text-ink">Tes commandes passées</h2>
+            <ul class="flex flex-col gap-3">
+                {% for order in past_orders %}
+                    {{ include('customer/account/_order.html.twig', {order: order, upcoming: false}) }}
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    <section id="producteurs" aria-labelledby="producteurs-titre" class="mb-12 scroll-mt-6" data-section="followed-shops">
+        <h2 id="producteurs-titre" class="font-display mb-4 text-2xl font-semibold text-ink">Les producteurs que tu suis</h2>
+        {% if followers is empty %}
+            <p class="rounded-xl border border-dashed border-line bg-white/60 p-5 text-ink-soft">
+                Tu ne suis encore personne. Sur la page d'un producteur, touche « Suivre » pour savoir quand ses ventes ouvrent.
+            </p>
+        {% else %}
+            <ul class="flex flex-col gap-3">
+                {% for follower in followers %}
+                    {% set shop = follower.shop %}
+                    <li class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-5" data-followed-shop="{{ shop.slug }}">
+                        <div class="flex items-center justify-between gap-3">
+                            <a href="{{ path('shop_show', {slug: shop.slug}) }}" class="font-display text-lg leading-snug font-semibold text-ink underline-offset-4 hover:underline">{{ shop.name }}</a>
+                            <form method="post" action="{{ path('shop_unfollow', {slug: shop.slug}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                                <input type="hidden" name="_back" value="account">
+                                <twig:Button type="submit" variant="ghost" class="-me-2 px-3" aria-label="Ne plus suivre {{ shop.name }}">Ne plus suivre</twig:Button>
+                            </form>
+                        </div>
+                        <form method="post" action="{{ path('shop_follow', {slug: shop.slug}) }}" class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line-soft pt-3"
+                              data-controller="autosubmit" data-action="change->autosubmit#submit" data-email-preference>
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                            <input type="hidden" name="_back" value="account">
+                            <label class="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-ink">
+                                <twig:Checkbox name="email_consent" value="1" :checked="follower.hasEmailConsent" />
+                                Me prévenir par e-mail quand une vente ouvre
+                            </label>
+                            <twig:Button type="submit" variant="secondary" size="sm" class="h-11" aria-label="Enregistrer le réglage pour {{ shop.name }}" data-autosubmit-target="fallback">Enregistrer</twig:Button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="profil" class="mb-12" data-section="profile">
+        <h2 id="profil" class="font-display mb-4 text-2xl font-semibold text-ink">Tes infos</h2>
+        <div class="rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6">
+            <p class="mb-5 flex items-start gap-2 text-sm text-ink-soft">
+                <twig:ux:icon name="lucide:mail" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+                <span>Tu te connectes avec <strong class="font-semibold break-all text-ink">{{ customer.email }}</strong></span>
+            </p>
+            {{ form_start(form, {action: path('customer_account')}) }}
+                {{ form_errors(form) }}
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.firstName) }}
+                    {{ form_row(form.lastName) }}
+                </div>
+                {{ form_row(form.phone) }}
+                <twig:Button type="submit" class="w-full sm:w-auto">Enregistrer mes infos</twig:Button>
+            {{ form_end(form) }}
+        </div>
+    </section>
+
+    <section aria-label="Session et compte" class="flex flex-col gap-3 border-t border-line-soft pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <form method="post" action="{{ path('customer_logout') }}">
+            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('logout') }}">
+            <twig:Button type="submit" variant="secondary" class="w-full sm:w-auto">
+                <twig:ux:icon name="lucide:log-out" />
+                Me déconnecter
+            </twig:Button>
+        </form>
+        <a href="{{ path('customer_account_delete') }}" class="inline-flex min-h-11 items-center justify-center text-sm font-medium text-danger underline underline-offset-4">
+            Supprimer mon compte
+        </a>
+    </section>
+{% endblock %}

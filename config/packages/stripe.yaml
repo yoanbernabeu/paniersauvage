@@ -1,0 +1,13 @@
+parameters:
+    # Used when STRIPE_SECRET_KEY is empty (development without Stripe keys): not a key, the client
+    # can be built and API calls fail with an ApiErrorException the gateway already handles. The
+    # production entrypoint refuses to start with an empty key.
+    stripe.unconfigured_key: 'sk_test_not_configured'
+
+services:
+    stripe.client:
+        class: 'Stripe\StripeClient'
+        arguments:
+            - '%env(default:stripe.unconfigured_key:STRIPE_SECRET_KEY)%'
+
+    Stripe\StripeClient: '@stripe.client'

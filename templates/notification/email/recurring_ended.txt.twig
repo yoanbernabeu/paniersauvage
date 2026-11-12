@@ -1,0 +1,21 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},
+
+{% if reason == 'producer' %}
+{{ shop.name }} a mis fin à ton abonnement « {{ plan.title }} ». Aucune nouvelle commande ne sera créée pour toi.
+
+Les commandes déjà créées restent prévues, sauf si {{ shop.name }} te dit le contraire. Une question ? Réponds simplement à cet e-mail.
+{% else %}
+Ton abonnement « {{ plan.title }} » chez {{ shop.name }} est arrivé à son terme{% if recurring_order.endsOn %} : sa dernière livraison était le {{ recurring_order.endsOn|date_long }}{% endif %}. Merci d'avoir suivi la saison avec {{ shop.name }} ! 🌾
+
+Pour la suite, retrouve ses prochaines ventes et paniers sur sa page.
+{% endif %}
+
+{{ shop.name }} : {{ shop_url }}
+{% endblock %}
+
+{% block footer %}Tu reçois cet e-mail parce que tu es abonné à « {{ plan.title }} » chez {{ shop.name }} ({{ shop_url }}).
+Une question ? Réponds simplement à cet e-mail, {{ shop.name }} le recevra.
+{% endblock %}

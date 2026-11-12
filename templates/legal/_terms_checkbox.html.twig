@@ -1,0 +1,21 @@
+{#
+    Mandatory "I accept the terms" box outside of a Symfony form (customer account creation).
+    Variables: name, id, error (bool: show the error message).
+#}
+<div class="flex flex-col gap-1.5" data-terms-checkbox>
+    <div class="flex min-h-11 items-start gap-3">
+        <input type="checkbox" id="{{ id }}" name="{{ name }}" value="1" required
+               class="mt-0.5 size-5 shrink-0 rounded-md border border-input bg-white accent-sage-dark"
+               {% if error %}aria-invalid="true" aria-describedby="{{ id }}_errors"{% endif %}>
+        <label for="{{ id }}" class="text-sm text-ink">
+            J'accepte les <a href="{{ path('legal_terms') }}#clients" class="link" target="_blank" rel="noopener">conditions d'utilisation</a>
+            et j'ai lu la <a href="{{ path('legal_privacy') }}" class="link" target="_blank" rel="noopener">politique de confidentialité</a>.
+        </label>
+    </div>
+    {% if error %}
+        <p id="{{ id }}_errors" class="flex items-start gap-1.5 text-sm font-medium text-danger" role="alert">
+            <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 size-4 shrink-0" />
+            Accepte les conditions d'utilisation pour créer ton compte.
+        </p>
+    {% endif %}
+</div>

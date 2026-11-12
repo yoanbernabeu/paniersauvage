@@ -1,0 +1,16 @@
+{% autoescape false %}
+Bonjour,
+
+
+Tu as demandé à te connecter à {{ instance.name }}, mais aucun compte n'existe encore avec cette adresse.
+Pour le créer, sans mot de passe, ouvre ce lien :
+
+{{ url }}
+
+Ce lien est valable {{ minutes }} minutes. Passé ce délai, demande-en simplement un nouveau.
+
+Tu n'as rien demandé ? Ignore ce message : aucun compte ne sera créé.
+
+🌾 {{ instance.name }}, les précommandes de tes producteurs.
+CGU : {{ url('legal_terms') }} · Confidentialité : {{ url('legal_privacy') }}
+{% endautoescape %}

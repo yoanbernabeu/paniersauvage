@@ -1,0 +1,73 @@
+{% extends 'layout/customer.html.twig' %}
+
+{#
+    Public page of a recurring plan, with the subscription form for a signed-in customer.
+    Variables: shop, plan, form, customer (nullable), open (subscriptions open), places_left
+    (null = no limit), season_dates.
+#}
+
+{% block title %}{{ plan.title }} · {{ shop.name }}{% endblock %}
+{% block meta_description %}Abonne-toi au panier « {{ plan.title }} » de {{ shop.name }} : ta commande est créée toute seule à chaque livraison.{% endblock %}
+
+{% block content %}
+    <header class="mb-8">
+        <a href="{{ path('shop_show', {slug: shop.slug}) }}" class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-sage-dark underline-offset-4 hover:underline">
+            <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+            {{ shop.name }}
+        </a>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+            <twig:Badge variant="sage">{{ plan.term.label }}</twig:Badge>
+            <twig:Badge variant="outline">{{ plan.mode.label }}</twig:Badge>
+            {% if places_left is not null %}
+                <twig:Badge variant="{{ places_left > 0 ? 'secondary' : 'destructive' }}" data-places-left>
+                    {{ places_left > 0 ? places_left ~ ' place' ~ (places_left > 1 ? 's') ~ ' restante' ~ (places_left > 1 ? 's') : 'Complet' }}
+                </twig:Badge>
+            {% endif %}
+        </div>
+        <h1 class="mt-3 text-3xl leading-tight font-semibold text-balance text-ink sm:text-4xl">{{ plan.title }}</h1>
+        <p class="mt-2 text-lg text-ink-soft">
+            {{ plan.description ?? 'Abonne-toi : ta commande est créée toute seule à chaque livraison, tu n\'as plus qu\'à venir la chercher.' }}
+        </p>
+    </header>
+
+    {{ include('recurring/_plan_content.html.twig') }}
+
+    <section aria-labelledby="abonnement" id="abonnement" class="mb-12 scroll-mt-6" data-section="subscribe">
+        <h2 id="abonnement" class="font-display mb-4 text-2xl font-semibold text-ink">Je m'abonne</h2>
+        {% if not open %}
+            <twig:Alert variant="info" data-plan-closed>
+                <twig:ux:icon name="lucide:info" />
+                <twig:Alert:Title>Les inscriptions sont fermées</twig:Alert:Title>
+                <twig:Alert:Description class="text-current">Suis {{ shop.name }} sur <a href="{{ path('shop_show', {slug: shop.slug}) }}" class="font-semibold underline underline-offset-4">sa page</a> pour savoir quand il en propose de nouveau.</twig:Alert:Description>
+            </twig:Alert>
+        {% elseif places_left is not null and places_left == 0 %}
+            <twig:Alert variant="warning" data-plan-full>
+                <twig:ux:icon name="lucide:triangle-alert" />
+                <twig:Alert:Title>Ce panier est complet</twig:Alert:Title>
+                <twig:Alert:Description class="text-current">Une place peut se libérer : reviens bientôt, ou commande à l'unité sur les ventes de {{ shop.name }}.</twig:Alert:Description>
+            </twig:Alert>
+        {% elseif not customer %}
+            <div class="rounded-xl bg-sage-soft p-5 sm:p-6" data-subscribe-login>
+                <p class="text-sage-deep">Un abonnement se gère depuis ton compte : on t'envoie un lien de connexion par e-mail, sans mot de passe. Tu reviens ensuite ici pour choisir ton point de retrait.</p>
+                <twig:Button as="a" href="{{ path('recurring_plan_login', {slug: shop.slug, id: plan.id}) }}" size="lg" class="mt-4 w-full sm:w-auto">
+                    Je m'abonne
+                    <twig:ux:icon name="lucide:arrow-right" />
+                </twig:Button>
+            </div>
+        {% else %}
+            <div class="rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6">
+                {{ form_start(form, {attr: {novalidate: 'novalidate'}, action: path('recurring_plan_show', {slug: shop.slug, id: plan.id})}) }}
+                    {{ include('recurring/_order_fields.html.twig') }}
+                    {{ form_row(form.acceptConditions) }}
+                    {% if form.adultCertified is defined %}
+                        <p class="-mt-3 mb-3 text-sm text-wheat-ink">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+                        {{ form_row(form.adultCertified) }}
+                    {% endif %}
+                    {% if form.acceptTerms is defined %}{{ form_row(form.acceptTerms) }}{% endif %}
+                    <p class="mb-4 text-sm text-ink-soft">Ta commande sera créée à chaque ouverture de vente, et tu recevras un e-mail pour la vérifier. Tu règles chaque livraison au retrait.</p>
+                    <twig:Button type="submit" size="lg" class="w-full sm:w-auto">Je m'abonne</twig:Button>
+                {{ form_end(form) }}
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

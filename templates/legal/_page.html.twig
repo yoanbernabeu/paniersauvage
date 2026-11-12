@@ -1,0 +1,50 @@
+{#
+    Layout of the legal pages: title, version and date, links between the four texts, then the text.
+    Blocks: title, meta_description, legal_title, legal_intro, legal_content.
+    Variables: version, updated_at (from LegalPageController).
+#}
+{% extends 'layout/customer.html.twig' %}
+
+{% set publisher = legal_publisher() %}
+{% set legal_pages = [
+    {route: 'legal_notice', label: 'Mentions légales'},
+    {route: 'legal_terms', label: 'Conditions d\'utilisation'},
+    {route: 'legal_privacy', label: 'Confidentialité'},
+    {route: 'legal_commitments', label: 'Nos engagements'},
+] %}
+
+{% block content %}
+    <nav aria-label="Informations légales" class="mb-8">
+        <ul class="flex flex-wrap gap-2">
+            {% for page in legal_pages %}
+                {% set current = app.request.attributes.get('_route') == page.route %}
+                <li>
+                    <a href="{{ path(page.route) }}" {% if current %}aria-current="page"{% endif %}
+                       class="inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold {{ current ? 'border-sage-dark bg-sage-dark text-white' : 'border-line bg-white text-sage-dark hover:bg-sage-soft' }}">
+                        {{ page.label }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+
+    <article class="legal-text" data-legal-page>
+        <header class="mb-8">
+            <h1 class="text-3xl leading-tight font-semibold text-ink sm:text-4xl">{% block legal_title %}{% endblock %}</h1>
+            <p class="mt-3 text-sm text-ink-soft" data-legal-version>
+                Version {{ version }} · mise à jour le {{ updated_at|date('d/m/Y') }}
+            </p>
+            {% set intro = block('legal_intro') is defined ? block('legal_intro')|trim : '' %}
+            {% if intro is not empty %}
+                <p class="mt-4 text-lg leading-relaxed text-ink-soft">{{ intro|raw }}</p>
+            {% endif %}
+            {{ include('instance/_legal_notice.html.twig') }}
+        </header>
+
+        <div class="flex flex-col gap-4 text-base leading-relaxed text-ink [&_a]:font-medium [&_a]:text-sage-dark [&_a]:underline [&_a]:underline-offset-2 [&_dd]:mb-3 [&_dt]:font-semibold [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-2xl [&_h2]:leading-tight [&_h2]:font-semibold [&_h2]:text-ink [&_h3]:mt-4 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-ink [&_li]:mt-1 [&_ol]:list-decimal [&_ol]:ps-6 [&_ul]:list-disc [&_ul]:ps-6">
+            {% block legal_content %}{% endblock %}
+        </div>
+    </article>
+{% endblock %}
+
+{% block legal_intro %}{% endblock %}

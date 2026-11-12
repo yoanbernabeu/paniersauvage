@@ -1,0 +1,37 @@
+{#
+    "Other producers near this pick-up point" (App\Shop\Search\CrossDiscovery): at most three shops
+    of the directory within 10 km, ranked by distance only. A neighbourly hint, never a shared basket.
+    Variables: nearby_shops (list of App\Shop\Search\NearbyShop), point_name (optional).
+#}
+{% if nearby_shops is not empty %}
+    <section aria-labelledby="autres-producteurs" class="{{ class|default('mt-12') }}" data-nearby-shops>
+        <h2 id="autres-producteurs" class="font-display text-2xl font-semibold text-balance text-ink">D'autres producteurs près de ce point de retrait</h2>
+        <p class="mt-1 text-sm text-ink-soft">
+            {%- if point_name|default(null) %}Autour de {{ point_name }}, à moins de 10 km.{% else %}À moins de 10 km.{% endif %}
+            Ils utilisent {{ instance.name }} et ont choisi d'apparaître dans l'annuaire, du plus proche au plus éloigné.
+        </p>
+        <ul class="mt-4 grid gap-3 sm:grid-cols-3">
+            {% for result in nearby_shops %}
+                {% set sale = result.nextSale %}
+                <li>
+                    <a href="{{ path('shop_show', {slug: result.shop.slug, via: 'croise'}) }}" class="group flex h-full min-h-11 flex-col rounded-xl bg-white p-4 shadow-card ring-1 ring-line transition-colors hover:ring-sage" data-nearby-shop="{{ result.shop.slug }}">
+                        <span class="font-display text-lg leading-snug font-semibold text-ink group-hover:text-sage-dark">{{ result.shop.name }}</span>
+                        <span class="mt-1 text-sm font-medium text-sage-dark">{{ result.distanceLabel()|capitalize }}</span>
+                        {% if result.shop.categories is not empty %}
+                            <span class="mt-1 text-sm text-ink-soft">{{ result.shop.categories|map(category => category.label)|join(', ') }}</span>
+                        {% endif %}
+                        <span class="mt-auto pt-3 text-sm text-ink-soft">
+                            {%- if sale and sale.isOpen() -%}
+                                Commandes ouvertes jusqu'au {{ sale.deadlineAt|datetime_long }}
+                            {%- elseif sale -%}
+                                Prochaine vente le {{ sale.opensAt|date_long }}
+                            {%- else -%}
+                                Pas de vente prévue pour l'instant
+                            {%- endif -%}
+                        </span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

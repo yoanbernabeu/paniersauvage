@@ -1,0 +1,34 @@
+{#
+    <twig:Badge>Du moment</twig:Badge>                    wheat (default)
+    <twig:Badge variant="secondary">Ouverte</twig:Badge>  soft sage
+    <twig:Badge variant="muted">Terminée</twig:Badge>
+#}
+{%- props
+    ## 'default'|'secondary'|'sage'|'muted'|'destructive'|'outline' The visual style variant.
+    variant = 'default',
+    ## 'span'|'a' The HTML tag to render; use `a` when the badge navigates.
+    as = 'span'
+-%}
+{%- set style = html_cva(
+    base: 'group/badge inline-flex h-6 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2.5 text-xs font-semibold whitespace-nowrap transition-colors [&>svg]:pointer-events-none [&>svg]:size-3!',
+    variants: {
+        variant: {
+            default: 'bg-wheat-soft text-wheat-ink',
+            secondary: 'bg-sage-mist text-sage-deep',
+            sage: 'bg-sage-dark text-white',
+            muted: 'bg-line-soft text-ink-soft',
+            destructive: 'bg-danger-soft text-danger',
+            outline: 'border-line bg-white text-ink',
+        },
+    },
+) -%}
+<{{ as }}
+    data-slot="badge"
+    data-variant="{{ variant }}"
+    {{ attributes.defaults({
+        class: style.apply({variant: variant})|tailwind_classes,
+    }) }}
+>
+    {##- The badge label or content. -#}
+    {%- block content %}{% endblock -%}
+</{{ as }}>

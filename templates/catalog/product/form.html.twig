@@ -1,0 +1,77 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+{% set is_new = product.id is null %}
+
+{% block title %}{{ is_new ? 'Nouveau produit' : 'Modifier le produit' }}{% endblock %}
+{% block page_title %}{{ is_new ? 'Nouveau produit' : 'Modifier le produit' }}{% endblock %}
+
+{% block content %}
+    <p class="mb-4">
+        <a href="{{ path('pro_product_index') }}" class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-sage-dark hover:underline">
+            <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+            Tous les produits
+        </a>
+    </p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-6'}}) }}
+        {{ form_errors(form) }}
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="product-main">
+            <h2 id="product-main" class="mb-4 text-base font-semibold text-ink">Le produit</h2>
+            {{ form_row(form.name) }}
+            {{ form_row(form.description) }}
+            <div class="grid gap-x-4 sm:grid-cols-3" data-controller="weighed-fields">
+                {{ form_row(form.priceCents) }}
+                {{ form_row(form.unit, {attr: {'data-weighed-fields-target': 'unit', 'data-action': 'weighed-fields#toggle'}}) }}
+                {{ form_row(form.vatRateBp) }}
+                <fieldset class="rounded-xl border border-line-soft bg-sage-soft/60 p-4 sm:col-span-3" data-weighed-fields-target="panel" data-weighed-panel>
+                    <legend class="px-1 text-sm font-semibold text-ink">Vente au poids</legend>
+                    <p class="mb-3 text-sm text-ink-soft">Pour un produit au kilo seulement : le prix est celui du kilo. Le montant est estimé à la commande, puis recalculé quand tu saisis le poids réel à la livraison.</p>
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {{ form_row(form.quantityStep, {row_attr: {class: 'mb-0 sm:mb-0'}}) }}
+                        {{ form_row(form.minQuantity, {row_attr: {class: 'mb-0'}}) }}
+                    </div>
+                </fieldset>
+            </div>
+            {% if product.photoPath %}
+                <div class="mb-3 flex items-center gap-3">
+                    <img src="{{ product.photoPath|image_url }}" alt="Photo actuelle" class="size-16 rounded-lg border border-line object-cover" data-current-photo>
+                    <span class="text-sm text-ink-soft">Photo actuelle</span>
+                </div>
+            {% endif %}
+            {{ form_row(form.photo) }}
+            {% if form.removePhoto is defined %}
+                {{ form_row(form.removePhoto) }}
+            {% endif %}
+        </section>
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="product-range">
+            <h2 id="product-range" class="mb-4 text-base font-semibold text-ink">Quand le proposer</h2>
+            {{ form_row(form.kind) }}
+            <p class="mb-3 text-sm text-ink-soft">Pour un produit du moment, indique sa période (les deux dates sont facultatives).</p>
+            <div class="grid gap-x-4 sm:grid-cols-2">
+                {{ form_row(form.availableFrom) }}
+                {{ form_row(form.availableUntil) }}
+            </div>
+            {{ form_row(form.maxQtyDefault) }}
+        </section>
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="product-details">
+            <h2 id="product-details" class="mb-4 text-base font-semibold text-ink">Détails</h2>
+            {{ form_row(form.allergens) }}
+            {{ form_row(form.labels) }}
+        </section>
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="product-legal">
+            <h2 id="product-legal" class="mb-4 text-base font-semibold text-ink">Règles de vente</h2>
+            {{ form_row(form.perishable) }}
+            {{ form_row(form.alcoholic) }}
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+            <twig:Button type="submit" class="w-full sm:w-auto">Enregistrer</twig:Button>
+            <twig:Button as="a" href="{{ path('pro_product_index') }}" variant="ghost" class="w-full sm:w-auto">Retour</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

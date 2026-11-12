@@ -1,0 +1,14 @@
+{% extends 'notification/layout.txt.twig' %}
+{% block content %}{% autoescape false %}
+Bonjour,
+
+{{ owner_name }} t'invite à gérer {{ shop_name }} sur Panier Sauvage : ventes, commandes, clients et livraisons.
+
+Ouvre ce lien pour créer ton mot de passe et rejoindre l'équipe :
+
+{{ url }}
+
+Ce lien est valable {{ days }} jours et ne sert qu'une fois. Un compte Panier Sauvage ne sert qu'une boutique.
+{% endautoescape %}{% endblock %}
+{% block footer %}Tu ne connais pas {{ owner_name }} ? Ignore ce message : rien ne se passe sans toi.
+{% endblock %}

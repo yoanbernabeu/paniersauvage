@@ -1,0 +1,10 @@
+{#
+    Links to the legal pages, for the footers of the three layouts.
+    Variables: class (optional, classes of the <ul>), link_class (optional, classes of each link).
+#}
+<ul class="{{ class|default('flex flex-wrap items-center justify-center gap-x-4') }}" data-legal-links>
+    <li><a href="{{ path('legal_notice') }}" class="{{ link_class|default('link inline-flex min-h-11 items-center') }}">Mentions légales</a></li>
+    <li><a href="{{ path('legal_terms') }}" class="{{ link_class|default('link inline-flex min-h-11 items-center') }}">CGU</a></li>
+    <li><a href="{{ path('legal_privacy') }}" class="{{ link_class|default('link inline-flex min-h-11 items-center') }}">Confidentialité</a></li>
+    <li><a href="{{ path('legal_commitments') }}" class="{{ link_class|default('link inline-flex min-h-11 items-center') }}">Nos engagements</a></li>
+</ul>

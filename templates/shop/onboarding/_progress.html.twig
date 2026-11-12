@@ -1,0 +1,35 @@
+{#
+    First steps of the shop, while they are not all done: count, bar and next step.
+    Variables: progress (App\Shop\Service\OnboardingProgress), compact (bool, optional: flash version).
+#}
+{%- set next = progress.nextStep -%}
+{%- if next -%}
+    <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-5 {{ class|default('') }}" aria-labelledby="onboarding-progress-title" data-onboarding-progress>
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <h2 id="onboarding-progress-title" class="text-sm font-semibold text-ink">
+                {{ compact|default(false) ? 'Étape suivante' : 'Tes premiers pas' }}
+            </h2>
+            <span class="amount text-sm font-medium text-sage-dark" data-onboarding-count>{{ progress.doneCount }}/{{ progress.total }}</span>
+        </div>
+        <progress value="{{ progress.doneCount }}" max="{{ progress.total }}"
+                  aria-label="Premiers pas : {{ progress.doneCount }} sur {{ progress.total }}"
+                  class="mt-2 block h-2 w-full appearance-none overflow-hidden rounded-full bg-sage-mist [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-sage-dark [&::-webkit-progress-bar]:bg-sage-mist [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-sage-dark"></progress>
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-ink" data-onboarding-next="{{ next.key }}">
+                <span class="font-semibold">{{ next.title }}.</span>
+                <span class="text-ink-soft">{{ next.text }}</span>
+            </p>
+            <div class="flex shrink-0 flex-wrap gap-2">
+                {% if next.url %}
+                    <twig:Button as="a" href="{{ next.url }}" variant="secondary" size="sm">
+                        {{ next.action }}
+                        <twig:ux:icon name="lucide:arrow-right" />
+                    </twig:Button>
+                {% endif %}
+                {% if next.key != 'share' %}
+                    <twig:Button as="a" href="{{ safe_path('pro_onboarding', '/pro/bienvenue') }}" variant="ghost" size="sm">Toutes les étapes</twig:Button>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{%- endif -%}

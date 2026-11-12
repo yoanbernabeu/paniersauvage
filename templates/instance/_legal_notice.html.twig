@@ -1,0 +1,22 @@
+{#
+    Head of the legal pages of a renamed instance (docs/INSTANCE.md): what this service is, who
+    publishes it (LEGAL_*), who carries it, and how to read "Panier Sauvage" in the texts; and on a
+    sponsored instance, that the subscription is free. Nothing on Panier Sauvage itself.
+#}
+{% if instance.isRenamed() or instance.isSponsored() %}
+    {% set publisher = legal_publisher() %}
+    <div class="mt-6 rounded-xl border border-line bg-sage-soft p-4 text-base leading-relaxed text-sage-deep sm:p-5" data-instance-legal>
+        {% if instance.isRenamed() %}<p>
+            {{ instance.name }} est une instance du logiciel libre
+            <a href="{{ publisher.sourceCodeUrl }}" class="font-medium underline underline-offset-2" rel="noopener">Panier Sauvage</a>
+            (licence AGPL), éditée par {{ publisher.name }}{{ include('instance/_carrier.html.twig', {prefix: ' et portée par ', suffix: ''}) }}.
+            Dans ces textes, « Panier Sauvage » désigne ce service et « nous », son éditeur.
+        </p>{% endif %}
+        {% if instance.isSponsored() %}
+            <p class="{{ instance.isRenamed() ? 'mt-2' }}" data-instance-sponsored>
+                {{ instance.sponsorshipMention() }} : les producteurs n'ont rien à payer, et les clauses sur
+                le prix, l'essai et le paiement de l'abonnement ne s'appliquent pas.
+            </p>
+        {% endif %}
+    </div>
+{% endif %}

@@ -1,0 +1,2 @@
+{# One product a generated order could not hold in full ("Tomates : 0,5 kg sur 1 kg"). Variables: item (RecurringOccurrence::getMissingItems()). #}
+{{- item.label }} : {{ item.given|quantity(item.unit) }} sur {{ item.wanted|quantity(item.unit) -}}

@@ -1,0 +1,110 @@
+{% extends 'legal/_page.html.twig' %}
+
+{% block title %}Confidentialité{% endblock %}
+{% block meta_description %}Politique de confidentialité de Panier Sauvage : données traitées, finalités, durées, destinataires, rôles du producteur et de la plateforme, tes droits.{% endblock %}
+{% block legal_title %}Politique de confidentialité{% endblock %}
+{% block legal_intro %}On collecte le moins possible, on ne vend rien, on ne fait pas de publicité. Voici le détail.{% endblock %}
+
+{% block legal_content %}
+    <h2 id="roles">1. Qui est responsable de tes données ?</h2>
+    <p>Deux situations, selon ce que tu fais sur Panier Sauvage :</p>
+    <ul>
+        <li>
+            <strong>Quand tu commandes chez un producteur</strong>, c'est ce producteur qui est responsable du
+            traitement des données de ta commande (ton nom, tes coordonnées, ce que tu as commandé, où tu
+            récupères ta commande). Panier Sauvage agit pour son compte, comme <strong>sous-traitant</strong>,
+            selon un accord conforme à l'article 28 du RGPD (<a href="{{ path('legal_terms') }}#sous-traitance">annexe 1 des conditions d'utilisation</a>).
+            Pour toute question sur une commande, adresse-toi d'abord au producteur : il suffit de répondre à
+            un de ses e-mails. Nous l'aidons à te répondre.
+        </li>
+        <li>
+            <strong>Pour ton compte sur la plateforme</strong> (connexion, liste de tes producteurs suivis,
+            sécurité), <strong>pour les comptes producteurs</strong> et pour l'annuaire, le responsable du
+            traitement est l'éditeur de Panier Sauvage : {{ publisher.name }}, {{ publisher.address|replace({"\n": ', '}) }},
+            <a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a>.
+        </li>
+    </ul>
+
+    <h2 id="donnees">2. Quelles données, pourquoi, sur quelle base, combien de temps ?</h2>
+
+    <h3>Clients</h3>
+    <dl>
+        <dt>Compte client : adresse e-mail, prénom, nom, téléphone, date de dernière connexion</dt>
+        <dd>Pour te connecter sans mot de passe et retrouver tes commandes chez tous tes producteurs. Base : exécution des conditions d'utilisation que tu acceptes. Conservées tant que ton compte existe ; tu le supprimes quand tu veux depuis « Mon compte ».</dd>
+        <dt>Commandes : produits, quantités, montants, lieu et créneau de retrait, adresse de livraison à domicile, note au producteur, historique des modifications</dt>
+        <dd>Pour que le producteur prépare et te remette ta commande, et pour t'envoyer la confirmation, les modifications et le rappel de la veille. Base : le contrat de vente conclu avec le producteur (traitement réalisé pour son compte). Conservées tant que le compte du producteur existe, car elles forment son historique de ventes et son journal comptable ; si tu supprimes ton compte, tes commandes passées sont anonymisées.</dd>
+        <dt>Producteurs suivis et accord pour recevoir leurs annonces</dt>
+        <dd>Pour t'envoyer l'ouverture des ventes des producteurs que tu as choisis. Base : ton consentement, retirable en un clic dans chaque e-mail ou sur la page du producteur.</dd>
+        <dt>Acceptation des conditions d'utilisation (date, version)</dt>
+        <dd>Pour prouver ton accord. Base : intérêt légitime. Conservées avec ton compte.</dd>
+        <dt>Journal des e-mails envoyés (type, date, statut d'envoi)</dt>
+        <dd>Pour éviter les doublons et diagnostiquer les e-mails non reçus. Base : intérêt légitime. Anonymisé si tu supprimes ton compte.</dd>
+    </dl>
+
+    <h3>Producteurs</h3>
+    <dl>
+        <dt>Compte : prénom, nom, adresse e-mail, mot de passe (haché, jamais lisible), date et version des conditions acceptées</dt>
+        <dd>Pour te donner accès à ton espace. Base : contrat. Conservées tant que ton compte existe.</dd>
+        <dt>Boutique : nom, description, logo, SIRET, adresse, téléphone, moyens de paiement acceptés, points de retrait, produits, ventes</dt>
+        <dd>Pour publier ta boutique et tes ventes, et informer tes clients de l'identité de leur vendeur. Base : contrat et obligation légale d'information des consommateurs. Conservées tant que ton compte existe.</dd>
+        <dt>Vérification du SIRET : nom de l'entreprise et code d'activité (NAF) issus du répertoire public, date de vérification</dt>
+        <dd>Pour n'afficher dans l'annuaire que de vrais producteurs. Base : intérêt légitime (confiance des clients). Seul ton SIRET est envoyé à l'API publique Recherche d'entreprises. Conservées tant que ton compte existe.</dd>
+        <dt>Abonnement : statut, dates, identifiants client et abonnement chez Stripe</dt>
+        <dd>Pour gérer l'essai et l'abonnement. Tes données de carte sont saisies chez Stripe et ne passent jamais par nos serveurs. Base : contrat ; les factures sont conservées 10 ans (obligation comptable).</dd>
+    </dl>
+
+    <h3>Tout visiteur</h3>
+    <dl>
+        <dt>Recherche de producteurs : ville ou code postal tapé, ou position « Autour de moi »</dt>
+        <dd>Pour te montrer les producteurs proches. La position de ton navigateur est arrondie (environ 100 m) et n'est jamais enregistrée ; une ville tapée est envoyée à l'API Adresse de l'État pour être localisée, puis gardée en cache sans lien avec toi.</dd>
+        <dt>Signalement d'une boutique : motif, message, e-mail si tu le donnes</dt>
+        <dd>Pour traiter ton signalement. Base : intérêt légitime et obligations d'hébergeur. Conservés le temps de traiter le signalement, puis au plus un an.</dd>
+        <dt>Sécurité : adresse IP (limitation des tentatives, journaux techniques du serveur)</dt>
+        <dd>Pour protéger le service contre les abus. Base : intérêt légitime. Les compteurs de tentatives s'effacent seuls en moins d'une heure ; les journaux techniques sont conservés au plus 12 mois.</dd>
+    </dl>
+
+    <h2 id="destinataires">3. Qui reçoit tes données ?</h2>
+    <ul>
+        <li><strong>Le producteur</strong> chez qui tu commandes, ou que tu suis : uniquement tes données liées à ses commandes et à son abonnement. Il ne voit jamais tes commandes chez d'autres producteurs.</li>
+        <li><strong>{{ publisher.hostName }}</strong>, notre hébergeur, dans l'Union européenne.</li>
+        <li><strong>Brevo</strong> (Sendinblue SAS, France), qui envoie nos e-mails.</li>
+        <li><strong>Stripe</strong> (Stripe Payments Europe Ltd, Irlande), pour l'abonnement des producteurs uniquement. Stripe peut transférer des données aux États-Unis, encadré par le Data Privacy Framework et des clauses contractuelles types.</li>
+        <li><strong>L'API Adresse</strong> de l'État (IGN / DINUM), qui ne reçoit que des adresses publiques (points de retrait) ou la ville tapée dans la recherche.</li>
+        <li><strong>L'API Recherche d'entreprises</strong> de l'État (DINUM), qui ne reçoit que le SIRET des producteurs.</li>
+        <li><strong>Le fournisseur des fonds de carte</strong> de la recherche (par défaut la fondation OpenStreetMap, Royaume-Uni, pays reconnu adéquat par la Commission européenne) : ton navigateur lui demande les images de la carte, ce qui lui transmet ton adresse IP. La carte reste facultative : la liste des résultats suffit.</li>
+    </ul>
+    <p><strong>Nous ne vendons, ne louons et n'échangeons aucune donnée.</strong> Aucune publicité, aucun traceur publicitaire, aucun outil de mesure d'audience tiers.</p>
+
+    <h2 id="cookies">4. Cookies</h2>
+    <p>
+        Un seul cookie : le cookie de session, indispensable pour rester connecté et pour retrouver une
+        commande passée sans compte. Il est exempté de consentement et disparaît à la fermeture du
+        navigateur ou après une période d'inactivité.
+    </p>
+
+    <h2 id="securite">5. Sécurité</h2>
+    <p>
+        Connexions chiffrées (HTTPS), mots de passe hachés, liens de connexion valables 15 minutes et une
+        seule fois, données de chaque boutique strictement cloisonnées, sauvegardes régulières, hébergement
+        dans l'Union européenne. Le code est libre et peut être audité par tous.
+    </p>
+
+    <h2 id="droits">6. Tes droits</h2>
+    <p>
+        Tu peux accéder à tes données, les rectifier, les effacer, t'opposer à leur traitement, en limiter
+        l'usage, les récupérer dans un format lisible (portabilité) et retirer ton consentement à tout
+        moment. Depuis « Mon compte », tu modifies ton profil et supprimes ton compte toi-même. Pour le
+        reste, écris à <a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a> ; pour une
+        commande, adresse-toi aussi au producteur concerné. Nous répondons sous un mois.
+    </p>
+    <p>
+        Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL
+        (<a href="https://www.cnil.fr/fr/plaintes" rel="noopener">www.cnil.fr/fr/plaintes</a>).
+    </p>
+
+    <h2 id="evolutions">7. Évolutions</h2>
+    <p>
+        Nous mettons cette politique à jour quand nos traitements changent ; la version et la date figurent en
+        haut de la page. Un changement important est annoncé par e-mail aux producteurs.
+    </p>
+{% endblock %}

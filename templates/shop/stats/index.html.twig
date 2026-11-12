@@ -1,0 +1,129 @@
+{#
+    "Statistiques" of the current shop. Variables: stats (App\Shop\Statistics\ShopStats), weeks,
+    months, regular_days (ints).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% macro percent(rate) %}{% if rate.percent is null %}—{% else %}{{ rate.percent }}&nbsp;%{% endif %}{% endmacro %}
+{% macro tenths(value) %}{{ value // 10 }}{% if value % 10 %},{{ value % 10 }}{% endif %}{% endmacro %}
+
+{% set picked_total = stats.weeklyPickups|reduce((carry, bar) => carry + bar.value, 0) %}
+{% set average_tenths = ((picked_total * 10) / weeks)|round %}
+
+{% block title %}Statistiques{% endblock %}
+{% block page_title %}Statistiques{% endblock %}
+{% block page_subtitle %}Quelques chiffres sobres sur tes ventes, calculés à partir de tes commandes. Rien n'est suivi en dehors.{% endblock %}
+
+{% block content %}
+    {% if stats.empty %}
+        <twig:Empty class="mb-6 rounded-xl border border-line bg-white py-12" data-stats-empty>
+            <twig:Empty:Media><twig:Illustration name="wheat" class="w-40" /></twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Pas encore de chiffres</twig:Empty:Title>
+                <twig:Empty:Description>Ils apparaissent dès tes premières commandes retirées. Coche-les sur la feuille de livraison.</twig:Empty:Description>
+            </twig:Empty:Header>
+        </twig:Empty>
+    {% endif %}
+
+    <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="stats-weekly" data-stats="weekly">
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <div>
+                <h2 id="stats-weekly" class="text-base font-semibold text-ink">Commandes retirées par semaine</h2>
+                <p class="text-sm text-ink-soft">Ton indicateur principal : des clients venus chercher ce que tu as préparé. {{ weeks }} dernières semaines, par date de livraison.</p>
+            </div>
+            <p class="text-end">
+                <span class="amount block text-3xl font-semibold text-ink" data-stats-average>{{ _self.tenths(average_tenths) }}</span>
+                <span class="text-sm text-ink-soft">par semaine en moyenne</span>
+            </p>
+        </div>
+        {{ include('shop/stats/_bar_chart.html.twig', {id: 'chart-weekly', title: 'Commandes retirées par semaine', bars: stats.weeklyPickups, unit: 'week', money: false}) }}
+    </section>
+
+    <section class="mt-6 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="stats-monthly" data-stats="monthly">
+        <h2 id="stats-monthly" class="text-base font-semibold text-ink">Chiffre d'affaires retiré par mois</h2>
+        <p class="mb-4 text-sm text-ink-soft">Montant des commandes retirées, au poids réel après pesée. {{ months }} derniers mois. Ce n'est pas un relevé de paiements : Panier Sauvage n'en enregistre aucun.</p>
+        {{ include('shop/stats/_bar_chart.html.twig', {id: 'chart-monthly', title: 'Chiffre d\'affaires retiré par mois', bars: stats.monthlyRevenue, unit: 'month', money: true}) }}
+    </section>
+
+    <h2 class="mt-8 mb-1 text-base font-semibold text-ink">Depuis le {{ stats.since|date_long(true) }}</h2>
+    <p class="mb-3 text-sm text-ink-soft">Les six derniers mois de livraisons.</p>
+    <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" data-stats-figures>
+        <div class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line" data-stat="median">
+            <dt class="text-sm text-ink-soft">Commandes par vente (médiane)</dt>
+            <dd class="amount mt-1 text-2xl font-semibold text-ink">{{ stats.medianOrdersTenths is null ? '—' : _self.tenths(stats.medianOrdersTenths) }}</dd>
+            <dd class="text-sm text-ink-soft">sur {{ stats.finishedSales }} vente{{ stats.finishedSales > 1 ? 's' }} terminée{{ stats.finishedSales > 1 ? 's' }}</dd>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line" data-stat="regulars">
+            <dt class="text-sm text-ink-soft">Clients réguliers</dt>
+            <dd class="amount mt-1 text-2xl font-semibold text-ink">{{ stats.regulars.part }}</dd>
+            <dd class="text-sm text-ink-soft">au moins 2 commandes en {{ regular_days }} jours, sur {{ stats.regulars.whole }} client{{ stats.regulars.whole > 1 ? 's' }} ({{ _self.percent(stats.regulars) }})</dd>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line" data-stat="absences">
+            <dt class="text-sm text-ink-soft">Taux d'absence</dt>
+            <dd class="amount mt-1 text-2xl font-semibold text-ink">{{ _self.percent(stats.absences) }}</dd>
+            <dd class="text-sm text-ink-soft">{{ stats.absences.part }} commande{{ stats.absences.part > 1 ? 's' }} non retirée{{ stats.absences.part > 1 ? 's' }} sur {{ stats.absences.whole }}</dd>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line" data-stat="cancellations">
+            <dt class="text-sm text-ink-soft">Taux d'annulation</dt>
+            <dd class="amount mt-1 text-2xl font-semibold text-ink">{{ _self.percent(stats.cancellations) }}</dd>
+            <dd class="text-sm text-ink-soft">{{ stats.cancellations.part }} annulée{{ stats.cancellations.part > 1 ? 's' }} sur {{ stats.cancellations.whole }} commande{{ stats.cancellations.whole > 1 ? 's' }}</dd>
+        </div>
+    </dl>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="stats-fill" data-stats="fill">
+            <h2 id="stats-fill" class="text-base font-semibold text-ink">Remplissage des offres limitées</h2>
+            <p class="mb-3 text-sm text-ink-soft">
+                Quantité commandée sur la quantité maximale, pour les produits à quantité limitée.
+                Ensemble : <span class="amount font-semibold text-ink" data-stats-fill>{{ _self.percent(stats.fill) }}</span>.
+            </p>
+            {% if stats.products is empty %}
+                <p class="text-sm text-ink-soft">Aucune offre limitée sur la période.</p>
+            {% else %}
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="border-b border-line">
+                            <th scope="col" class="py-1.5 font-semibold text-ink">Produit</th>
+                            <th scope="col" class="py-1.5 text-end font-semibold text-ink">Ventes</th>
+                            <th scope="col" class="py-1.5 text-end font-semibold text-ink">Épuisé</th>
+                            <th scope="col" class="py-1.5 text-end font-semibold text-ink">Rempli</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in stats.products|slice(0, 10) %}
+                            <tr class="border-b border-line-soft" data-stats-product="{{ product.name }}">
+                                <td class="py-1.5 text-ink">{{ product.name }}</td>
+                                <td class="amount py-1.5 text-end text-ink-soft">{{ product.offers }}</td>
+                                <td class="amount py-1.5 text-end text-ink-soft">{{ product.soldOut }}</td>
+                                <td class="amount py-1.5 text-end font-semibold text-ink">{{ _self.percent(product.fill) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="stats-sources" data-stats="sources">
+            <h2 id="stats-sources" class="text-base font-semibold text-ink">D'où viennent tes commandes</h2>
+            <p class="mb-3 text-sm text-ink-soft">Commandes non annulées, selon le lien suivi par le client.</p>
+            {% if stats.sources is empty %}
+                <p class="text-sm text-ink-soft">Pas encore de commande sur la période.</p>
+            {% else %}
+                <ul class="flex flex-col gap-3">
+                    {% for source in stats.sources %}
+                        <li data-stats-source="{{ source.key }}">
+                            <p class="flex justify-between gap-3 text-sm">
+                                <span class="text-ink">{{ source.label }}</span>
+                                <span class="amount shrink-0 text-ink-soft"><span class="font-semibold text-ink">{{ _self.percent(source.share) }}</span> · {{ source.share.part }}</span>
+                            </p>
+                            <svg viewBox="0 0 100 4" preserveAspectRatio="none" class="mt-1 h-2 w-full" aria-hidden="true">
+                                <rect width="100" height="4" rx="2" class="fill-sage-mist" />
+                                <rect width="{{ source.share.percent }}" height="4" rx="2" class="fill-sage" />
+                            </svg>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

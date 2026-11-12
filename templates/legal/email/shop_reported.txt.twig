@@ -1,0 +1,16 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Nouveau signalement de la boutique {{ shop.name }} ({{ shop_url }}), le {{ report.reportedAt|datetime_long }}.
+
+Motif : {{ report.reason.label }}
+
+{{ report.message }}
+
+{% if report.reporterEmail %}
+Réponds à cet e-mail pour écrire à la personne qui a signalé ({{ report.reporterEmail }}).
+{% else %}
+La personne n'a pas laissé d'e-mail.
+{% endif %}
+SIRET de la boutique : {{ shop.siret ?? 'non renseigné' }}.
+{% endblock %}

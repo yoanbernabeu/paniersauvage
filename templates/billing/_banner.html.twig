@@ -1,0 +1,20 @@
+{#
+    Subscription alert of the producer area, included by layout/pro.html.twig.
+    Shown when new sales are blocked (ShopSubscription::allowsNewSales() is false) or when the
+    free trial ends in less than 7 days. Renders nothing otherwise.
+#}
+{%- set billing_banner = billing_banner() -%}
+{%- if billing_banner -%}
+    <twig:Alert variant="{{ billing_banner.variant }}" class="{{ class|default('mb-5') }}" data-billing-banner="{{ billing_banner.variant }}" :data-subscription-alert="billing_banner.variant == 'destructive'">
+        <twig:ux:icon name="lucide:triangle-alert" />
+        <twig:Alert:Title>{{ billing_banner.title }}</twig:Alert:Title>
+        <twig:Alert:Description class="text-current">
+            {{ billing_banner.message }}
+            {% if not is_granted('ROLE_SHOP_OWNER') %}
+                <span data-billing-owner-only>Seul le propriétaire de la boutique peut gérer l'abonnement.</span>
+            {% elseif app.current_route != 'pro_billing' %}
+                <a href="{{ safe_path('pro_billing', '/pro/abonnement') }}" class="font-semibold whitespace-nowrap underline underline-offset-2">{{ billing_banner.action }}</a>
+            {% endif %}
+        </twig:Alert:Description>
+    </twig:Alert>
+{%- endif -%}

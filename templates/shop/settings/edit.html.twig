@@ -1,0 +1,89 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Ma boutique{% endblock %}
+{% block page_title %}Ma boutique{% endblock %}
+{% block page_subtitle %}Ce que tes clients voient sur ta page.{% endblock %}
+
+{% block content %}
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-6'}}) }}
+            {{ form_errors(form) }}
+
+            <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="settings-identity">
+                <h2 id="settings-identity" class="mb-4 text-base font-semibold text-ink">Présentation</h2>
+                {{ form_row(form.name) }}
+                {{ form_row(form.description) }}
+                {% if shop.logoPath %}
+                    <div class="mb-3 flex items-center gap-3">
+                        <img src="{{ shop.logoPath|image_url }}" alt="Logo actuel" class="size-16 rounded-lg border border-line object-cover" data-current-logo>
+                        <span class="text-sm text-ink-soft">Logo actuel</span>
+                    </div>
+                {% endif %}
+                {{ form_row(form.logo) }}
+                {% if form.removeLogo is defined %}
+                    {{ form_row(form.removeLogo) }}
+                {% endif %}
+            </section>
+
+            <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="settings-visibility" data-section="visibility">
+                <h2 id="settings-visibility" class="mb-1 text-base font-semibold text-ink">Annuaire des producteurs</h2>
+                <p class="mb-4 text-sm text-ink-soft">
+                    Ta page et tes ventes fonctionnent sans l'annuaire : tes clients passent par ton lien.
+                    L'annuaire aide en plus les gens du coin à te découvrir, classés par distance seulement.
+                </p>
+                {{ include('shop/settings/_choice_grid.html.twig', {field: form.categories, key: 'categories'}) }}
+                {{ form_row(form.listedInSearch) }}
+                <p class="text-sm text-ink-soft">
+                    Seuls tes points avec une adresse localisée et tes zones de livraison à domicile comptent.
+                    <a href="{{ safe_path('pro_delivery_point_index', '/pro/points-de-livraison') }}" class="link">Vérifie tes points de livraison</a>.
+                </p>
+                {{ form_row(form.crossDiscoveryEnabled, {row_attr: {class: 'mt-4 mb-0'}}) }}
+            </section>
+
+            <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="settings-contact">
+                <h2 id="settings-contact" class="mb-4 text-base font-semibold text-ink">Coordonnées du vendeur</h2>
+                {{ form_row(form.legalName) }}
+                {{ form_row(form.address) }}
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.phone) }}
+                    {{ form_row(form.siret) }}
+                </div>
+                {{ include('legal/_verification_status.html.twig') }}
+                {{ form_row(form.contactEmail) }}
+            </section>
+
+            <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="settings-orders">
+                <h2 id="settings-orders" class="mb-4 text-base font-semibold text-ink">Commandes</h2>
+                {{ include('shop/settings/_choice_grid.html.twig', {field: form.paymentMethods, key: 'payment-methods'}) }}
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.localCurrencyName) }}
+                    {{ form_row(form.foodVoucherDetails) }}
+                </div>
+                {{ form_row(form.paymentInfo) }}
+                {{ form_row(form.vatRegime) }}
+                {{ form_row(form.allowCustomerEdit) }}
+                {{ form_row(form.defaultEditCutoffHours) }}
+            </section>
+
+            <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="settings-new-customers" data-section="new-customers">
+                <h2 id="settings-new-customers" class="mb-1 text-base font-semibold text-ink">Nouveaux clients</h2>
+                <p class="mb-4 text-sm text-ink-soft">
+                    Pour te protéger des commandes sans lendemain. Un client est nouveau tant qu'il n'a retiré aucune commande chez toi.
+                    Les commandes que tu saisis toi-même ne sont jamais limitées.
+                </p>
+                {{ form_row(form.firstOrderCapCents) }}
+                {{ form_row(form.newCustomerDeposit, {row_attr: {class: 'mb-0'}}) }}
+            </section>
+
+            <div>
+                <twig:Button type="submit" class="w-full sm:w-auto">Enregistrer</twig:Button>
+            </div>
+        {{ form_end(form) }}
+
+        <aside class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6 lg:order-last" aria-labelledby="settings-link">
+            <h2 id="settings-link" class="text-base font-semibold text-ink">Le lien de ta boutique</h2>
+            <p class="mt-1 mb-3 text-sm text-ink-soft">Partage-le à tes clients : c'est là qu'ils passent commande.</p>
+            {{ include('shop/_share_link.html.twig') }}
+        </aside>
+    </div>
+{% endblock %}

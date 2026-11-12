@@ -1,0 +1,72 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Récurrences{% endblock %}
+{% block page_title %}Récurrences{% endblock %}
+{% block page_subtitle %}Une récurrence prépare toute seule tes ventes des 4 prochaines semaines.{% endblock %}
+
+{% block page_actions %}
+    <twig:Button as="a" href="{{ path('pro_schedule_new') }}">
+        <twig:ux:icon name="lucide:plus" />
+        Nouvelle récurrence
+    </twig:Button>
+{% endblock %}
+
+{% block content %}
+    {% if not allows_new_sales %}
+        {{ include('sale/_subscription_alert.html.twig') }}
+    {% endif %}
+
+    {% if schedules is empty %}
+        <twig:Empty class="rounded-xl border border-line bg-white py-12">
+            <twig:Empty:Media><twig:Illustration name="wheat" class="w-24" /></twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Pas encore de récurrence</twig:Empty:Title>
+                <twig:Empty:Description>Tu livres chaque semaine le même jour ? Crée une récurrence : tes ventes s'ouvriront et se fermeront toutes seules.</twig:Empty:Description>
+            </twig:Empty:Header>
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ path('pro_schedule_new') }}">Créer une récurrence</twig:Button>
+            </twig:Empty:Content>
+        </twig:Empty>
+    {% else %}
+        <ul class="divide-y divide-line-soft overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-line">
+            {% for schedule in schedules %}
+                <li class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4" data-schedule="{{ schedule.id }}">
+                    <div class="min-w-0 flex-1">
+                        <p class="flex flex-wrap items-center gap-2">
+                            <a href="{{ path('pro_schedule_edit', {id: schedule.id}) }}" class="truncate font-medium text-ink hover:underline">{{ schedule.name }}</a>
+                            {% if schedule.active %}
+                                <twig:Badge variant="secondary">Active</twig:Badge>
+                            {% else %}
+                                <twig:Badge variant="muted">En pause</twig:Badge>
+                            {% endif %}
+                        </p>
+                        <p class="mt-0.5 text-sm text-ink-soft">
+                            Livraison le {{ schedule.weekday|weekday_name }}, {{ time_range(schedule.deliveryStartTime, schedule.deliveryEndTime) }}
+                            · commandes jusqu'à {{ schedule.deadlineTime|time_short }}, {{ schedule.deadlineDaysBefore }} jour{{ schedule.deadlineDaysBefore > 1 ? 's' }} avant
+                        </p>
+                        <p class="text-sm text-ink-soft">
+                            {{ schedule.deliveryPoints|length }} point{{ schedule.deliveryPoints|length > 1 ? 's' }} de livraison
+                            · {{ schedule.products is empty ? 'toute ta gamme' : schedule.products|length ~ ' produit' ~ (schedule.products|length > 1 ? 's') }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <twig:Button as="a" href="{{ path('pro_schedule_edit', {id: schedule.id}) }}" variant="secondary" size="sm">
+                            <twig:ux:icon name="lucide:pencil" />
+                            Modifier
+                        </twig:Button>
+                        {% if route_exists('pro_recurring_plan_edit') %}
+                            <twig:Button as="a" href="{{ path('pro_recurring_plan_edit', {id: schedule.id}) }}" variant="ghost" size="sm" data-schedule-recurring-plan>
+                                <twig:ux:icon name="lucide:package" />
+                                Panier récurrent
+                            </twig:Button>
+                        {% endif %}
+                        <form method="post" action="{{ path('pro_schedule_toggle', {id: schedule.id}) }}">
+                            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                            <twig:Button type="submit" variant="ghost" size="sm">{{ schedule.active ? 'Mettre en pause' : 'Réactiver' }}</twig:Button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{#
+    Confirmation of the pre-contractual information in the order e-mail (Code de la consommation,
+    L221-13): seller, prices, right of withdrawal, alcohol. Variables: order, shop (+ layout styles).
+#}
+{% set producer = shop.owner %}
+<h2 style="{{ h2_css }}">Ton vendeur</h2>
+<p style="{{ muted_css }}" data-seller-identity>
+    {{ shop.name }}{% if producer %} ({{ producer.fullName }}){% endif %}{% if shop.siret %} · SIRET {{ shop.siret }}{% endif %}<br>
+    {% if shop.address %}{{ shop.address|replace({"\n": ', '}) }}<br>{% endif %}
+    {% if shop.phone %}{{ shop.phone }}{% if producer %} · {% endif %}{% endif %}{% if producer %}<a href="mailto:{{ shop.publicEmail() }}" style="{{ link_css }}">{{ shop.publicEmail() }}</a>{% endif %}
+</p>
+<p style="{{ muted_css }}">
+    Prix toutes taxes comprises. Ta commande est conclue avec {{ shop.name }} : tu le règles directement au retrait, {{ instance.name }} ne voit passer aucun paiement.
+</p>
+{% if order.hasWithdrawableItems() %}
+    <p style="{{ muted_css }}" data-withdrawal-info>
+        <strong>Droit de rétractation :</strong> les denrées périssables en sont exclues. Pour les produits qui se conservent
+        ({{ order.lines|filter(l => not l.saleOffer.product.perishable)|map(l => l.label)|join(', ') }}),
+        tu as 14 jours après le retrait pour te rétracter : préviens {{ shop.name }} en répondant à cet e-mail
+        (<a href="{{ url('legal_terms') }}#formulaire-retractation" style="{{ link_css }}">formulaire type</a>), rends-lui le produit non ouvert, il te rembourse sous 14 jours.
+    </p>
+{% else %}
+    <p style="{{ muted_css }}" data-withdrawal-info>Denrées périssables : pas de droit de rétractation (article L221-28 du Code de la consommation).</p>
+{% endif %}
+{% if order.containsAlcohol() %}
+    <p style="{{ muted_css }}font-weight:600;color:#5A4300;" data-alcohol-warning>
+        L'abus d'alcool est dangereux pour la santé, à consommer avec modération. Une pièce d'identité peut t'être demandée au retrait.
+    </p>
+{% endif %}

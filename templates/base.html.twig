@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr"{% if not instance.accent.isDefault() %} data-accent="{{ instance.accent.value }}"{% endif %}>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}{{ instance.name }}{% endblock %}{% block title_suffix %} · {{ instance.name }}{% endblock %}</title>
+        <meta name="description" content="{% block meta_description %}{{ instance.name }} : les précommandes en ligne des producteurs, sans WhatsApp ni tableur.{% endblock %}">
+        <meta name="theme-color" content="{% block theme_color %}#FAF8F3{% endblock %}">
+        <meta name="color-scheme" content="light">
+        {% if instance.isRenamed() %}
+            <meta name="application-name" content="{{ instance.name }}">
+            <meta name="generator" content="{{ constant('App\\Instance\\InstanceSettings::SOFTWARE_NAME') }} (AGPL-3.0)">
+        {% endif %}
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
+        <link rel="preload" href="{{ asset('fonts/inter-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="{{ asset('fonts/fraunces-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        {% block head_extra %}{% endblock %}
+        {% block stylesheets %}
+            {# Linked, not imported from JS: a CSS import is a data: module, refused by the CSP. #}
+            <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+            <link rel="stylesheet" href="{{ asset('@symfony/ux-live-component/live.min.css') }}">
+        {% endblock %}
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app', {nonce: csp_nonce()}) }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body class="{% block body_class %}min-h-dvh bg-cream text-ink{% endblock %}">
+        <a href="#contenu" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-sage-deep focus:shadow-card">Aller au contenu</a>
+        {% block body %}{% endblock %}
+    </body>
+</html>

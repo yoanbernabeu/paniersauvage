@@ -1,0 +1,33 @@
+{% extends 'legal/_page.html.twig' %}
+
+{% block title %}Nos engagements{% endblock %}
+{% block meta_description %}Les engagements publics de Panier Sauvage : zéro commission à vie, un seul prix public, logiciel libre, export des données, annuaire sans mise en avant payée, aucune donnée revendue.{% endblock %}
+{% block legal_title %}Nos engagements{% endblock %}
+{% block legal_intro %}Panier Sauvage est un outil au service des producteurs, pas une place de marché. Ces engagements sont publics : s'ils changeaient un jour, ce serait annoncé à l'avance, et le code libre permettrait à chacun de continuer sans nous.{% endblock %}
+
+{% set commitments = [
+    {icon: 'lucide:hand-coins', title: 'Zéro commission, à vie', text: 'Nous ne prendrons jamais de pourcentage sur tes ventes. 100 % de ce que paient tes clients va dans ta poche. Nous vivons de l\'abonnement, et de rien d\'autre.'},
+    {icon: 'lucide:tag', title: 'Un seul prix, public', text: '10 € par mois ou 100 € par an, affichés sur la page des tarifs. Pas de prix caché, pas d\'option payante pour être mieux vu, pas de négociation au cas par cas.'},
+    {icon: 'lucide:code', title: 'Un logiciel libre', text: 'Le code de Panier Sauvage est publié sous licence AGPL : chacun peut le lire, le vérifier, l\'améliorer et l\'installer pour son territoire.'},
+    {icon: 'lucide:download', title: 'Tes données, quand tu veux', text: 'Commandes, journal des ventes : tu exportes tout, à tout moment, même après la fin de ton abonnement. Tes clients restent les tiens.'},
+    {icon: 'lucide:map-pin', title: 'Un annuaire classé par distance, et c\'est tout', text: 'L\'annuaire des producteurs est classé uniquement par distance. Personne ne peut payer pour apparaître plus haut, et nous n\'y mettons personne en avant.'},
+    {icon: 'lucide:shield-check', title: 'Aucune donnée revendue', text: 'Ni publicité, ni revente, ni location de fichiers. Les données de tes clients ne servent qu\'à tes commandes, et nous ne les démarchons jamais pour d\'autres.'},
+    {icon: 'lucide:leaf', title: 'La sobriété', text: 'Des pages légères qui marchent sans JavaScript et sur un vieux téléphone, des polices hébergées chez nous, aucun traceur, des services publics (API Adresse, Recherche d\'entreprises) plutôt que des géants du numérique.'},
+] %}
+
+{% block legal_content %}
+    <ul class="grid list-none! gap-4 ps-0! sm:grid-cols-2" data-commitments>
+        {% for commitment in commitments %}
+            <li class="mt-0! rounded-xl border border-line bg-white p-5">
+                <twig:ux:icon name="{{ commitment.icon }}" class="size-6 text-sage-dark" />
+                <h2 class="mt-3! text-xl!">{{ commitment.title }}</h2>
+                <p class="mt-2 text-ink-soft">{{ commitment.text }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        Code source : <a href="{{ publisher.sourceCodeUrl }}" rel="noopener" data-source-code-link>{{ publisher.sourceCodeUrl }}</a>.
+        Une question, une idée, un manquement ? Écris-nous à <a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a>.
+    </p>
+{% endblock %}

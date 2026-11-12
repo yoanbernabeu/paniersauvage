@@ -1,0 +1,30 @@
+{#
+    Landing page of a link sent by e-mail: nothing happens until the button is pressed (POST).
+    Variables: email, action (the URL to POST, with its signed query string), csrf_token_id, signup.
+#}
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}{{ signup ? 'Créer ton compte' : 'Te connecter' }}{% endblock %}
+{% block auth_title %}{{ signup ? 'Créer ton compte ?' : 'Te connecter ?' }}{% endblock %}
+{% block auth_intro %}Un dernier clic pour confirmer que c'est bien toi.{% endblock %}
+
+{% block content %}
+    <form method="post" action="{{ action }}" class="flex flex-col gap-5" data-turbo="false">
+        <p class="text-base leading-relaxed text-ink">
+            {{ signup ? 'Créer ton compte ' ~ instance.name ~ ' avec' : 'Te connecter en tant que' }}<br>
+            <strong class="font-semibold break-all" data-confirm-email>{{ email }}</strong> ?
+        </p>
+        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token(csrf_token_id) }}">
+        {% if signup %}
+            {{ include('legal/_terms_checkbox.html.twig', {name: 'accept_terms', id: 'accept_terms', error: terms_error|default(false)}) }}
+        {% endif %}
+        <twig:Button type="submit" class="w-full">
+            <twig:ux:icon name="lucide:log-in" />
+            {{ signup ? 'Créer mon compte' : 'Me connecter' }}
+        </twig:Button>
+    </form>
+{% endblock %}
+
+{% block auth_footer %}
+    Ce n'est pas toi ? <a href="{{ path('home') }}" class="link">Retour à l'accueil</a>, rien ne se passera.
+{% endblock %}

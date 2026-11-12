@@ -1,0 +1,73 @@
+{#
+    Solidarity plan of the subscription page: pay what you can (0 to 10 € a month), on a declaration
+    on honour. Variables of billing/index.html.twig: subscription, can_subscribe, free_solidarity,
+    solidarity_form, solidarity.
+#}
+{% set form = solidarity_form %}
+{% set on_solidarity = subscription and subscription.isSolidarity() %}
+<section aria-labelledby="palier-solidaire" class="mt-5 rounded-2xl border border-line bg-white p-4 sm:p-5" data-solidarity>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="palier-solidaire" class="text-base font-semibold text-ink">Palier solidaire : à prix libre</h2>
+        <twig:Badge variant="sage">De {{ solidarity.min }} à {{ solidarity.max }} € par mois</twig:Badge>
+    </div>
+    <p class="mt-2 text-sm text-ink-soft">
+        Tu démarres, tu vends peu, c'est ta première saison ou ta structure fait de l'aide alimentaire ?
+        Choisis ton prix, entre {{ solidarity.min }} et {{ solidarity.max }} € par mois ({{ solidarity.suggested }} € suggérés).
+        Les fonctions sont exactement les mêmes. Aucun justificatif : une déclaration sur l'honneur suffit,
+        et tu peux changer de montant quand tu veux.
+    </p>
+
+    {% if on_solidarity and subscription.solidarityDeclaredAt %}
+        <p class="mt-2 text-sm text-ink" data-solidarity-declared>
+            Ta dernière déclaration date du {{ subscription.solidarityDeclaredAt|date_long(true) }}.
+        </p>
+    {% endif %}
+
+    {{ form_start(form, {attr: {class: 'mt-4', 'data-turbo': 'false', novalidate: 'novalidate'}}) }}
+        <fieldset class="mb-5" aria-describedby="{{ form.criteria.vars.id }}_help">
+            <legend class="text-sm font-medium text-ink">{{ form.criteria.vars.label }}</legend>
+            <p id="{{ form.criteria.vars.id }}_help" class="mt-1 text-sm text-ink-soft">{{ form.criteria.vars.help }}</p>
+            <div class="mt-2 flex flex-col gap-2">
+                {% for child in form.criteria %}
+                    <div class="flex items-start gap-3 rounded-xl border border-line-soft px-3 py-2.5">
+                        <div class="flex min-h-11 items-center">{{ form_widget(child) }}</div>
+                        <div class="py-2">
+                            <label for="{{ child.vars.id }}" class="font-medium text-ink">{{ child.vars.label }}</label>
+                            <p class="text-sm text-ink-soft">{{ solidarity.descriptions[child.vars.value] ?? '' }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {{ form_errors(form.criteria) }}
+        </fieldset>
+
+        <div class="sm:max-w-xs">
+            {{ form_row(form.amountEuros) }}
+        </div>
+
+        {{ form_row(form.honour) }}
+
+        {% if not can_subscribe %}
+            <p class="mb-4 text-sm text-ink-soft" data-solidarity-running>
+                Tu as déjà un abonnement en cours : à plus de 0 €, le nouveau montant s'applique à ta prochaine échéance, sans frais.
+                À 0 €, ton abonnement payant s'arrête tout de suite et ton palier gratuit commence aujourd'hui.
+            </p>
+        {% elseif not free_solidarity %}
+            <p class="mb-4 text-sm text-ink-soft">
+                À plus de 0 €, tu règles sur la page sécurisée de Stripe, chaque mois. À 0 €, aucun paiement : ton palier dure {{ solidarity.months }} mois, et on te prévient par e-mail un mois avant la fin.
+            </p>
+        {% else %}
+            <p class="mb-4 text-sm text-ink-soft">
+                En renouvelant à 0 €, ton palier repart pour {{ solidarity.months }} mois à partir d'aujourd'hui.
+            </p>
+        {% endif %}
+
+        <twig:Button type="submit" variant="{{ can_subscribe and not on_solidarity ? 'secondary' : 'default' }}" class="w-full sm:w-auto">
+            {{ on_solidarity ? 'Mettre à jour ma déclaration' : 'Choisir le palier solidaire' }}
+        </twig:Button>
+    {{ form_end(form) }}
+
+    <p class="mt-4 text-xs text-ink-soft">
+        Pas de contrôle a priori. Le seul point qui peut être vérifié après coup est le volume de tes précommandes, calculé par l'outil lui-même.
+    </p>
+</section>

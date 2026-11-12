@@ -1,0 +1,54 @@
+{% extends 'notification/layout.html.twig' %}
+
+{#
+    Order generated for a subscription. outcome: placed, partial (order with what was left),
+    out_of_stock or unavailable (no order). Variables: occurrence, order (nullable), delivery,
+    editable_until, order_url, recurring_url, plan, shop.
+#}
+
+{% block preheader %}
+    {%- if order -%}
+        Livraison {{ delivery.startsAt|date_long }}. À régler à la livraison : {{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}.
+    {%- else -%}
+        Pas de commande pour la livraison du {{ occurrence.deliveryDate|date_long }}.
+    {%- endif -%}
+{% endblock %}
+
+{% block title %}{{ order ? 'Ta commande est prête 🧺' : 'Pas de commande cette fois' }}{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},</p>
+    {% if outcome == 'placed' %}
+        <p style="{{ p_css }}">Ton abonnement « {{ plan.title }} » a créé ta commande pour la livraison du {{ occurrence.deliveryDate|date_long }}.</p>
+    {% elseif outcome == 'partial' %}
+        <p style="{{ p_css }}">Ton abonnement « {{ plan.title }} » a créé ta commande pour la livraison du {{ occurrence.deliveryDate|date_long }}, mais il manquait des produits cette semaine.</p>
+    {% elseif outcome == 'unavailable' %}
+        <p style="{{ p_css }}">La vente du {{ occurrence.deliveryDate|date_long }} ne passe pas par ton point de retrait ({{ recurring_order.deliveryPoint.name }}) : aucune commande n'a été créée.</p>
+    {% else %}
+        <p style="{{ p_css }}">{{ shop.name }} n'a plus assez de produits pour la livraison du {{ occurrence.deliveryDate|date_long }} : aucune commande n'a été créée cette fois. Tu n'as rien à venir chercher ni à régler.</p>
+    {% endif %}
+
+    {% if occurrence.missingItems is not empty and order %}
+        <h2 style="{{ h2_css }}">Ce qui manque</h2>
+        <ul style="{{ font_text }}margin:0 0 16px 0;padding-left:20px;font-size:16px;line-height:24px;color:#1F2A24;">
+            {% for item in occurrence.missingItems %}
+                <li>{{ include('recurring/_missing_item.txt.twig') }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if order %}
+        {{ include('notification/_order_summary.html.twig') }}
+        <h2 style="{{ h2_css }}">Livraison</h2>
+        {{ include('notification/_delivery.html.twig') }}
+        {{ include('notification/_edit_info.html.twig') }}
+        {{ include('notification/_button.html.twig', {url: order_url, label: 'Voir ma commande'}) }}
+        <p style="{{ p_css }}">Absent cette semaine ? <a href="{{ recurring_url }}" style="{{ link_css }}">Mets cette livraison en pause</a>{% if editable_until %} avant le {{ editable_until|datetime_long }}{% endif %}, ou change tes quantités pour les suivantes.</p>
+        {{ include('legal/email/_order_information.html.twig') }}
+    {% else %}
+        <p style="{{ p_css }}">Ton abonnement continue : la prochaine commande sera créée à la prochaine vente.</p>
+        {{ include('notification/_button.html.twig', {url: recurring_url, label: 'Voir mon abonnement'}) }}
+    {% endif %}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_recurring_footer.html.twig') }}{% endblock %}

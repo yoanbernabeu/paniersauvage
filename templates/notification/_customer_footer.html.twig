@@ -1,0 +1,15 @@
+{# Variables: shop, shop_url, following (bool, optional), unsubscribe_url (optional, signed one-click link). #}
+<p style="margin:0;">
+    {% if following|default(false) %}
+        Tu reçois cet e-mail parce que tu suis <a href="{{ shop_url }}" style="{{ link_css }}">{{ shop.name }}</a>.
+        {% if unsubscribe_url is defined %}
+            Pour ne plus recevoir ses annonces, <a href="{{ unsubscribe_url }}" style="{{ link_css }}">désabonne-toi en un clic</a>.
+        {% else %}
+            Pour ne plus recevoir ses annonces, rends-toi sur <a href="{{ shop_url }}" style="{{ link_css }}">sa page</a>.
+        {% endif %}
+    {% else %}
+        Tu reçois cet e-mail parce que tu as une commande chez {{ shop.name }}.
+        Gère tes notifications sur <a href="{{ shop_url }}" style="{{ link_css }}">la page de {{ shop.name }}</a>.
+    {% endif %}
+    Une question ? Réponds simplement à cet e-mail, {{ shop.name }} le recevra.
+</p>

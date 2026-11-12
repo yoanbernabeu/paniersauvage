@@ -1,0 +1,31 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Livraison {{ delivery.startsAt|date_long }}. À régler à la livraison : {{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}.{% endblock %}
+
+{% block title %}C'est noté 🧺{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},</p>
+    {% if actor == 'producer' %}
+        <p style="{{ p_css }}">{{ shop.name }} a enregistré une commande pour toi. Voici le récapitulatif.</p>
+    {% else %}
+        <p style="{{ p_css }}">Merci ! Ta commande chez {{ shop.name }} est confirmée.</p>
+    {% endif %}
+
+    {{ include('notification/_order_summary.html.twig') }}
+
+    {% if new_customer_deposit|default(null) %}
+        <p style="{{ p_css }}{{ box_css }}" data-new-customer-deposit>Première commande chez {{ shop.name }} : acompte demandé, <strong>{{ new_customer_deposit }}</strong>. Il se règle directement avec {{ shop.name }}, hors de Panier Sauvage.</p>
+    {% endif %}
+
+    <h2 style="{{ h2_css }}">Livraison</h2>
+    {{ include('notification/_delivery.html.twig') }}
+
+    {{ include('notification/_edit_info.html.twig') }}
+    {{ include('notification/_button.html.twig', {url: order_url, label: 'Voir ma commande'}) }}
+
+    {{ include('legal/email/_order_information.html.twig') }}
+    {{ include('notification/_nearby_shops.html.twig', {nearby_shops: nearby_shops|default([])}) }}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_customer_footer.html.twig') }}{% endblock %}

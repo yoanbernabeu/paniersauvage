@@ -1,0 +1,15 @@
+name: Question
+description: Une question sur l'utilisation, l'installation ou une instance territoriale.
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Ta question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte
+      description: Ce que tu as déjà essayé ou lu (README, docs/DEPLOY.md, docs/INSTANCE.md…).

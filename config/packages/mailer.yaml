@@ -1,0 +1,6 @@
+framework:
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+        headers:
+            # Default sender of every e-mail (override per message when needed).
+            From: '%env(MAILER_FROM)%'

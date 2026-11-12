@@ -1,0 +1,16 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}C'est noté{% endblock %}
+
+{% set content_width = 'max-w-xl' %}
+
+{% block content %}
+    <h1 class="text-3xl leading-tight font-semibold text-ink">C'est noté</h1>
+    <p class="mt-3 leading-relaxed text-ink-soft" data-unsubscribed>
+        Tu ne recevras plus d'e-mail quand {{ shop.name }} ouvre une vente. Tu peux changer d'avis à tout moment depuis ton compte.
+    </p>
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+        <twig:Button as="a" href="{{ path('shop_show', {slug: shop.slug}) }}" variant="secondary">Voir la page de {{ shop.name }}</twig:Button>
+        <twig:Button as="a" href="{{ path('customer_account') }}#producteurs" variant="ghost">Mes réglages</twig:Button>
+    </div>
+{% endblock %}

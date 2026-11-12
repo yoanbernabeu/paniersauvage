@@ -1,0 +1,218 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+{% set max_quantity = constant('App\\Ordering\\Form\\OrderFormType::MAX_QUANTITY') %}
+{# isOpen() is called explicitly: `sale.open` would call Sale::open() and change the status. #}
+{% set after_deadline = not sale.isOpen() or date() >= sale.deadlineAt %}
+{% set without_email = order and not order.customer.hasEmail() %}
+
+{% block title %}{{ order ? 'Modifier une commande' : 'Ajouter une commande' }}{% endblock %}
+{% block page_title %}{{ order ? 'Commande de ' ~ order.customerDisplayName : 'Ajouter une commande' }}{% endblock %}
+{% block page_subtitle %}
+    {{ sale.title }} · livraison {{ sale.deliveryDate|date_long }}{% if order %} · <span class="amount">{{ order.reference }}</span> {{ include('customer/pro/_absence_badge.html.twig', {class: 'align-middle'}) }}{% endif %}
+{% endblock %}
+{% block page_actions %}
+    <twig:Button as="a" variant="outline" size="sm" href="{{ back_url }}">
+        <twig:ux:icon name="lucide:arrow-left" />
+        Retour à la vente
+    </twig:Button>
+{% endblock %}
+
+{% block content %}
+    {% if stock_messages is not empty %}
+        <twig:Alert variant="warning" class="mb-5" data-stock-alert>
+            <twig:ux:icon name="lucide:triangle-alert" />
+            <twig:Alert:Title>Stock insuffisant</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">
+                {% for message in stock_messages %}{{ message }} {% endfor %}
+                Les quantités ont été ajustées : vérifie puis enregistre à nouveau.
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {% if after_deadline %}
+        <twig:Alert variant="info" class="mb-5" data-after-deadline>
+            <twig:ux:icon name="lucide:info" />
+            <twig:Alert:Description class="text-current">
+                La date limite est passée : c'est toi qui changes les commandes désormais.{% if not without_email %} Le client est prévenu par e-mail à chaque changement.{% endif %}
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {% if order and order.customer.isWithoutEmail() %}
+        <twig:Alert variant="info" class="mb-5" data-offline-customer>
+            <twig:ux:icon name="lucide:phone" />
+            <twig:Alert:Description class="text-current">
+                Client sans e-mail : il ne reçoit aucun message, préviens-le toi-même des changements.
+                <a href="{{ path('pro_offline_customer_edit', {id: order.customer.id}) }}" class="link font-medium">Modifier ses coordonnées</a>
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {% if form.vars.errors|length > 0 %}
+        <twig:Alert variant="destructive" class="mb-5">
+            <twig:ux:icon name="lucide:circle-alert" />
+            <twig:Alert:Description class="font-medium text-current">
+                {% for error in form.vars.errors %}{{ error.message }} {% endfor %}
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {{ form_start(form, {attr: {'data-controller': 'order-form'}}) }}
+        {% if form.email is defined %}
+            <twig:Card class="mb-5">
+                <twig:Card:Content>
+                    <h2 class="mb-1 text-base font-semibold text-ink">Client</h2>
+                    <p class="mb-4 text-sm text-ink-soft">Si cet e-mail est déjà connu, la commande est rattachée à son compte. Sinon, le client est créé. Pas d'e-mail ? Laisse-le vide et indique un téléphone : le client n'est connu que de ta boutique et ne reçoit aucun message.</p>
+                    {{ form_row(form.email) }}
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {{ form_row(form.firstName) }}
+                        {{ form_row(form.lastName) }}
+                    </div>
+                    {{ form_row(form.phone, {row_attr: {class: 'mb-0'}}) }}
+                </twig:Card:Content>
+            </twig:Card>
+        {% endif %}
+
+        <twig:Card class="mb-5">
+            <twig:Card:Content>
+                <h2 class="mb-3 text-base font-semibold text-ink">Livraison</h2>
+                <div role="radiogroup" aria-label="Point de livraison" class="flex flex-col gap-1">
+                    {% for delivery in sale.deliveries %}
+                        <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 has-checked:bg-sage-soft">
+                            <input type="radio"
+                                   name="{{ field_name(form.delivery) }}"
+                                   value="{{ delivery.id }}"
+                                   class="size-5 shrink-0 accent-sage-dark"
+                                   data-order-form-target="delivery"
+                                   data-home="{{ delivery.home ? 'true' : 'false' }}"
+                                   data-action="order-form#toggleAddress"
+                                   required
+                                   {% if data.delivery and data.delivery.id == delivery.id %}checked{% endif %}>
+                            <span class="text-sm">
+                                <span class="font-semibold text-ink">{{ delivery.deliveryPoint.name }}</span>
+                                <span class="text-ink-soft">· {{ delivery.startsAt|date_compact }}, {{ time_range(delivery.startsAt, delivery.endsAt) }}</span>
+                            </span>
+                        </label>
+                    {% else %}
+                        <p class="text-sm text-ink-soft">Cette vente n'a pas encore de point de livraison.</p>
+                    {% endfor %}
+                </div>
+                {{ form_errors(form.delivery) }}
+                {% do form.delivery.setRendered %}
+
+                {% if sale.deliveries|filter(d => d.home)|length > 0 %}
+                    <div class="mt-3" data-order-form-target="address">
+                        <label for="{{ form.deliveryAddress.vars.id }}" class="mb-1.5 block text-sm font-medium text-ink">Adresse du client (livraison à domicile)</label>
+                        {{ form_widget(form.deliveryAddress, {attr: {'data-order-form-target': 'addressInput'}}) }}
+                        {{ form_errors(form.deliveryAddress) }}
+                    </div>
+                {% else %}
+                    {% do form.deliveryAddress.setRendered %}
+                {% endif %}
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card class="mb-5">
+            <twig:Card:Content>
+                <h2 class="mb-3 text-base font-semibold text-ink">Produits</h2>
+                <twig:Table>
+                    <twig:Table:Header>
+                        <twig:Table:Row>
+                            <twig:Table:Head>Produit</twig:Table:Head>
+                            <twig:Table:Head class="text-right">Prix</twig:Table:Head>
+                            <twig:Table:Head class="text-right">Reste</twig:Table:Head>
+                            <twig:Table:Head class="w-24 text-right">Quantité</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        {% for offer in sale.offers|sort((a, b) => a.product.position <=> b.product.position) %}
+                            {% set field = form.quantities[offer.id] %}
+                            {% set unit = offer.product.unit %}
+                            {% set line = order ? order.lineFor(offer) : null %}
+                            {% set available = offer.remaining is null ? null : offer.remaining + (line ? line.quantity : 0) %}
+                            {% set max = available is null ? max_quantity * 1000 : min(available, max_quantity * 1000) %}
+                            <twig:Table:Row data-order-form-row data-offer="{{ offer.id }}">
+                                <twig:Table:Cell>
+                                    <label for="{{ field.vars.id }}" class="font-medium text-ink">{{ offer.product.name }}</label>
+                                    {% if unit.weighed %}<span class="block text-xs text-ink-soft">au kilo · poids en kg</span>{% endif %}
+                                    {{ form_errors(field) }}
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-right">{{ (line ? line.unitPriceCents : offer.priceCents)|money }}{% if unit.weighed %}<span class="text-ink-soft"> / kg</span>{% endif %}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-right {{ available is same as(0) ? 'text-danger' : 'text-ink-soft' }}" data-available>
+                                    {{ available is null ? 'Illimité' : available|quantity(unit) }}
+                                </twig:Table:Cell>
+                                <twig:Table:Cell class="text-right">
+                                    <twig:Input type="number"
+                                                id="{{ field.vars.id }}"
+                                                name="{{ field_name(field) }}"
+                                                value="{{ (data.quantities[offer.id] ?? 0)|quantity_input }}"
+                                                min="0"
+                                                max="{{ max|quantity_input }}"
+                                                step="{{ unit.weighed ? '0.001' : '1' }}"
+                                                inputmode="{{ unit.weighed ? 'decimal' : 'numeric' }}"
+                                                data-order-form-target="quantity"
+                                                data-price-cents="{{ line ? line.unitPriceCents : offer.priceCents }}"
+                                                data-step="{{ unit.weighed ? 1 : 1000 }}"
+                                                data-minimum="{{ unit.weighed ? 1 : 1000 }}"
+                                                data-weighed="{{ unit.weighed ? 'true' : 'false' }}"
+                                                data-action="input->order-form#refresh"
+                                                class="amount w-20! px-2! text-right" />
+                                    {% do field.setRendered %}
+                                </twig:Table:Cell>
+                            </twig:Table:Row>
+                        {% else %}
+                            <twig:Table:Row>
+                                <twig:Table:Cell colspan="4" class="text-ink-soft">Cette vente ne propose encore aucun produit.</twig:Table:Cell>
+                            </twig:Table:Row>
+                        {% endfor %}
+                    </twig:Table:Body>
+                </twig:Table>
+                {% do form.quantities.setRendered %}
+                <p class="mt-3 flex items-baseline justify-end gap-2 text-sm text-ink-soft">
+                    <span data-order-form-target="count"></span>
+                    <span data-order-form-target="estimate" {% if not data.hasWeighedItems(sale) %}hidden{% endif %}>environ</span>
+                    <span class="amount text-lg font-semibold text-ink" data-order-form-target="total">{{ data.estimatedTotalCents(sale, order)|money }}</span>
+                </p>
+            </twig:Card:Content>
+        </twig:Card>
+
+        {% if form.actualQuantities is defined and form.actualQuantities|length > 0 %}
+            <twig:Card class="mb-5" data-weights>
+                <twig:Card:Content>
+                    <h2 class="mb-1 text-base font-semibold text-ink">Poids réel</h2>
+                    <p class="mb-4 text-sm text-ink-soft">Saisis le poids pesé à la livraison, en kilos : le montant à régler est recalculé. Laisse vide tant que ce n'est pas pesé.</p>
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {% for field in form.actualQuantities %}
+                            {{ form_row(field, {row_attr: {class: 'mb-3'}, label: field.vars.label ~ ' (kg)'}) }}
+                        {% endfor %}
+                    </div>
+                </twig:Card:Content>
+            </twig:Card>
+        {% endif %}
+
+        <twig:Card class="mb-5">
+            <twig:Card:Content>
+                {{ form_row(form.note, {label: 'Note sur la commande', row_attr: {class: 'mb-0'}, attr: {placeholder: 'Commande prise au téléphone, à trancher…'}}) }}
+            </twig:Card:Content>
+        </twig:Card>
+
+        {{ form_rest(form) }}
+        <div class="flex flex-wrap items-center gap-3">
+            <twig:Button type="submit">{{ order ? 'Enregistrer la commande' : 'Ajouter la commande' }}</twig:Button>
+            <twig:Button as="a" variant="ghost" href="{{ back_url }}">Retour</twig:Button>
+        </div>
+    {{ form_end(form, {render_rest: false}) }}
+
+    {% if order %}
+        <twig:Separator class="my-8" />
+        <form method="post" action="{{ path('pro_order_cancel', {id: sale.id, orderId: order.id}) }}" class="flex flex-wrap items-center justify-between gap-3" data-turbo-confirm="Ses produits sont remis en vente{{ without_email ? ' : préviens le client toi-même.' : ' et le client est prévenu par e-mail.' }}" data-confirm-title="Annuler la commande de {{ order.customerDisplayName }} ?" data-confirm-label="Annuler la commande" data-confirm-danger>
+            <p class="text-sm text-ink-soft">Annuler la commande remet ses produits en vente. {{ without_email ? 'Ce client n\'a pas d\'e-mail : préviens-le toi-même.' : 'Le client est prévenu par e-mail.' }}</p>
+            <input type="hidden" name="_token" value="{{ csrf_token('pro_order_cancel_' ~ order.id) }}">
+            <twig:Button type="submit" variant="destructive" size="sm">
+                <twig:ux:icon name="lucide:trash-2" />
+                Annuler cette commande
+            </twig:Button>
+        </form>
+    {% endif %}
+{% endblock %}

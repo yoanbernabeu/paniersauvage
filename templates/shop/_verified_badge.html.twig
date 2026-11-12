@@ -1,0 +1,10 @@
+{#
+    "SIRET vérifié" badge, for the public page of a shop (included by the shop page): shown only when
+    the shop's current SIRET was checked against the public company register. Variables: shop.
+#}
+{% if shop_verified(shop) %}
+    <twig:Badge variant="sage" class="gap-1" title="SIRET {{ shop.siret }} vérifié dans le répertoire public des entreprises" data-verified-badge>
+        <twig:ux:icon name="lucide:badge-check" class="size-3.5" />
+        SIRET vérifié
+    </twig:Badge>
+{% endif %}

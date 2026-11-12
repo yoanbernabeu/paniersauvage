@@ -1,0 +1,230 @@
+{# Monthly sales journal. Variables: journal (App\Accounting\Model\SalesJournal), current_month, accounts (AccountingSettings). #}
+{% extends 'layout/pro.html.twig' %}
+
+{% set month_param = journal.month|date('Y-m') %}
+{% set has_next = journal.month < current_month %}
+
+{% block title %}Comptabilité{% endblock %}
+{% block page_title %}Comptabilité{% endblock %}
+{% block page_subtitle %}Journal des ventes de {{ journal.month|month_label }}, à partir de tes commandes livrées.{% endblock %}
+
+{% block page_actions %}
+    {% if not journal.empty %}
+        <twig:Button as="a" variant="secondary" size="sm" href="{{ path('pro_accounting_csv', {mois: month_param}) }}" data-turbo="false">
+            <twig:ux:icon name="lucide:download" />
+            CSV
+        </twig:Button>
+        <twig:Button as="a" variant="secondary" size="sm" href="{{ path('pro_accounting_pdf', {mois: month_param}) }}" target="_blank" rel="noopener" data-turbo="false">
+            <twig:ux:icon name="lucide:file-text" />
+            PDF
+        </twig:Button>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <form method="get" action="{{ path('pro_accounting') }}" class="mb-5 flex flex-wrap items-end gap-2" data-month-picker>
+        <twig:Button as="a" variant="outline" size="icon" href="{{ path('pro_accounting', {mois: journal.previousMonth|date('Y-m')}) }}" aria-label="Mois précédent" rel="prev">
+            <twig:ux:icon name="lucide:chevron-left" />
+        </twig:Button>
+        {# Month and year selects: <input type="month"> is missing from Safari and Firefox on desktop. #}
+        {% set month_names = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'] %}
+        {% set selected_month = journal.month|date('n') %}
+        {% set selected_year = journal.month|date('Y') %}
+        {% set last_year = current_month|date('Y') %}
+        <div class="min-w-36 flex-1 sm:w-40 sm:flex-none">
+            <twig:Label for="mois-numero" class="sr-only">Mois</twig:Label>
+            <twig:NativeSelect id="mois-numero" name="mois_numero" class="w-full">
+                {% for number, name in month_names %}
+                    <twig:NativeSelect:Option value="{{ '%02d'|format(number + 1) }}" :selected="number + 1 == selected_month">{{ name|capitalize }}</twig:NativeSelect:Option>
+                {% endfor %}
+            </twig:NativeSelect>
+        </div>
+        <div class="w-28 shrink-0">
+            <twig:Label for="annee" class="sr-only">Année</twig:Label>
+            <twig:NativeSelect id="annee" name="annee" class="w-full">
+                {% for year in last_year..min(selected_year, last_year - 4) %}
+                    <twig:NativeSelect:Option value="{{ year }}" :selected="year == selected_year">{{ year }}</twig:NativeSelect:Option>
+                {% endfor %}
+            </twig:NativeSelect>
+        </div>
+        {% if has_next %}
+            <twig:Button as="a" variant="outline" size="icon" href="{{ path('pro_accounting', {mois: journal.nextMonth|date('Y-m')}) }}" aria-label="Mois suivant" rel="next">
+                <twig:ux:icon name="lucide:chevron-right" />
+            </twig:Button>
+        {% endif %}
+        <twig:Button type="submit" variant="sage" class="max-sm:w-full">Afficher</twig:Button>
+    </form>
+
+    <dl class="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4" data-journal-summary>
+        {% for figure in [
+            {label: 'Commandes livrées', value: journal.orderCount},
+            {label: 'CA TTC', value: journal.total.grossCents|money},
+            {label: 'CA HT', value: journal.total.netCents|money},
+            {label: 'TVA', value: journal.total.vatCents|money},
+        ] %}
+            <div class="rounded-2xl border border-line bg-white px-4 py-3">
+                <dt class="text-xs font-semibold tracking-wide text-ink-soft uppercase">{{ figure.label }}</dt>
+                <dd class="amount mt-1 text-xl font-semibold text-sage-deep sm:text-2xl">{{ figure.value }}</dd>
+            </div>
+        {% endfor %}
+    </dl>
+
+    {% if journal.empty %}
+        <twig:Empty class="border border-line bg-white">
+            <twig:Empty:Media><twig:Illustration name="wheat" class="h-20 text-sage" /></twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Aucune commande livrée en {{ journal.month|month_label }}</twig:Empty:Title>
+                <twig:Empty:Description>Dès que tu marques des commandes comme livrées, elles apparaissent ici.</twig:Empty:Description>
+            </twig:Empty:Header>
+        </twig:Empty>
+    {% else %}
+        <div class="grid gap-5">
+            {% if journal.vatExempt %}
+                <twig:Alert variant="info" data-vat-mention>
+                    <twig:ux:icon name="lucide:info" />
+                    <twig:Alert:Description class="text-current">{{ constant('App\\Shop\\Enum\\VatRegime::FRANCHISE_MENTION') }} : les ventes en franchise en base n'ont pas de TVA.</twig:Alert:Description>
+                </twig:Alert>
+            {% endif %}
+            <section aria-labelledby="par-taux" class="rounded-2xl border border-line bg-white py-4">
+                <h2 id="par-taux" class="px-4 pb-2 text-base font-semibold text-ink">Par taux de TVA</h2>
+                <ul class="divide-y divide-line-soft sm:hidden" data-journal-cards="vat">
+                    {% for row in journal.byVatRate %}
+                        <li class="px-4 py-3">
+                            <p class="font-medium text-ink">{{ row.vatExempt ? 'Franchise en base de TVA' : 'TVA ' ~ row.vatRateBp|vat_rate }}</p>
+                            {{ _self.amounts(row.amounts) }}
+                        </li>
+                    {% endfor %}
+                    <li class="px-4 py-3 font-semibold">
+                        <p class="text-ink">Total</p>
+                        {{ _self.amounts(journal.total) }}
+                    </li>
+                </ul>
+                <div class="hidden sm:block">
+                <twig:Table data-journal="vat">
+                    <twig:Table:Header>
+                        <twig:Table:Row>
+                            <twig:Table:Head class="ps-4">Taux</twig:Table:Head>
+                            <twig:Table:Head class="text-end">TTC</twig:Table:Head>
+                            <twig:Table:Head class="text-end">HT</twig:Table:Head>
+                            <twig:Table:Head class="pe-4 text-end">TVA</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        {% for row in journal.byVatRate %}
+                            <twig:Table:Row>
+                                <twig:Table:Cell class="ps-4 font-medium">{{ row.vatExempt ? 'Franchise en base' : row.vatRateBp|vat_rate }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.amounts.grossCents|money }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.amounts.netCents|money }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount pe-4 text-end">{{ row.amounts.vatCents|money }}</twig:Table:Cell>
+                            </twig:Table:Row>
+                        {% endfor %}
+                    </twig:Table:Body>
+                    <twig:Table:Footer>
+                        <twig:Table:Row>
+                            <twig:Table:Cell class="ps-4 font-semibold">Total</twig:Table:Cell>
+                            <twig:Table:Cell class="amount text-end font-semibold">{{ journal.total.grossCents|money }}</twig:Table:Cell>
+                            <twig:Table:Cell class="amount text-end font-semibold">{{ journal.total.netCents|money }}</twig:Table:Cell>
+                            <twig:Table:Cell class="amount pe-4 text-end font-semibold">{{ journal.total.vatCents|money }}</twig:Table:Cell>
+                        </twig:Table:Row>
+                    </twig:Table:Footer>
+                </twig:Table>
+                </div>
+            </section>
+
+            <section aria-labelledby="par-vente" class="rounded-2xl border border-line bg-white py-4">
+                <h2 id="par-vente" class="px-4 pb-2 text-base font-semibold text-ink">Par vente</h2>
+                <ul class="divide-y divide-line-soft sm:hidden" data-journal-cards="sales">
+                    {% for row in journal.bySale %}
+                        <li class="px-4 py-3">
+                            <p class="font-medium text-ink">{{ row.title }}</p>
+                            <p class="text-sm text-ink-soft">Livraison du {{ row.deliveryDate|date_compact }} · <span class="amount">{{ row.orderCount }}</span> commande{{ row.orderCount > 1 ? 's' }}</p>
+                            {{ _self.amounts(row.amounts) }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="hidden sm:block">
+                <twig:Table data-journal="sales">
+                    <twig:Table:Header>
+                        <twig:Table:Row>
+                            <twig:Table:Head class="ps-4">Livraison</twig:Table:Head>
+                            <twig:Table:Head>Vente</twig:Table:Head>
+                            <twig:Table:Head class="text-end">Commandes</twig:Table:Head>
+                            <twig:Table:Head class="text-end">TTC</twig:Table:Head>
+                            <twig:Table:Head class="text-end">HT</twig:Table:Head>
+                            <twig:Table:Head class="pe-4 text-end">TVA</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        {% for row in journal.bySale %}
+                            <twig:Table:Row>
+                                <twig:Table:Cell class="ps-4">{{ row.deliveryDate|date_compact }}</twig:Table:Cell>
+                                <twig:Table:Cell class="font-medium">{{ row.title }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.orderCount }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.amounts.grossCents|money }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.amounts.netCents|money }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount pe-4 text-end">{{ row.amounts.vatCents|money }}</twig:Table:Cell>
+                            </twig:Table:Row>
+                        {% endfor %}
+                    </twig:Table:Body>
+                </twig:Table>
+                </div>
+            </section>
+
+            <section aria-labelledby="par-produit" class="rounded-2xl border border-line bg-white py-4">
+                <h2 id="par-produit" class="px-4 pb-2 text-base font-semibold text-ink">Par produit</h2>
+                <ul class="divide-y divide-line-soft sm:hidden" data-journal-cards="products">
+                    {% for row in journal.byProduct %}
+                        <li class="px-4 py-3">
+                            <p class="font-medium text-ink">{{ row.label }}</p>
+                            <p class="text-sm text-ink-soft">Quantité <span class="amount">{{ row.amounts.quantity|quantity(row.unit) }}</span> · {{ row.vatExempt ? 'sans TVA (franchise)' : 'TVA ' ~ row.vatRateBp|vat_rate }}</p>
+                            {{ _self.amounts(row.amounts) }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="hidden sm:block">
+                <twig:Table data-journal="products">
+                    <twig:Table:Header>
+                        <twig:Table:Row>
+                            <twig:Table:Head class="ps-4">Produit</twig:Table:Head>
+                            <twig:Table:Head class="text-end">Taux</twig:Table:Head>
+                            <twig:Table:Head class="text-end">Quantité</twig:Table:Head>
+                            <twig:Table:Head class="text-end">TTC</twig:Table:Head>
+                            <twig:Table:Head class="text-end">HT</twig:Table:Head>
+                            <twig:Table:Head class="pe-4 text-end">TVA</twig:Table:Head>
+                        </twig:Table:Row>
+                    </twig:Table:Header>
+                    <twig:Table:Body>
+                        {% for row in journal.byProduct %}
+                            <twig:Table:Row>
+                                <twig:Table:Cell class="ps-4 font-medium">{{ row.label }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.vatExempt ? 'Franchise' : row.vatRateBp|vat_rate }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end whitespace-nowrap">{{ row.amounts.quantity|quantity(row.unit) }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.amounts.grossCents|money }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount text-end">{{ row.amounts.netCents|money }}</twig:Table:Cell>
+                                <twig:Table:Cell class="amount pe-4 text-end">{{ row.amounts.vatCents|money }}</twig:Table:Cell>
+                            </twig:Table:Row>
+                        {% endfor %}
+                    </twig:Table:Body>
+                </twig:Table>
+                </div>
+            </section>
+        </div>
+    {% endif %}
+
+    {{ include('accounting/_entries_export.html.twig') }}
+
+    <p class="mt-5 text-sm text-ink-soft">
+        Ce journal compte les commandes marquées « livrées » dont la livraison a eu lieu dans le mois.
+        Il ne dit rien des règlements : {{ instance.name }} n'en enregistre aucun.
+        La TVA est calculée à partir du prix TTC, ligne par ligne, et arrondie au centime le plus proche.
+    </p>
+{% endblock %}
+
+{# Gross / net / VAT of a row, for the mobile cards. #}
+{% macro amounts(amounts) %}
+    <dl class="mt-1.5 grid grid-cols-3 gap-2 text-sm">
+        <div><dt class="text-xs text-ink-soft">TTC</dt><dd class="amount text-ink">{{ amounts.grossCents|money }}</dd></div>
+        <div><dt class="text-xs text-ink-soft">HT</dt><dd class="amount text-ink">{{ amounts.netCents|money }}</dd></div>
+        <div><dt class="text-xs text-ink-soft">TVA</dt><dd class="amount text-ink">{{ amounts.vatCents|money }}</dd></div>
+    </dl>
+{% endmacro %}

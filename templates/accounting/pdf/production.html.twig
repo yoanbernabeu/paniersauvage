@@ -1,0 +1,74 @@
+{# Production sheet of a sale. Variable: sheet (App\Accounting\Model\ProductionSheet). #}
+{% extends 'accounting/pdf/_base.html.twig' %}
+
+{% set sale = sheet.sale %}
+{% set shop_name = sale.shop.name %}
+
+{% block title %}Fiche de production – {{ sale.title }}{% endblock %}
+{% block kicker %}Fiche de production{% endblock %}
+{% block heading %}{{ sale.title }}{% endblock %}
+
+{% block meta %}
+    <p>Livraison : <span class="strong">{{ sale.deliveryDate|date_long(true) }}</span></p>
+    <p>Date limite de commande : {{ sale.deadlineAt|datetime_long }}</p>
+    <p>Vente {{ sale.code }} · {{ sale.status.label }}</p>
+{% endblock %}
+
+{% block content %}
+    <table class="figures">
+        <tr>
+            <td>
+                <div class="label">Commandes</div>
+                <div class="value">{{ sheet.orderCount }}</div>
+            </td>
+            <td>
+                <div class="label">Articles à préparer</div>
+                <div class="value">{{ sheet.itemCount }}</div>
+            </td>
+            <td>
+                <div class="label">Produits différents</div>
+                <div class="value">{{ sheet.lines|length }}</div>
+            </td>
+            <td>
+                <div class="label">Total des commandes</div>
+                <div class="value nowrap">{{ sheet.totalCents|money }}</div>
+            </td>
+        </tr>
+    </table>
+
+    {% if sheet.lines is empty %}
+        <p class="empty">Aucune commande à préparer pour cette vente.</p>
+    {% else %}
+        <h2>Total par produit</h2>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th class="right" style="width: 18%;">Quantité</th>
+                    <th style="width: 12%;">Unité</th>
+                    <th class="right" style="width: 16%;">Commandes</th>
+                    <th class="center" style="width: 10%;">Prêt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in sheet.lines %}
+                    <tr>
+                        <td class="strong">{{ line.label }}</td>
+                        <td class="right strong" style="font-size: 13pt;">{{ line.quantity|quantity(line.unit, false) }}</td>
+                        <td class="muted">{{ line.unit.short }}</td>
+                        <td class="right">{{ line.orderCount }}</td>
+                        <td class="center"><div class="box-check" style="margin: 0 auto;"></div></td>
+                    </tr>
+                {% endfor %}
+                <tr class="total">
+                    <td>Total</td>
+                    <td class="right">{{ sheet.itemCount }}</td>
+                    <td></td>
+                    <td class="right">{{ sheet.orderCount }}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="note">Les commandes annulées ne sont pas comptées.{% if sale.shop.vatExempt %} {{ constant('App\\Shop\\Enum\\VatRegime::FRANCHISE_MENTION') }}.{% endif %}</p>
+    {% endif %}
+{% endblock %}

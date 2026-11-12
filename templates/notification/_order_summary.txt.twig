@@ -1,0 +1,18 @@
+TA COMMANDE {{ order.reference }}
+{% for line in order.lines %}
+- {{ line.quantity|line_quantity(line.unit) }} {{ line.label }}{% if line.actualQuantity is not null %} · pesé {{ line.actualQuantity|quantity(line.unit) }}{% endif %} : {{ line.estimated ? 'environ ' }}{{ line.totalCents|money }}
+{% endfor %}
+
+À régler à la livraison : {{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}
+{% if order.vatExempt %}
+{{ constant('App\\Shop\\Enum\\VatRegime::FRANCHISE_MENTION') }}
+{% endif %}
+{% if order.estimated %}
+Produits au poids : le montant exact est calculé à la pesée, à la livraison.
+{% endif %}
+{% if shop.paymentSummary %}
+Moyens de paiement acceptés par {{ shop.name }} : {{ shop.paymentSummary }}
+{% endif %}
+{% if order.note %}
+Ta note : {{ order.note }}
+{% endif %}

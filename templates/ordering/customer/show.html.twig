@@ -1,0 +1,85 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}Ma commande chez {{ shop.name }}{% endblock %}
+
+{% block content %}
+    <a href="{{ safe_path('customer_account', '/mon-compte') }}" class="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-sage-dark">
+        <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+        Mes commandes
+    </a>
+
+    {{ include('ordering/_shop_header.html.twig') }}
+
+    <div class="mb-6">
+        <div class="flex flex-wrap items-center gap-2">
+            {{ include('ordering/_order_status_badge.html.twig') }}
+            <span class="amount text-sm text-ink-soft">{{ order.reference }}</span>
+        </div>
+        <h1 class="mt-2 text-3xl leading-tight font-semibold text-ink">Ta commande pour {{ sale.deliveryDate|date_long }}</h1>
+    </div>
+
+    {{ include('ordering/_summary.html.twig') }}
+    {% if order.active %}
+        {{ include('ordering/_new_customer_notice.html.twig', {customer: order.customer, class: 'mt-6'}) }}
+    {% endif %}
+
+    {% if editable %}
+        <p class="mt-6 text-sm text-ink-soft" data-edit-notice>
+            Tu peux modifier ou annuler ta commande jusqu'au {{ sale.effectiveEditCutoffAt|datetime_long }}.
+        </p>
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <twig:Button as="a" size="lg" href="{{ path('customer_order_edit', {reference: order.reference}) }}">
+                <twig:ux:icon name="lucide:pencil" />
+                Modifier ma commande
+            </twig:Button>
+            <twig:Button as="a" size="lg" variant="secondary" href="{{ path('customer_order_ics', {reference: order.reference}) }}" data-turbo="false">
+                <twig:ux:icon name="lucide:calendar-days" />
+                Ajouter à mon calendrier
+            </twig:Button>
+            <form method="post" action="{{ path('customer_order_cancel', {reference: order.reference}) }}" data-turbo-confirm="Tes produits seront remis en vente." data-confirm-title="Annuler ta commande ?" data-confirm-label="Annuler ma commande" data-confirm-cancel="Garder ma commande" data-confirm-danger>
+                <input type="hidden" name="_token" value="{{ csrf_token('customer_order_cancel_' ~ order.reference) }}">
+                <twig:Button type="submit" size="lg" variant="ghost" class="w-full text-danger hover:bg-danger-soft sm:w-auto">Annuler ma commande</twig:Button>
+            </form>
+        </div>
+    {% else %}
+        <div class="mt-6 rounded-xl bg-sage-soft p-4 text-sm text-sage-deep" data-read-only-notice>
+            {% if order.cancelled %}
+                <p class="font-semibold">Cette commande est annulée.</p>
+            {% elseif not order.confirmed or sale.done %}
+                <p class="font-semibold">Cette commande est terminée.</p>
+            {% else %}
+                <p class="font-semibold">Cette commande n'est plus modifiable en ligne.</p>
+            {% endif %}
+            <p class="mt-1">Une question, un changement ? Contacte directement {{ shop.name }} :</p>
+            {% set public_email = shop.publicEmail() %}
+            <ul class="mt-2 flex flex-col gap-1" data-shop-contact>
+                {% if shop.phone %}
+                    <li class="flex min-h-11 items-center gap-2">
+                        <twig:ux:icon name="lucide:phone" class="size-4" />
+                        <a href="tel:{{ shop.phone|replace({' ': ''}) }}" class="link">{{ shop.phone }}</a>
+                    </li>
+                {% endif %}
+                {% if public_email %}
+                    <li class="flex min-h-11 items-center gap-2">
+                        <twig:ux:icon name="lucide:mail" class="size-4" />
+                        <a href="mailto:{{ public_email }}" class="link break-all">{{ public_email }}</a>
+                    </li>
+                {% endif %}
+                {% if shop.address %}
+                    <li class="flex min-h-11 items-center gap-2">
+                        <twig:ux:icon name="lucide:map-pin" class="size-4" />
+                        <span>{{ shop.address }}</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% if not order.cancelled and not sale.done %}
+            <div class="mt-4">
+                <twig:Button as="a" size="lg" href="{{ path('customer_order_ics', {reference: order.reference}) }}" data-turbo="false">
+                    <twig:ux:icon name="lucide:calendar-days" />
+                    Ajouter à mon calendrier
+                </twig:Button>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}

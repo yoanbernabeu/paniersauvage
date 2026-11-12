@@ -1,0 +1,34 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Tu as jusqu'au {{ sale.orderDeadline|datetime_long }} pour commander, dans la limite des quantités.{% endblock %}
+
+{% block title %}Il reste quelques produits 🧺{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},</p>
+    <p style="{{ p_css }}">{{ shop.name }} remet en vente ce qu'il lui reste pour la livraison du <strong style="font-weight:600;">{{ sale.deliveryDate|date_long }}</strong>.</p>
+    <p style="{{ p_css }}">Tu as jusqu'au <strong style="font-weight:600;">{{ sale.orderDeadline|datetime_long }}</strong> pour commander, premier arrivé, premier servi.</p>
+
+    {{ include('notification/_button.html.twig', {url: sale_url, label: 'Je commande'}) }}
+
+    {% if offers is not empty %}
+        <h2 style="{{ h2_css }}">Ce qu'il reste</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+            {% for offer in offers %}
+                <tr>
+                    <td style="padding:8px 0;border-bottom:1px solid #ECE8DE;{{ font_text }}font-size:16px;line-height:22px;color:#1F2A24;">{{ offer.product.name }} <span style="color:#56635B;">(reste {{ offer.remaining|quantity(offer.product.unit) }})</span></td>
+                    <td align="right" style="padding:8px 0 8px 12px;border-bottom:1px solid #ECE8DE;{{ font_text }}font-size:16px;line-height:22px;color:#1F2A24;white-space:nowrap;">{{ offer.priceCents|money }} / {{ offer.product.unit.short }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    {% if sale.deliveries is not empty %}
+        <h2 style="{{ h2_css }}">Où et quand</h2>
+        {% for delivery in sale.deliveries %}
+            {{ include('notification/_delivery.html.twig') }}
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_customer_footer.html.twig', {following: true}) }}{% endblock %}

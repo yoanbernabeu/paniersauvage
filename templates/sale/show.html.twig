@@ -1,0 +1,305 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}{{ sale.title }}{% endblock %}
+
+{% block page_header %}
+    <div class="mb-6">
+        <a href="{{ path('pro_sale_index') }}" class="mb-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-sage-dark hover:underline">
+            <twig:ux:icon name="lucide:chevron-left" class="size-4" />
+            Toutes les ventes
+        </a>
+        <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1 class="text-2xl leading-tight font-semibold text-ink sm:text-3xl">{{ sale.title }}</h1>
+                    {{ include('sale/_status_badge.html.twig') }}
+                </div>
+                <p class="mt-1 text-sm text-ink-soft">
+                    Livraison {{ sale.deliveryDate|date_long(true) }}
+                    {%- if sale.schedule %} · créée par la récurrence « {{ sale.schedule.name }} »{% endif %}
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                {% if sale.deliveries is not empty and not sale.cancelled %}
+                    <twig:Button as="a" href="{{ path('pro_sale_delivery_sheet', {id: sale.id}) }}" variant="sage">
+                        <twig:ux:icon name="lucide:truck" />
+                        Feuille de livraison
+                    </twig:Button>
+                {% endif %}
+                {% if sale.status.ongoing %}
+                    <twig:Button as="a" href="{{ path('pro_sale_edit', {id: sale.id}) }}" variant="secondary">
+                        <twig:ux:icon name="lucide:pencil" />
+                        Modifier
+                    </twig:Button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    {# isOpen() is called explicitly: `sale.open` would call Sale::open() and change the status. #}
+    {% set shareable = sale.scheduled or sale.isOpen() or last_minute_open %}
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
+        {# Public link: first on mobile, top of the side column on desktop. #}
+        {% if shareable %}
+            <twig:Card data-controller="clipboard" data-clipboard-copied-label-value="Lien copié" data-share-card
+                       class="lg:col-start-3 lg:row-start-1 lg:self-start">
+                <twig:Card:Header>
+                    <twig:Card:Title>Lien de la vente</twig:Card:Title>
+                    <twig:Card:Description>
+                        {% if last_minute_open %}
+                            Ta vente de dernière minute est ouverte : envoie ce lien pour écouler tes invendus.
+                        {% else %}
+                            {{ sale.isOpen() ? 'Envoie ce lien à tes clients pour qu\'ils commandent.' : 'Tes clients pourront commander ici dès l\'ouverture.' }}
+                        {% endif %}
+                    </twig:Card:Description>
+                </twig:Card:Header>
+                <twig:Card:Content class="flex flex-col gap-3">
+                    <twig:Label for="sale-public-url" class="sr-only">Lien public de la vente</twig:Label>
+                    <twig:Input id="sale-public-url" type="text" readonly value="{{ public_url }}" data-clipboard-target="source" class="bg-sage-soft! text-sm!" />
+                    <div class="flex flex-wrap gap-2">
+                        <twig:Button variant="secondary" data-action="clipboard#copy" data-clipboard-target="button">
+                            <twig:ux:icon name="lucide:copy" />
+                            <span data-clipboard-target="label">Copier le lien</span>
+                        </twig:Button>
+                        <twig:Button as="a" href="{{ whatsapp_url }}" target="_blank" rel="noopener" variant="sage" data-whatsapp-share>
+                            <twig:ux:icon name="lucide:message-circle" />
+                            Partager sur WhatsApp
+                        </twig:Button>
+                    </div>
+                </twig:Card:Content>
+            </twig:Card>
+        {% endif %}
+
+        <div class="flex flex-col gap-5 lg:col-span-2 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+            {# Production totals #}
+            <twig:Card>
+                <twig:Card:Header>
+                    <twig:Card:Title>À produire</twig:Card:Title>
+                    <twig:Card:Description>
+                        {{ orders|length }} commande{{ orders|length > 1 ? 's' }} · <span class="amount">{{ total_cents|money }}</span> à régler par tes clients
+                    </twig:Card:Description>
+                </twig:Card:Header>
+                <twig:Card:Content>
+                    {% if production is empty %}
+                        <p class="text-sm text-ink-soft">Cette vente ne propose aucun produit.</p>
+                    {% else %}
+                        <twig:Table data-production>
+                            <twig:Table:Header>
+                                <twig:Table:Row>
+                                    <twig:Table:Head>Produit</twig:Table:Head>
+                                    <twig:Table:Head class="text-end">Commandé</twig:Table:Head>
+                                    <twig:Table:Head class="text-end">Reste</twig:Table:Head>
+                                    <twig:Table:Head class="text-end">Prix</twig:Table:Head>
+                                </twig:Table:Row>
+                            </twig:Table:Header>
+                            <twig:Table:Body>
+                                {% for total in production %}
+                                    <twig:Table:Row data-production-row>
+                                        <twig:Table:Cell class="font-medium whitespace-normal text-ink">{{ total.offer.product.name }}</twig:Table:Cell>
+                                        <twig:Table:Cell class="amount text-end text-base font-semibold text-ink">{{ total.quantity|quantity(total.offer.product.unit) }}</twig:Table:Cell>
+                                        <twig:Table:Cell class="amount text-end text-ink-soft">
+                                            {%- if total.offer.limited -%}
+                                                {%- if total.offer.soldOut -%}
+                                                    <twig:Badge variant="muted">Épuisé</twig:Badge>
+                                                {%- else -%}
+                                                    {{ total.offer.remaining|quantity(total.offer.product.unit) }} sur {{ total.offer.maxQty|quantity(total.offer.product.unit) }}
+                                                {%- endif -%}
+                                            {%- else -%}
+                                                illimité
+                                            {%- endif -%}
+                                        </twig:Table:Cell>
+                                        <twig:Table:Cell class="amount text-end text-ink-soft">{{ total.offer.priceCents|money }}{% if total.offer.product.unit.weighed %} / kg{% endif %}</twig:Table:Cell>
+                                    </twig:Table:Row>
+                                {% endfor %}
+                            </twig:Table:Body>
+                        </twig:Table>
+                    {% endif %}
+                </twig:Card:Content>
+            </twig:Card>
+
+            {# Orders grouped by delivery #}
+            <twig:Card>
+                <twig:Card:Header>
+                    <twig:Card:Title>Commandes</twig:Card:Title>
+                    {% if sale.status.ongoing and route_exists('pro_sale_order_new') %}
+                        <twig:Card:Action>
+                            <twig:Button as="a" href="{{ safe_path('pro_sale_order_new', '/pro/ventes/' ~ sale.id ~ '/commandes/nouvelle', {id: sale.id}) }}" variant="secondary" size="sm">
+                                <twig:ux:icon name="lucide:plus" />
+                                Ajouter une commande
+                            </twig:Button>
+                        </twig:Card:Action>
+                    {% endif %}
+                </twig:Card:Header>
+                <twig:Card:Content class="flex flex-col gap-5">
+                    {% if groups is empty %}
+                        <p class="text-sm text-ink-soft">Cette vente n'a aucune livraison prévue.</p>
+                    {% endif %}
+                    {% for group in groups %}
+                        <section data-delivery-group>
+                            <div class="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-sage-soft px-3 py-2">
+                                <h3 class="flex min-w-0 items-center gap-2 text-sm font-semibold text-sage-deep">
+                                    <twig:ux:icon name="lucide:{{ group.delivery.deliveryPoint.type.icon }}" class="size-4 shrink-0" />
+                                    <span class="truncate">{{ group.delivery.deliveryPoint.name }}</span>
+                                    <span class="font-normal whitespace-nowrap">· {{ time_range(group.delivery.startsAt, group.delivery.endsAt) }}</span>
+                                </h3>
+                                <span class="amount text-sm text-sage-deep">{{ group.orders|length }} commande{{ group.orders|length > 1 ? 's' }}</span>
+                            </div>
+                            {% if group.orders is empty %}
+                                <p class="px-3 py-2 text-sm text-ink-soft">Pas encore de commande ici.</p>
+                            {% else %}
+                                <ul class="divide-y divide-line-soft">
+                                    {% for order in group.orders %}
+                                        <li class="flex flex-col gap-1 px-3 py-2.5 sm:flex-row sm:items-start sm:gap-4" data-order="{{ order.reference }}">
+                                            <div class="min-w-0 flex-1">
+                                                <p class="flex flex-wrap items-center gap-2 font-medium text-ink">
+                                                    {{ order.customerDisplayName }}
+                                                    {{ include('ordering/_order_status_badge.html.twig', {hide_confirmed: true}) }}
+                                                    {{ include('customer/pro/_absence_badge.html.twig') }}
+                                                </p>
+                                                <p class="text-sm text-ink-soft">
+                                                    {%- for line in order.lines -%}
+                                                        {{ line.quantity|line_quantity(line.unit) }} {{ line.label }}{% if line.actualQuantity is not null %} · pesé {{ line.actualQuantity|quantity(line.unit) }}{% endif %}{{ not loop.last ? ' · ' }}
+                                                    {%- endfor -%}
+                                                </p>
+                                                {% if order.note %}
+                                                    <p class="mt-1 inline-flex rounded-lg bg-wheat-soft px-2 py-1 text-sm text-wheat-ink">{{ order.note }}</p>
+                                                {% endif %}
+                                                {% if order.deliveryAddress %}
+                                                    <p class="mt-1 text-sm text-ink-soft">{{ order.deliveryAddress }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex items-center gap-3 sm:flex-col sm:items-end sm:gap-1">
+                                                <span class="amount font-semibold text-ink">{{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}</span>
+                                                {% if route_exists('pro_order_edit') or route_exists('pro_order_cancel') %}
+                                                    <span class="-mx-3 flex items-center gap-1 sm:-me-3" data-order-actions>
+                                                        {% if route_exists('pro_order_edit') %}
+                                                            <twig:Button as="a" href="{{ path('pro_order_edit', {id: sale.id, orderId: order.id}) }}" variant="ghost" class="px-3">
+                                                                <twig:ux:icon name="lucide:pencil" />
+                                                                Modifier<span class="sr-only"> la commande de {{ order.customerDisplayName }}</span>
+                                                            </twig:Button>
+                                                        {% endif %}
+                                                        {% if route_exists('pro_order_cancel') and not order.cancelled %}
+                                                            <form method="post" action="{{ path('pro_order_cancel', {id: sale.id, orderId: order.id}) }}" data-turbo-confirm="Ses produits sont remis en vente et le client est prévenu par e-mail." data-confirm-title="Annuler la commande de {{ order.customerDisplayName }} ?" data-confirm-label="Annuler la commande" data-confirm-danger>
+                                                                <input type="hidden" name="_token" value="{{ csrf_token('pro_order_cancel_' ~ order.id) }}">
+                                                                <twig:Button type="submit" variant="ghost" class="px-3 text-danger hover:bg-danger-soft">
+                                                                    <twig:ux:icon name="lucide:x" />
+                                                                    Annuler<span class="sr-only"> la commande de {{ order.customerDisplayName }}</span>
+                                                                </twig:Button>
+                                                            </form>
+                                                        {% endif %}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </section>
+                    {% endfor %}
+                </twig:Card:Content>
+            </twig:Card>
+        </div>
+
+        <div class="flex flex-col gap-5 lg:col-start-3 {{ shareable ? 'lg:row-start-2' : 'lg:row-span-2 lg:row-start-1' }}">
+            {# Leftovers and last-minute sale (SPEC §21), once the orders are closed. #}
+            {% if sale.closed %}
+                {{ include('sale/_leftovers.html.twig') }}
+            {% endif %}
+
+            {# Dates #}
+            <twig:Card>
+                <twig:Card:Header><twig:Card:Title>Dates</twig:Card:Title></twig:Card:Header>
+                <twig:Card:Content>
+                    <dl class="flex flex-col gap-3 text-sm">
+                        <div>
+                            <dt class="text-ink-soft">Ouverture des commandes</dt>
+                            <dd class="font-medium text-ink">{{ sale.opensAt|datetime_long }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-ink-soft">Date limite de commande</dt>
+                            <dd class="font-medium text-ink">{{ sale.deadlineAt|datetime_long }}</dd>
+                        </div>
+                        {% if sale.lastMinuteUntil %}
+                            <div>
+                                <dt class="text-ink-soft">Vente de dernière minute</dt>
+                                <dd class="font-medium text-ink">jusqu'au {{ sale.lastMinuteUntil|datetime_long }}</dd>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <dt class="text-ink-soft">Livraison</dt>
+                            <dd class="font-medium text-ink">{{ sale.deliveryDate|date_long(true) }}</dd>
+                            {% for delivery in sale.deliveries %}
+                                <dd class="text-ink-soft">{{ delivery.deliveryPoint.name }}, {{ time_range(delivery.startsAt, delivery.endsAt) }}</dd>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <dt class="text-ink-soft">Modification par tes clients</dt>
+                            <dd class="font-medium text-ink">
+                                {%- if sale.allowCustomerEdit -%}
+                                    jusqu'au {{ sale.effectiveEditCutoffAt|datetime_long }}
+                                {%- else -%}
+                                    non autorisée
+                                {%- endif -%}
+                            </dd>
+                        </div>
+                    </dl>
+                </twig:Card:Content>
+            </twig:Card>
+
+            {# Documents (built in another feature set: shown once their routes exist) #}
+            {% if route_exists('pro_sale_production_pdf') or route_exists('pro_sale_delivery_pdf') or route_exists('pro_sale_orders_csv') %}
+                <twig:Card>
+                    <twig:Card:Header><twig:Card:Title>Documents</twig:Card:Title></twig:Card:Header>
+                    <twig:Card:Content class="flex flex-col gap-2">
+                        {% if route_exists('pro_sale_production_pdf') %}
+                            <twig:Button as="a" href="{{ safe_path('pro_sale_production_pdf', '/pro/ventes/' ~ sale.id ~ '/production.pdf', {id: sale.id}) }}" variant="outline" class="justify-start">
+                                <twig:ux:icon name="lucide:file-text" />
+                                Feuille de production (PDF)
+                            </twig:Button>
+                        {% endif %}
+                        {% if route_exists('pro_sale_delivery_pdf') %}
+                            <twig:Button as="a" href="{{ safe_path('pro_sale_delivery_pdf', '/pro/ventes/' ~ sale.id ~ '/livraison.pdf', {id: sale.id}) }}" variant="outline" class="justify-start">
+                                <twig:ux:icon name="lucide:printer" />
+                                Feuille de livraison (PDF)
+                            </twig:Button>
+                        {% endif %}
+                        {% if route_exists('pro_sale_orders_csv') %}
+                            <twig:Button as="a" href="{{ safe_path('pro_sale_orders_csv', '/pro/ventes/' ~ sale.id ~ '/commandes.csv', {id: sale.id}) }}" variant="outline" class="justify-start">
+                                <twig:ux:icon name="lucide:download" />
+                                Commandes (CSV)
+                            </twig:Button>
+                        {% endif %}
+                    </twig:Card:Content>
+                </twig:Card>
+            {% endif %}
+
+            {# Cancellation #}
+            {% if sale.status.ongoing %}
+                <twig:Card>
+                    <twig:Card:Header>
+                        <twig:Card:Title>Annuler la vente</twig:Card:Title>
+                        <twig:Card:Description>Les clients qui ont commandé sont prévenus par e-mail. Cette action est définitive.</twig:Card:Description>
+                    </twig:Card:Header>
+                    <twig:Card:Content>
+                        {# Customers with an order still to deliver: they get the cancellation e-mail. #}
+                        {% set notified = {} %}
+                        {% for order in orders|filter(order => order.confirmed) %}
+                            {% set notified = notified|merge({('c' ~ order.customer.id): true}) %}
+                        {% endfor %}
+                        <form method="post" action="{{ path('pro_sale_cancel', {id: sale.id}) }}" data-sale-cancel
+                              data-turbo-confirm="{{ notified is empty ? 'Personne n\'a encore commandé : aucun client ne sera prévenu.' : (notified|length == 1 ? '1 client sera prévenu par e-mail et sa commande annulée.' : notified|length ~ ' clients seront prévenus par e-mail et leurs commandes annulées.') }} C'est définitif."
+                              data-confirm-title="Annuler cette vente ?" data-confirm-label="Annuler la vente" data-confirm-danger>
+                            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('sale-cancel') }}">
+                            <twig:Button type="submit" variant="destructive">
+                                <twig:ux:icon name="lucide:ban" />
+                                Annuler la vente
+                            </twig:Button>
+                        </form>
+                    </twig:Card:Content>
+                </twig:Card>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

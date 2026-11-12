@@ -1,0 +1,22 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Vérifie ta boîte mail{% endblock %}
+{% block auth_title %}Vérifie ta boîte mail{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-4 text-sm text-ink">
+        <p>Si cette adresse correspond à un compte producteur, un e-mail avec un lien pour choisir un nouveau mot de passe vient de partir.</p>
+        <twig:Alert variant="info">
+            <twig:ux:icon name="lucide:clock" />
+            <twig:Alert:Description>
+                Le lien est valable {{ minutes }} minutes et ne sert qu'une fois. Rien reçu ? Regarde dans les indésirables.
+            </twig:Alert:Description>
+        </twig:Alert>
+    </div>
+{% endblock %}
+
+{% block auth_footer %}
+    <a href="{{ path('pro_password_forgot') }}" class="link">Refaire une demande</a>
+    <span aria-hidden="true" class="mx-2">·</span>
+    <a href="{{ path('pro_login') }}" class="link">Retour à la connexion</a>
+{% endblock %}

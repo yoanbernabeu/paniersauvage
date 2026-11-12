@@ -1,0 +1,104 @@
+{% extends 'layout/pro.html.twig' %}
+
+{# Variables: plans, subscriptions_by_plan (plan id => list of RecurringOrder), schedules_without_plan, today. #}
+
+{% block title %}Paniers récurrents{% endblock %}
+{% block page_title %}Paniers récurrents{% endblock %}
+{% block page_subtitle %}Tes abonnés reçoivent une commande à chaque vente de leur récurrence, sans rien faire. Ils règlent au retrait.{% endblock %}
+
+{% block content %}
+    {% if plans is empty and schedules_without_plan is empty %}
+        <twig:Empty class="rounded-xl border border-line bg-white py-12">
+            <twig:Empty:Media><twig:Illustration name="basket" class="w-24" /></twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Commence par une récurrence</twig:Empty:Title>
+                <twig:Empty:Description>Un panier récurrent s'appuie sur une récurrence de vente (par exemple chaque mercredi). Crée-la, puis propose ton panier.</twig:Empty:Description>
+            </twig:Empty:Header>
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ path('pro_schedule_new') }}">Créer une récurrence</twig:Button>
+            </twig:Empty:Content>
+        </twig:Empty>
+    {% endif %}
+
+    <div class="flex flex-col gap-6">
+        {% for plan in plans %}
+            {% set subscriptions = subscriptions_by_plan[plan.id] ?? [] %}
+            {% set in_progress = subscriptions|filter(s => not s.ended) %}
+            <twig:Card data-plan="{{ plan.id }}">
+                <twig:Card:Header>
+                    <twig:Card:Title class="flex flex-wrap items-center gap-2">
+                        {{ plan.title }}
+                        <twig:Badge variant="{{ plan.enabled ? 'secondary' : 'muted' }}">{{ plan.enabled ? 'Inscriptions ouvertes' : 'Inscriptions fermées' }}</twig:Badge>
+                    </twig:Card:Title>
+                    <twig:Card:Description>
+                        {{ plan.schedule.name }} · {{ plan.mode.label }} · {{ plan.term.label }}{% if plan.season %} du {{ plan.seasonStartsOn|date_short }} au {{ plan.seasonEndsOn|date_short }}{% endif %}
+                        · {{ in_progress|length }}{{ plan.capacity ? ' / ' ~ plan.capacity }} abonné{{ in_progress|length > 1 ? 's' }}
+                    </twig:Card:Description>
+                    <twig:Card:Action class="flex flex-wrap gap-2">
+                        <twig:Button as="a" href="{{ path('pro_recurring_plan_edit', {id: plan.schedule.id}) }}" variant="secondary" size="sm">
+                            <twig:ux:icon name="lucide:pencil" />
+                            Modifier
+                        </twig:Button>
+                        <twig:Button as="a" href="{{ path('recurring_plan_show', {slug: plan.shop.slug, id: plan.id}) }}" variant="ghost" size="sm" target="_blank" rel="noopener">
+                            <twig:ux:icon name="lucide:external-link" />
+                            Page publique
+                        </twig:Button>
+                    </twig:Card:Action>
+                </twig:Card:Header>
+                <twig:Card:Content>
+                    {% if subscriptions is empty %}
+                        <p class="text-sm text-ink-soft">Pas encore d'abonné. Partage le lien de ta page : le panier y apparaît dès que les inscriptions sont ouvertes.</p>
+                    {% else %}
+                        <twig:Table data-subscribers>
+                            <twig:Table:Header>
+                                <twig:Table:Row>
+                                    <twig:Table:Head>Abonné</twig:Table:Head>
+                                    <twig:Table:Head>Chaque livraison</twig:Table:Head>
+                                    <twig:Table:Head>Retrait</twig:Table:Head>
+                                    <twig:Table:Head>État</twig:Table:Head>
+                                </twig:Table:Row>
+                            </twig:Table:Header>
+                            <twig:Table:Body>
+                                {% for subscription in subscriptions %}
+                                    <twig:Table:Row data-subscriber="{{ subscription.id }}">
+                                        <twig:Table:Cell class="font-medium text-ink">
+                                            <a href="{{ path('pro_recurring_order_show', {id: subscription.id}) }}" class="link">{{ subscription.customer.displayName }}</a>
+                                        </twig:Table:Cell>
+                                        <twig:Table:Cell class="whitespace-normal text-ink-soft">
+                                            {% if plan.basket %}{{ subscription.shares }} panier{{ subscription.shares > 1 ? 's' }}{% else %}{% for entry in subscription.wantedQuantities %}{{ entry[1]|line_quantity(entry[0].unit) }} {{ entry[0].name }}{{ not loop.last ? ', ' }}{% endfor %}{% endif %}
+                                            · <span class="amount">{{ subscription.estimatedPriceCents|money }}</span>
+                                        </twig:Table:Cell>
+                                        <twig:Table:Cell class="whitespace-normal text-ink-soft">{{ subscription.deliveryPoint.name }}</twig:Table:Cell>
+                                        <twig:Table:Cell>
+                                            <twig:Badge variant="{{ subscription.status.badge }}">{{ subscription.ending ? 'Résilié au ' ~ subscription.endsOn|date_short : subscription.status.label }}</twig:Badge>
+                                        </twig:Table:Cell>
+                                    </twig:Table:Row>
+                                {% endfor %}
+                            </twig:Table:Body>
+                        </twig:Table>
+                    {% endif %}
+                </twig:Card:Content>
+            </twig:Card>
+        {% endfor %}
+
+        {% if schedules_without_plan is not empty %}
+            <section aria-labelledby="proposer" data-schedules-without-plan>
+                <h2 id="proposer" class="mb-3 text-base font-semibold text-ink">Proposer un panier sur une récurrence</h2>
+                <ul class="divide-y divide-line-soft overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-line">
+                    {% for schedule in schedules_without_plan %}
+                        <li class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-ink">
+                                <span class="font-medium">{{ schedule.name }}</span>
+                                <span class="block text-sm text-ink-soft">Livraison le {{ schedule.weekday|weekday_name }}, {{ time_range(schedule.deliveryStartTime, schedule.deliveryEndTime) }}</span>
+                            </p>
+                            <twig:Button as="a" href="{{ path('pro_recurring_plan_edit', {id: schedule.id}) }}" variant="secondary" size="sm">
+                                <twig:ux:icon name="lucide:plus" />
+                                Proposer un panier
+                            </twig:Button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

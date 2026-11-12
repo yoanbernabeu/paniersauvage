@@ -1,0 +1,101 @@
+{#
+    A customer of the current shop and their orders here (never elsewhere). Variables: row
+    (App\Customer\Model\ShopCustomer), customer (Customer), offline (bool: customer without e-mail of
+    this shop), orders (list of Order of this shop, latest delivery first).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}{{ row.displayName }} · Mes clients{% endblock %}
+{% block page_title %}{{ row.displayName }}{% endblock %}
+{% block page_subtitle %}
+    {% if offline %}Client sans e-mail, connu de ta boutique seulement{% elseif row.erased %}Compte supprimé par le client{% else %}Client de ta boutique{% endif %}
+{% endblock %}
+{% block page_actions %}
+    <twig:Button as="a" variant="outline" size="sm" href="{{ path('pro_customer_index') }}">
+        <twig:ux:icon name="lucide:arrow-left" />
+        Mes clients
+    </twig:Button>
+{% endblock %}
+
+{% block content %}
+    <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="customer-contact" data-customer-contact>
+        <h2 id="customer-contact" class="mb-3 text-base font-semibold text-ink">Coordonnées</h2>
+        <dl class="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+            <dt class="font-semibold text-ink">E-mail</dt>
+            <dd class="text-ink-soft">
+                {% if row.email %}<a href="mailto:{{ row.email }}" class="link break-all">{{ row.email }}</a>{% elseif offline %}Aucun : ce client ne reçoit aucun e-mail{% else %}—{% endif %}
+            </dd>
+            <dt class="font-semibold text-ink">Téléphone</dt>
+            <dd class="text-ink-soft">{% if row.phone %}<a href="tel:{{ row.phone|replace({' ': ''}) }}" class="link">{{ row.phone }}</a>{% else %}—{% endif %}</dd>
+            <dt class="font-semibold text-ink">Abonnement</dt>
+            <dd class="text-ink-soft" data-customer-follow>
+                {% if row.follower %}
+                    Suit ta boutique depuis le {{ row.followedAt|date_short }} ·
+                    {{ row.emailConsent ? 'reçoit l\'annonce de tes ventes par e-mail' : 'ne reçoit pas l\'annonce de tes ventes' }}
+                {% else %}
+                    Ne suit pas ta boutique
+                {% endif %}
+            </dd>
+        </dl>
+        {% if offline and not row.erased %}
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <twig:Button as="a" variant="secondary" size="sm" href="{{ path('pro_offline_customer_edit', {id: customer.id}) }}" data-offline-edit>
+                    <twig:ux:icon name="lucide:pencil" />
+                    Modifier ses coordonnées ou lui ajouter un e-mail
+                </twig:Button>
+            </div>
+        {% endif %}
+    </section>
+
+    <dl class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4" data-customer-figures>
+        {% for figure in [
+            {label: 'Commandes', value: row.orderCount},
+            {label: 'Dernière commande', value: row.lastOrderDate ? row.lastOrderDate|date_short : '—'},
+            {label: 'Total retiré', value: row.deliveredCents|money},
+            {label: 'Absences', value: row.absences},
+        ] %}
+            <div class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line">
+                <dt class="text-sm text-ink-soft">{{ figure.label }}</dt>
+                <dd class="amount mt-1 text-xl font-semibold text-ink">{{ figure.value }}</dd>
+            </div>
+        {% endfor %}
+    </dl>
+
+    <section class="mt-6 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="customer-orders" data-customer-orders>
+        <h2 id="customer-orders" class="mb-3 text-base font-semibold text-ink">Ses commandes chez toi</h2>
+        {% if orders is empty %}
+            <p class="text-sm text-ink-soft">Aucune commande pour l'instant.</p>
+        {% else %}
+            <ul class="divide-y divide-line-soft">
+                {% for order in orders %}
+                    <li class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2.5 text-sm" data-customer-order="{{ order.reference }}">
+                        <span class="min-w-0">
+                            <a href="{{ path('pro_order_edit', {id: order.sale.id, orderId: order.id}) }}" class="link font-medium">{{ order.sale.deliveryDate|date_long }}</a>
+                            <span class="text-ink-soft">· {{ order.sale.title }}</span>
+                        </span>
+                        <span class="flex items-center gap-2 text-ink-soft">
+                            <span class="amount">{{ order.reference }}</span>
+                            {{ include('ordering/_order_status_badge.html.twig') }}
+                            <span class="amount font-semibold text-ink">{{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}</span>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    {% if offline and not row.erased %}
+        <twig:Separator class="my-8" />
+        <form method="post" action="{{ path('pro_offline_customer_erase', {id: customer.id}) }}" class="flex flex-wrap items-center justify-between gap-3"
+              data-turbo-confirm="Son nom, son téléphone, ses adresses et ses notes sont effacés. Ses commandes restent dans ta comptabilité, sans nom." data-confirm-title="Effacer les données de ce client ?" data-confirm-label="Effacer ses données" data-confirm-danger>
+            <p class="text-sm text-ink-soft">Ce client te demande d'effacer ses données ? Ses commandes passées restent, sans nom.</p>
+            <input type="hidden" name="_token" value="{{ csrf_token('pro_offline_customer_erase_' ~ customer.id) }}">
+            <twig:Button type="submit" variant="destructive" size="sm">
+                <twig:ux:icon name="lucide:trash-2" />
+                Effacer ses données
+            </twig:Button>
+        </form>
+    {% endif %}
+{% endblock %}

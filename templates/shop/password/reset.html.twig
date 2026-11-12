@@ -1,0 +1,22 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Nouveau mot de passe{% endblock %}
+{% block auth_title %}Choisis un nouveau mot de passe{% endblock %}
+{% block auth_intro %}Pour le compte {{ email }}.{% endblock %}
+
+{% block content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_errors(form) }}
+        {# Lets password managers attach the new password to the right account. #}
+        <input type="email" name="username" value="{{ email }}" autocomplete="username" class="sr-only" tabindex="-1" aria-hidden="true" readonly>
+        {{ form_row(form.plainPassword) }}
+        <twig:Button type="submit" class="mt-1 w-full">
+            Enregistrer mon mot de passe
+            <twig:ux:icon name="lucide:check" />
+        </twig:Button>
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block auth_footer %}
+    <a href="{{ path('pro_login') }}" class="link">Retour à la connexion</a>
+{% endblock %}

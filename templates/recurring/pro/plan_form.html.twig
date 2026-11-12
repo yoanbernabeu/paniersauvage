@@ -1,0 +1,84 @@
+{% extends 'layout/pro.html.twig' %}
+
+{# Variables: form, plan, schedule, is_new, products. #}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}Panier récurrent · {{ schedule.name }}{% endblock %}
+{% block page_title %}{{ is_new ? 'Proposer un panier récurrent' : 'Modifier le panier récurrent' }}{% endblock %}
+{% block page_subtitle %}Sur ta récurrence « {{ schedule.name }} » (chaque {{ schedule.weekday|weekday_name }}) : à chaque vente, une commande est créée pour chaque abonné.{% endblock %}
+
+{% block content %}
+    {% if not schedule.active %}
+        <twig:Alert variant="warning" class="mb-5">
+            <twig:ux:icon name="lucide:triangle-alert" />
+            <twig:Alert:Title>Ta récurrence est en pause</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">Aucune vente n'est créée, donc aucune commande d'abonné non plus. Personne ne peut s'abonner tant qu'elle est en pause.</twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-5'}}) }}
+        {% if form.vars.errors|length > 0 %}
+            <div data-form-errors>{{ form_errors(form) }}</div>
+        {% endif %}
+
+        <twig:Card>
+            <twig:Card:Header><twig:Card:Title>Le panier</twig:Card:Title></twig:Card:Header>
+            <twig:Card:Content>
+                {{ form_row(form.enabled) }}
+                {{ form_row(form.title) }}
+                {{ form_row(form.description) }}
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card>
+            <twig:Card:Header>
+                <twig:Card:Title>Composition</twig:Card:Title>
+                <twig:Card:Description>Panier composé : quantité dans un panier. Produits au choix : quantité maximale par abonné et par livraison. Laisse 0 pour ne pas proposer un produit.</twig:Card:Description>
+            </twig:Card:Header>
+            <twig:Card:Content>
+                {{ form_row(form.mode) }}
+                <fieldset class="mb-5" data-plan-items>
+                    <legend class="mb-2 text-sm font-medium text-ink">Produits et quantités</legend>
+                    {% if products is empty %}
+                        <p class="text-sm text-ink-soft">Ta récurrence ne propose aucun produit. <a href="{{ path('pro_schedule_edit', {id: schedule.id}) }}" class="link">Ajoute des produits à la récurrence</a>.</p>
+                    {% endif %}
+                    <div class="grid gap-x-4 sm:grid-cols-2">
+                        {% for product in products %}
+                            {% set field = form.quantities[product.id] %}
+                            {{ form_row(field, {label: product.name ~ ' (' ~ product.unit.short ~ ')', help: product.priceCents|money ~ ' / ' ~ product.unit.short ~ (product.alcoholic ? ' · alcool : case 18 ans demandée' : '')}) }}
+                        {% endfor %}
+                    </div>
+                    {{ form_errors(form.quantities) }}
+                </fieldset>
+                {{ form_row(form.maxShares, {row_attr: {class: 'sm:max-w-xs'}}) }}
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card>
+            <twig:Card:Header><twig:Card:Title>Places et engagement</twig:Card:Title></twig:Card:Header>
+            <twig:Card:Content>
+                {{ form_row(form.capacity, {row_attr: {class: 'sm:max-w-xs'}}) }}
+                {{ form_row(form.term) }}
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.seasonStartsOn, {help: 'Contrat de saison seulement.'}) }}
+                    {{ form_row(form.seasonEndsOn) }}
+                </div>
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.noticeDays) }}
+                    {{ form_row(form.maxPauses) }}
+                </div>
+                {{ form_row(form.conditions) }}
+                <p class="flex items-start gap-2 rounded-lg bg-sage-soft p-3 text-sm text-sage-deep">
+                    <twig:ux:icon name="lucide:wallet" class="mt-0.5 size-4 shrink-0" />
+                    Rien n'est payé en ligne : tes abonnés règlent chaque livraison au retrait. Le total d'un contrat de saison leur est montré à titre indicatif.
+                </p>
+            </twig:Card:Content>
+        </twig:Card>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <twig:Button type="submit">Enregistrer</twig:Button>
+            <twig:Button as="a" href="{{ path('pro_recurring_index') }}" variant="ghost">Retour</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

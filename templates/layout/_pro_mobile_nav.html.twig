@@ -1,0 +1,68 @@
+{#
+    Producer navigation under the `sm` breakpoint: bottom bar (Accueil, Ventes, Produits) plus a
+    "Plus" menu with the other entries. Built from pro_nav(), so it only lists routes that exist.
+    Variables: nav_items (from layout/pro.html.twig), shop (optional).
+#}
+{%- set primary_items = nav_items|filter(item => item.primary) -%}
+{%- set more_items = nav_items|filter(item => not item.primary) -%}
+{%- set show_shop_page = shop and route_exists('shop_show') -%}
+{%- if nav_items is not empty -%}
+    <nav aria-label="Navigation producteur" class="surface-dark fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-sage-dark pb-[env(safe-area-inset-bottom)] text-white sm:hidden" data-mobile-nav>
+        <div class="relative" data-controller="disclosure">
+            {% if more_items is not empty or show_shop_page %}
+                <div id="pro-nav-more" hidden data-disclosure-target="panel"
+                     class="absolute inset-x-2 bottom-full mb-2 max-h-[70dvh] overflow-y-auto rounded-xl bg-white p-2 text-ink shadow-card ring-1 ring-line [--focus-ring:var(--color-sage-dark)]">
+                    <ul class="flex flex-col">
+                        {% for item in more_items %}
+                            <li>
+                                <a href="{{ item.url }}"
+                                   {% if item.active %}aria-current="page"{% endif %}
+                                   class="flex min-h-12 items-center gap-3 rounded-lg px-3 text-base font-medium {{ item.active ? 'bg-sage-soft text-sage-deep' : 'text-ink hover:bg-sage-soft' }}">
+                                    <twig:ux:icon name="{{ item.icon }}" class="size-5 text-sage-dark" />
+                                    {{ item.label }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        {% if show_shop_page %}
+                            <li class="mt-1 border-t border-line-soft pt-1">
+                                <a href="{{ path('shop_show', {slug: shop.slug}) }}" target="_blank" rel="noopener" class="flex min-h-12 items-center gap-3 rounded-lg px-3 text-base font-medium text-ink hover:bg-sage-soft">
+                                    <twig:ux:icon name="lucide:external-link" class="size-5 text-sage-dark" />
+                                    Voir ma page
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <ul class="grid auto-cols-fr grid-flow-col">
+                {% for item in primary_items %}
+                    <li>
+                        <a href="{{ item.url }}"
+                           {% if item.active %}aria-current="page"{% endif %}
+                           class="flex h-16 flex-col items-center justify-center gap-1 text-xs font-medium {{ item.active ? 'text-white' : 'text-white/75' }}">
+                            <span class="flex h-7 w-12 items-center justify-center rounded-full {{ item.active ? 'bg-white/15 text-wheat' : '' }}">
+                                <twig:ux:icon name="{{ item.icon }}" class="size-5" />
+                            </span>
+                            {{ item.shortLabel ?? item.label }}
+                        </a>
+                    </li>
+                {% endfor %}
+                {% if more_items is not empty or show_shop_page %}
+                    {% set more_active = more_items|filter(item => item.active) is not empty %}
+                    <li>
+                        <button type="button" aria-expanded="false" aria-controls="pro-nav-more"
+                                data-disclosure-target="button" data-action="disclosure#toggle"
+                                class="flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-medium {{ more_active ? 'text-white' : 'text-white/75' }}">
+                            <span class="flex h-7 w-12 items-center justify-center rounded-full {{ more_active ? 'bg-white/15 text-wheat' : '' }}">
+                                <twig:ux:icon name="lucide:menu" class="size-5" />
+                            </span>
+                            Plus
+                            {% if more_active %}<span class="sr-only">(page en cours)</span>{% endif %}
+                        </button>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+{%- endif -%}

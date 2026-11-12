@@ -1,0 +1,64 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}Bienvenue{% endblock %}
+{% block page_title %}Bienvenue{% if app.user %}, {{ app.user.firstName }}{% endif %}{% endblock %}
+{% block page_subtitle %}
+    {% if progress.complete %}
+        Tout est prêt. Belles ventes !
+    {% else %}
+        Cinq étapes pour prendre ta première précommande. {{ progress.doneCount }} sur {{ progress.total }} sont faites.
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% set steps = progress.steps %}
+
+    <ol class="flex flex-col gap-3" data-onboarding>
+        {% for step in steps %}
+            <li class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-5" data-step="{{ step.key }}" data-done="{{ step.done ? 'yes' : 'no' }}">
+                <div class="flex items-start gap-3">
+                    {% if step.done %}
+                        <span class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-sage-dark text-white">
+                            <twig:ux:icon name="lucide:check" class="size-4" />
+                            <span class="sr-only">Fait :</span>
+                        </span>
+                    {% else %}
+                        <span class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-line text-sm font-semibold text-ink-soft" aria-hidden="true">{{ step.number }}</span>
+                        <span class="sr-only">À faire :</span>
+                    {% endif %}
+                    <div class="min-w-0 flex-1">
+                        <h2 class="flex flex-wrap items-center gap-2 text-base font-semibold {{ step.done ? 'text-ink-soft' : 'text-ink' }}">
+                            {{ step.title }}
+                            {% if step.optional %}<twig:Badge variant="muted">Facultatif</twig:Badge>{% endif %}
+                        </h2>
+                        <p class="mt-0.5 text-sm text-ink-soft">{{ step.text }}</p>
+
+                        {% if step.key == 'share' %}
+                            <div class="mt-3">
+                                {{ include('shop/_share_link.html.twig') }}
+                            </div>
+                        {% else %}
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <twig:Button as="a" href="{{ step.url }}" variant="{{ step.done ? 'ghost' : 'secondary' }}" size="sm">
+                                    {{ step.done ? 'Revoir' : step.action }}
+                                </twig:Button>
+                                {% if step.secondUrl and not step.done %}
+                                    <twig:Button as="a" href="{{ step.secondUrl }}" variant="ghost" size="sm">
+                                        {{ step.secondAction }}
+                                    </twig:Button>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ol>
+
+    <p class="mt-6 text-sm text-ink-soft">
+        Tu peux revenir ici quand tu veux.
+        <a href="{{ safe_path('pro_dashboard', '/pro') }}" class="link">Aller à mon tableau de bord</a>
+    </p>
+{% endblock %}

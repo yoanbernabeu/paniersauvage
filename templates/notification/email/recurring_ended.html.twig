@@ -1,0 +1,21 @@
+{% extends 'notification/layout.html.twig' %}
+
+{# reason: contract_end (season contract or notice over) or producer. #}
+
+{% block preheader %}Plus aucune commande ne sera créée pour « {{ plan.title }} ».{% endblock %}
+
+{% block title %}{{ reason == 'producer' ? 'Fin de ton abonnement' : 'Fin de ton contrat 🌾' }}{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},</p>
+    {% if reason == 'producer' %}
+        <p style="{{ p_css }}">{{ shop.name }} a mis fin à ton abonnement « {{ plan.title }} ». Aucune nouvelle commande ne sera créée pour toi.</p>
+        <p style="{{ p_css }}">Les commandes déjà créées restent prévues, sauf si {{ shop.name }} te dit le contraire. Une question ? Réponds simplement à cet e-mail.</p>
+    {% else %}
+        <p style="{{ p_css }}">Ton abonnement « {{ plan.title }} » chez {{ shop.name }} est arrivé à son terme{% if recurring_order.endsOn %} : sa dernière livraison était le {{ recurring_order.endsOn|date_long }}{% endif %}. Merci d'avoir suivi la saison avec {{ shop.name }} !</p>
+        <p style="{{ p_css }}">Pour la suite, retrouve ses prochaines ventes et paniers sur sa page.</p>
+    {% endif %}
+    {{ include('notification/_button.html.twig', {url: shop_url, label: 'Voir la page de ' ~ shop.name}) }}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_recurring_footer.html.twig') }}{% endblock %}

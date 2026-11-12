@@ -1,0 +1,18 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Demain, {{ time_range(delivery.startsAt, delivery.endsAt) }}. À régler à la livraison : {{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}.{% endblock %}
+
+{% block title %}C'est demain 🌾{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},</p>
+    <p style="{{ p_css }}">Petit rappel : ta commande chez {{ shop.name }} t'attend demain.</p>
+
+    {{ include('notification/_delivery.html.twig') }}
+    {{ include('notification/_order_summary.html.twig') }}
+
+    {{ include('notification/_button.html.twig', {url: order_url, label: 'Voir ma commande'}) }}
+    <p style="{{ p_css }}">Un empêchement ? Préviens directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.</p>
+{% endblock %}
+
+{% block footer %}{{ include('notification/_customer_footer.html.twig') }}{% endblock %}

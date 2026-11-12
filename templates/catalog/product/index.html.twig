@@ -1,0 +1,67 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Produits{% endblock %}
+{% block page_title %}Produits{% endblock %}
+{% block page_subtitle %}Ton catalogue : la gamme permanente et les produits du moment.{% endblock %}
+{% block page_actions %}
+    <twig:Button as="a" variant="ghost" size="sm" href="{{ path('pro_catalog_dfc') }}" data-dfc-link>
+        <twig:ux:icon name="lucide:share-2" />
+        Partager mon catalogue
+    </twig:Button>
+    {% if permanent or seasonal or archived %}
+        <twig:Button as="a" href="{{ path('pro_product_new') }}">
+            <twig:ux:icon name="lucide:plus" />
+            Ajouter un produit
+        </twig:Button>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if not permanent and not seasonal and not archived %}
+        <twig:Empty class="rounded-xl bg-white py-12 shadow-card ring-1 ring-line">
+            <twig:Empty:Media>
+                <twig:Illustration name="wheat" class="w-24 text-sage" />
+            </twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Ton catalogue est vide</twig:Empty:Title>
+                <twig:Empty:Description>Ajoute ce que tu vends : un nom, un prix, et c'est parti.</twig:Empty:Description>
+            </twig:Empty:Header>
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ path('pro_product_new') }}">
+                    <twig:ux:icon name="lucide:plus" />
+                    Ajouter mon premier produit
+                </twig:Button>
+            </twig:Empty:Content>
+        </twig:Empty>
+    {% else %}
+        <div class="flex flex-col gap-8">
+            <section aria-labelledby="products-permanent" data-section="permanent">
+                <h2 id="products-permanent" class="mb-1 text-base font-semibold text-ink">Gamme permanente <span class="font-normal text-ink-soft">({{ permanent|length }})</span></h2>
+                <p class="mb-3 text-sm text-ink-soft">Proposée par défaut dans chaque vente.</p>
+                {% if permanent %}
+                    {{ include('catalog/product/_list.html.twig', {products: permanent, movable: true}) }}
+                {% else %}
+                    <p class="rounded-xl border border-dashed border-line bg-white px-4 py-5 text-sm text-ink-soft">Aucun produit dans ta gamme permanente pour l'instant.</p>
+                {% endif %}
+            </section>
+
+            <section aria-labelledby="products-seasonal" data-section="seasonal">
+                <h2 id="products-seasonal" class="mb-1 text-base font-semibold text-ink">Du moment <span class="font-normal text-ink-soft">({{ seasonal|length }})</span></h2>
+                <p class="mb-3 text-sm text-ink-soft">Proposés quand la livraison tombe dans leur période.</p>
+                {% if seasonal %}
+                    {{ include('catalog/product/_list.html.twig', {products: seasonal, movable: true}) }}
+                {% else %}
+                    <p class="rounded-xl border border-dashed border-line bg-white px-4 py-5 text-sm text-ink-soft">Aucun produit du moment. Pratique pour une brioche de fête ou des fraises de saison.</p>
+                {% endif %}
+            </section>
+
+            {% if archived %}
+                <section aria-labelledby="products-archived" data-section="archived">
+                    <h2 id="products-archived" class="mb-1 text-base font-semibold text-ink">Archivés <span class="font-normal text-ink-soft">({{ archived|length }})</span></h2>
+                    <p class="mb-3 text-sm text-ink-soft">Ils ne sont plus proposés dans tes nouvelles ventes.</p>
+                    {{ include('catalog/product/_list.html.twig', {products: archived}) }}
+                </section>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

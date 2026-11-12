@@ -1,0 +1,15 @@
+{# Delivery slot and place. Variables: delivery (SaleDelivery), order (optional, for a home delivery). #}
+{% set point = delivery.deliveryPoint %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+    <tr>
+        <td style="{{ box_css }}{{ font_text }}font-size:16px;line-height:24px;color:#2F4337;">
+            <strong style="font-weight:600;">{{ delivery.startsAt|date_long|capitalize }}, {{ time_range(delivery.startsAt, delivery.endsAt) }}</strong><br>
+            {% if delivery.home %}
+                Livraison à domicile{% if order is defined and order.deliveryAddress %} : {{ order.deliveryAddress|nl2br }}{% endif %}
+            {% else %}
+                {{ point.name }}{% if point.address %}<br>{{ point.address|nl2br }}{% endif %}
+            {% endif %}
+            {% if point.instructions %}<br><span style="font-size:14px;line-height:21px;color:#46604F;">{{ point.instructions|nl2br }}</span>{% endif %}
+        </td>
+    </tr>
+</table>

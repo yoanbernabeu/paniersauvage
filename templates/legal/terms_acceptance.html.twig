@@ -1,0 +1,37 @@
+{#
+    Acceptance of a new version of the terms by a producer, before any other /pro page.
+    Variables: form (TermsAcceptanceType), first_time (bool), version, updated_at.
+#}
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Nos conditions d'utilisation{% endblock %}
+{% block auth_title %}{{ first_time ? 'Avant de continuer' : 'Nos conditions ont changé' }}{% endblock %}
+{% block auth_intro %}
+    {% if first_time %}
+        Lis et accepte nos conditions d'utilisation pour accéder à ton espace producteur.
+    {% else %}
+        On a mis à jour nos conditions d'utilisation (version {{ version }} du {{ updated_at|date('d/m/Y') }}). Prends une minute pour les relire.
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <ul class="mb-5 flex flex-col gap-2 text-sm text-ink" data-terms-summary>
+        <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" />Zéro commission sur tes ventes, un seul prix public.</li>
+        <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" />Tu restes le vendeur : identité, prix TTC, paiement direct, droit de rétractation pour le non périssable.</li>
+        <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" />Tu es responsable des données de tes clients, nous sommes ton sous-traitant.</li>
+    </ul>
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_row(form.acceptTerms) }}
+        <twig:Button type="submit" class="w-full">
+            Accepter et continuer
+            <twig:ux:icon name="lucide:arrow-right" />
+        </twig:Button>
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block auth_footer %}
+    <form method="post" action="{{ path('pro_logout') }}" class="inline">
+        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('logout') }}">
+        Pas maintenant ? <button type="submit" class="link inline-flex min-h-11 items-center">Me déconnecter</button>
+    </form>
+{% endblock %}

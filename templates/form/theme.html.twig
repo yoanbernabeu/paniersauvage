@@ -1,0 +1,121 @@
+{#
+    Global Symfony Form theme (registered in config/packages/twig.yaml): fields rendered with
+    {{ form_row(form.field) }} get the same look as the <twig:Input>, <twig:Textarea>,
+    <twig:NativeSelect> and <twig:Checkbox> components.
+#}
+{% use 'form_div_layout.html.twig' %}
+
+{#
+    Every field points at its help text and its errors (aria-describedby) and says when it is invalid
+    (aria-invalid), whether it is rendered with form_row() or form_widget().
+#}
+{%- block widget_attributes -%}
+    {%- set described_by = [] -%}
+    {%- if help is defined and help is not empty -%}
+        {%- set described_by = described_by|merge([id ~ '_help']) -%}
+    {%- endif -%}
+    {%- if errors is defined and errors|length > 0 -%}
+        {%- set described_by = described_by|merge([id ~ '_errors']) -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+    {%- endif -%}
+    {%- if described_by is not empty -%}
+        {%- set attr = attr|merge({'aria-describedby': ((attr['aria-describedby'] ?? '') ~ ' ' ~ described_by|join(' '))|trim}) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock widget_attributes -%}
+
+{%- block form_row -%}
+    <div{% with {attr: row_attr|merge({class: (row_attr.class|default('') ~ ' mb-5 flex flex-col gap-1.5')|trim})} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_label(form) -}}
+        {{- form_widget(form) -}}
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{%- block form_label -%}
+    {%- set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' text-sm font-medium leading-snug text-ink')|trim}) -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block form_label_content -%}
+    {{- parent() -}}
+    {%- if required is defined and not required and compound is defined and not compound and label is not same as(false) %} <span class="font-normal text-ink-soft">(facultatif)</span>{% endif -%}
+{%- endblock form_label_content -%}
+
+{%- block form_widget_simple -%}
+    {%- set type = type|default('text') -%}
+    {%- if type not in ['hidden', 'range', 'file'] -%}
+        {%- set attr = attr|merge({class: ('h-11 w-full min-w-0 rounded-lg border bg-white px-3.5 py-2 text-base text-ink transition-colors outline-none placeholder:text-ink-soft/70 focus-visible:border-sage disabled:cursor-not-allowed disabled:bg-sage-soft disabled:opacity-60 ' ~ (errors|length > 0 ? 'border-danger' : 'border-input') ~ ' ' ~ attr.class|default(''))|trim}) -%}
+    {%- elseif type == 'file' -%}
+        {%- set attr = attr|merge({class: ('block w-full text-sm text-ink-soft file:me-3 file:h-10 file:cursor-pointer file:rounded-full file:border file:border-solid file:border-sage file:bg-transparent file:px-4 file:text-sm file:font-semibold file:text-sage-dark hover:file:bg-sage-soft ' ~ attr.class|default(''))|trim}) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock form_widget_simple -%}
+
+{%- block textarea_widget -%}
+    {%- set attr = attr|merge({class: ('min-h-24 w-full rounded-lg border bg-white px-3.5 py-2.5 text-base text-ink transition-colors outline-none placeholder:text-ink-soft/70 focus-visible:border-sage disabled:cursor-not-allowed disabled:bg-sage-soft disabled:opacity-60 ' ~ (errors|length > 0 ? 'border-danger' : 'border-input') ~ ' ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock textarea_widget -%}
+
+{%- block choice_widget_collapsed -%}
+    {%- set attr = attr|merge({class: ('h-11 w-full min-w-0 rounded-lg border bg-white py-2 ps-3.5 pe-9 text-base text-ink transition-colors outline-none focus-visible:border-sage disabled:cursor-not-allowed disabled:opacity-60 ' ~ (errors|length > 0 ? 'border-danger' : 'border-input') ~ ' ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock choice_widget_collapsed -%}
+
+{%- block choice_widget_expanded -%}
+    <div {{ block('widget_container_attributes') }} class="flex flex-col gap-1">
+        {%- for child in form %}
+            <div class="flex min-h-11 items-center gap-3">
+                {{- form_widget(child) -}}
+                {{- form_label(child, null, {translation_domain: choice_translation_domain, label_attr: {class: 'font-normal'}}) -}}
+            </div>
+        {% endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}
+
+{%- block checkbox_widget -%}
+    {%- set attr = attr|merge({class: ('size-5 shrink-0 rounded-md border border-input bg-white accent-sage-dark outline-none disabled:opacity-60 ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock checkbox_widget -%}
+
+{%- block radio_widget -%}
+    {%- set attr = attr|merge({class: ('size-5 shrink-0 border border-input bg-white accent-sage-dark outline-none disabled:opacity-60 ' ~ attr.class|default(''))|trim}) -%}
+    {{- parent() -}}
+{%- endblock radio_widget -%}
+
+{%- block checkbox_row -%}
+    <div{% with {attr: row_attr|merge({class: (row_attr.class|default('') ~ ' mb-5 flex flex-col gap-1.5')|trim})} %}{{ block('attributes') }}{% endwith %}>
+        <div class="flex min-h-11 items-center gap-3">
+            {{- form_widget(form) -}}
+            {{- form_label(form, null, {required: true}) -}}
+        </div>
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock checkbox_row -%}
+
+{%- block form_help -%}
+    {%- set help_attr = help_attr|merge({class: (help_attr.class|default('') ~ ' text-sm text-ink-soft')|trim}) -%}
+    {{- parent() -}}
+{%- endblock form_help -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <ul id="{{ id }}_errors" class="flex flex-col gap-1 text-sm font-medium text-danger" role="alert">
+            {%- for error in errors -%}
+                <li class="flex items-start gap-1.5"><twig:ux:icon name="lucide:circle-alert" class="mt-0.5 size-4 shrink-0" />{{ error.message }}</li>
+            {%- endfor -%}
+        </ul>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{%- block button_widget -%}
+    {%- set attr = attr|merge({class: (attr.class|default('inline-flex h-11 items-center justify-center gap-2 rounded-full border border-sage px-5 text-sm font-semibold text-sage-dark transition-colors hover:bg-sage-soft'))|trim}) -%}
+    {{- parent() -}}
+{%- endblock button_widget -%}
+
+{%- block submit_widget -%}
+    {%- set attr = attr|merge({class: (attr.class|default('inline-flex h-11 items-center justify-center gap-2 rounded-full bg-wheat px-5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-wheat-dark'))|trim}) -%}
+    {{- parent() -}}
+{%- endblock submit_widget -%}

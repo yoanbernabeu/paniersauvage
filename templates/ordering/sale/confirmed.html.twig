@@ -1,0 +1,46 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}C'est noté ! Commande chez {{ shop.name }}{% endblock %}
+
+{% block content %}
+    <div class="mb-8 flex flex-col items-center text-center">
+        <twig:Illustration name="basket" class="w-52" />
+        <h1 class="mt-4 text-4xl font-semibold text-ink">C'est noté ! 🧺</h1>
+        <p class="mt-2 max-w-md text-lg text-ink-soft">
+            Merci{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %}, ta commande chez <strong class="font-semibold text-ink">{{ shop.name }}</strong> est enregistrée.
+        </p>
+        <p class="mt-1 text-sm text-ink-soft">Référence <span class="amount font-semibold text-ink" data-order-reference>{{ order.reference }}</span> · un e-mail de confirmation arrive à {{ order.customer.email }}.</p>
+    </div>
+
+    {{ include('ordering/_summary.html.twig') }}
+    {{ include('ordering/_new_customer_notice.html.twig', {customer: is_guest ? null : order.customer, class: 'mt-6'}) }}
+
+    <div class="mt-6 rounded-xl bg-sage-soft p-4 text-sm text-sage-deep" data-edit-notice>
+        {% if editable %}
+            {% if is_guest %}
+                Un changement d'avis ? Tu peux modifier ou annuler ta commande jusqu'au {{ sale.effectiveEditCutoffAt|datetime_long }} :
+                <a href="{{ safe_path('customer_login', '/connexion') }}" class="link">connecte-toi avec ton e-mail</a>, on t'envoie un lien.
+            {% else %}
+                Un changement d'avis ? Tu peux
+                <a href="{{ path('customer_order_edit', {reference: order.reference}) }}" class="link">modifier ou annuler ta commande</a>
+                jusqu'au {{ sale.effectiveEditCutoffAt|datetime_long }}.
+            {% endif %}
+        {% else %}
+            Pour changer quelque chose, contacte directement {{ shop.name }}{% if shop.phone %} au <a href="tel:{{ shop.phone|replace({' ': ''}) }}" class="link">{{ shop.phone }}</a>{% endif %}.
+        {% endif %}
+    </div>
+
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <twig:Button as="a" size="lg" href="{{ path('sale_order_ics', {slug: shop.slug, code: sale.code, reference: order.reference}) }}" data-turbo="false" data-ics-link>
+            <twig:ux:icon name="lucide:calendar-days" />
+            Ajouter à mon calendrier
+        </twig:Button>
+        {% if not is_guest %}
+            <twig:Button as="a" size="lg" variant="secondary" href="{{ path('customer_order_show', {reference: order.reference}) }}">Voir ma commande</twig:Button>
+        {% else %}
+            <twig:Button as="a" size="lg" variant="secondary" href="{{ safe_path('shop_show', '/' ~ shop.slug, {slug: shop.slug}) }}">Retour chez {{ shop.name }}</twig:Button>
+        {% endif %}
+    </div>
+
+    {{ include('shop/_nearby_shops.html.twig', {nearby_shops: nearby_shops|default([]), point_name: order.saleDelivery.deliveryPoint.name}) }}
+{% endblock %}

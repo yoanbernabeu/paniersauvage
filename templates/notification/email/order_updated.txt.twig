@@ -1,0 +1,19 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},
+
+{% if actor == 'producer' %}
+{{ shop.name }} a modifié ta commande. Voici le récapitulatif à jour.
+{% elseif actor == 'customer' %}
+Tu as modifié ta commande chez {{ shop.name }}. Voici le récapitulatif à jour.
+{% else %}
+Ta commande chez {{ shop.name }} a été mise à jour. Voici le récapitulatif.
+{% endif %}
+
+{{ include('notification/_order_summary.txt.twig') }}
+LIVRAISON
+{{ include('notification/_delivery.txt.twig') }}
+{{ include('notification/_edit_info.txt.twig') }}
+Voir ma commande : {{ order_url }}
+{% endblock %}

@@ -1,0 +1,63 @@
+{# Variables: products (list of Product, all of the current shop), movable (bool: up / down buttons). #}
+<ul class="divide-y divide-line-soft overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-line">
+    {% for product in products %}
+        <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3 sm:px-4" data-product="{{ product.id }}">
+            {% if product.photoPath %}
+                <img src="{{ product.photoPath|image_url }}" alt="" class="size-12 shrink-0 rounded-lg border border-line-soft object-cover" loading="lazy">
+            {% else %}
+                <span class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-sage-soft text-sage" aria-hidden="true">
+                    <twig:ux:icon name="lucide:wheat" class="size-5" />
+                </span>
+            {% endif %}
+
+            <div class="min-w-0 flex-1 basis-40">
+                <p class="truncate font-medium {{ product.archived ? 'text-ink-soft' : 'text-ink' }}">{{ product.name }}</p>
+                <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+                    <span><span class="amount font-medium text-ink">{{ product.priceCents|money }}</span> / {{ product.unit.short }}{% if product.unit.weighed %} · par {{ product.quantityStep|quantity(product.unit) }}{% endif %}</span>
+                    <span>TVA {{ product.vatRateBp|vat_rate }}</span>
+                    {% if product.maxQtyDefault is not null %}
+                        <span>{{ product.maxQtyDefault|quantity(product.unit) }} max par vente</span>
+                    {% endif %}
+                </p>
+                {% if product.seasonal and (product.availableFrom or product.availableUntil) %}
+                    <p class="mt-1">
+                        <twig:Badge>
+                            {% if product.availableFrom and product.availableUntil %}
+                                Du {{ product.availableFrom|date_short }} au {{ product.availableUntil|date_short }}
+                            {% elseif product.availableFrom %}
+                                À partir du {{ product.availableFrom|date_short }}
+                            {% else %}
+                                Jusqu'au {{ product.availableUntil|date_short }}
+                            {% endif %}
+                        </twig:Badge>
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="flex shrink-0 items-center gap-1">
+                {% if movable|default(false) and products|length > 1 %}
+                    <form method="post" action="{{ path('pro_product_move', {id: product.id}) }}" class="flex items-center" data-product-move>
+                        <input type="hidden" name="_token" value="{{ csrf_token('product_move_' ~ product.id) }}">
+                        <twig:Button type="submit" name="direction" value="up" variant="ghost" size="icon" :disabled="loop.first" aria-label="Monter {{ product.name }}">
+                            <twig:ux:icon name="lucide:chevron-up" />
+                        </twig:Button>
+                        <twig:Button type="submit" name="direction" value="down" variant="ghost" size="icon" :disabled="loop.last" aria-label="Descendre {{ product.name }}">
+                            <twig:ux:icon name="lucide:chevron-down" />
+                        </twig:Button>
+                    </form>
+                {% endif %}
+                <twig:Button as="a" href="{{ path('pro_product_edit', {id: product.id}) }}" variant="ghost" size="sm" class="h-11" aria-label="Modifier {{ product.name }}">
+                    <twig:ux:icon name="lucide:pencil" />
+                    Modifier
+                </twig:Button>
+                <form method="post" action="{{ path('pro_product_archive', {id: product.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('product_archive_' ~ product.id) }}">
+                    <twig:Button type="submit" variant="ghost" size="sm" class="h-11" aria-label="{{ product.archived ? 'Désarchiver' : 'Archiver' }} {{ product.name }}">
+                        <twig:ux:icon name="lucide:archive" />
+                        {{ product.archived ? 'Désarchiver' : 'Archiver' }}
+                    </twig:Button>
+                </form>
+            </div>
+        </li>
+    {% endfor %}
+</ul>

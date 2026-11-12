@@ -1,0 +1,134 @@
+{# Results of the producer directory. Variables: see shop/directory/index.html.twig. #}
+{% set where = place_label ? 'autour de ' ~ place_label : 'autour de toi' %}
+
+{% if state == 'results' %}
+    {#
+        With a map (variable map, see App\Shop\Search\SearchMap), the producer-map controller shows it
+        and sets data-map="on": above the list on small screens, in a sticky column beside it on
+        large ones. Without JavaScript nothing changes: a single column, no empty box.
+    #}
+    <div class="grid gap-y-5 lg:data-[map=on]:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:data-[map=on]:grid-rows-[auto_1fr] lg:data-[map=on]:gap-x-8"
+        {% if map %}
+            data-controller="producer-map"
+            data-producer-map-tiles-value="{{ map.tiles|json_encode }}"
+            data-producer-map-center-value="{{ map.center|json_encode }}"
+            data-producer-map-radius-value="{{ map.radiusKm }}"
+            data-producer-map-results-value="{{ map.results|json_encode }}"
+        {% endif %}
+        data-results-layout>
+        <div class="min-w-0">
+            <h2 id="resultats-titre" class="font-display mb-1 text-2xl font-semibold text-balance text-ink">
+                {{ results|length }} producteur{{ results|length > 1 ? 's' }} {{ where }}
+            </h2>
+            <p class="text-sm text-ink-soft">À moins de {{ criteria.radiusKm }} km, du plus proche au plus éloigné{{ criteria.filters.isEmpty() ? '' : ', avec tes filtres' }}.</p>
+        </div>
+        {% if map %}
+            <div class="min-w-0 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start" data-producer-map-target="frame" hidden>
+                <a href="#liste-producteurs" class="sr-only focus:not-sr-only focus:mb-2 focus:inline-block focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-sage-deep focus:shadow-card">Passer la carte</a>
+                <div role="region" aria-label="Carte des producteurs {{ where }}" aria-describedby="carte-aide" class="overflow-hidden rounded-2xl bg-sage-soft shadow-card ring-1 ring-line">
+                    <div class="h-64 sm:h-80 lg:h-[min(32rem,calc(100dvh-2rem))]" data-producer-map-target="canvas" data-map-canvas></div>
+                </div>
+                <p id="carte-aide" class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-soft" data-map-legend>
+                    <span class="inline-flex items-center gap-1.5"><span class="size-2.5 rounded-full bg-ink ring-2 ring-sage/30" aria-hidden="true"></span>{{ place_label ? 'Ta recherche' : 'Toi' }}</span>
+                    <span class="inline-flex items-center gap-1.5"><span class="size-2.5 rounded-full bg-sage" aria-hidden="true"></span>Point de retrait le plus proche de chaque producteur</span>
+                    <span class="sr-only">Au clavier, Tab atteint les producteurs de la carte, les flèches passent de l'un à l'autre et Entrée ouvre sa fiche.</span>
+                </p>
+            </div>
+        {% endif %}
+        <ul id="liste-producteurs" class="flex min-w-0 flex-col gap-4 lg:col-start-1" data-results>
+            {% for result in results %}
+                {% set shop = result.shop %}
+                {% set sale = result.nextSale %}
+                <li>
+                    <a href="{{ path('shop_show', {slug: shop.slug, via: 'recherche'}) }}" class="group flex scroll-my-4 items-start gap-4 rounded-xl bg-white p-4 shadow-card ring-1 ring-line transition hover:ring-sage data-active:ring-2 data-active:ring-sage sm:p-5" data-result="{{ shop.slug }}"
+                        {%- if map %} data-producer-map-target="item" data-action="mouseenter->producer-map#highlight focusin->producer-map#highlight mouseleave->producer-map#unhighlight focusout->producer-map#unhighlight"{% endif %}>
+                        {% if shop.logoPath %}
+                            <img src="{{ shop.logoPath|image_url }}" alt="" width="56" height="56" loading="lazy" class="size-14 shrink-0 rounded-full bg-white object-cover ring-1 ring-line">
+                        {% else %}
+                            <span class="flex size-14 shrink-0 items-center justify-center rounded-full bg-sage-mist ring-1 ring-sage/20" aria-hidden="true">
+                                <twig:Illustration name="wheat" class="h-9 w-auto text-sage-dark" />
+                            </span>
+                        {% endif %}
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-display text-xl leading-snug font-semibold text-ink group-hover:text-sage-dark">{{ shop.name }}</h3>
+                            <p class="mt-1 flex items-start gap-1.5 text-sm text-ink-soft" data-distance>
+                                <twig:ux:icon name="lucide:map-pin" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+                                <span><strong class="font-semibold text-ink">{{ result.distanceLabel() }}</strong> · {{ result.pointLabel() }}</span>
+                            </p>
+                            {% if shop.categories is not empty %}
+                                <p class="mt-1 text-sm text-ink" data-categories>{{ shop.categories|map(category => category.label)|join(', ') }}</p>
+                            {% endif %}
+                            {% if result.labels is not empty %}
+                                <ul class="mt-2 flex flex-wrap gap-1.5" aria-label="Labels de ses produits" data-labels>
+                                    {% for label in result.labels|slice(0, 4) %}
+                                        <li><twig:Badge variant="outline">{{ label }}</twig:Badge></li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <div class="mt-3" data-next-sale>
+                                {% if sale and sale.isOpen() %}
+                                    <twig:Badge variant="secondary" class="h-auto py-1 whitespace-normal">
+                                        <twig:ux:icon name="lucide:clock" class="size-3.5" />
+                                        Commandes ouvertes jusqu'au {{ sale.deadlineAt|datetime_long }}
+                                    </twig:Badge>
+                                    <p class="mt-1.5 text-sm text-ink-soft">Livraison {{ sale.deliveryDate|date_long }}</p>
+                                {% elseif sale %}
+                                    <twig:Badge variant="default" class="h-auto py-1 whitespace-normal">
+                                        <twig:ux:icon name="lucide:calendar-days" class="size-3.5" />
+                                        Prochaine vente le {{ sale.opensAt|date_long }}
+                                    </twig:Badge>
+                                    <p class="mt-1.5 text-sm text-ink-soft">Livraison {{ sale.deliveryDate|date_long }}</p>
+                                {% else %}
+                                    <p class="text-sm text-ink-soft">Pas de vente prévue pour l'instant : suis-le pour être prévenu.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <twig:ux:icon name="lucide:chevron-right" class="mt-1 size-5 shrink-0 text-ink-soft group-hover:text-sage-dark" aria-hidden="true" />
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% else %}
+    <h2 id="resultats-titre" class="sr-only">Résultats de la recherche</h2>
+    <twig:Empty class="border border-line bg-white/60 py-10" data-empty="{{ state }}">
+        <twig:Empty:Media>
+            <twig:Illustration name="{{ state == 'empty' ? 'basket' : (state == 'not_found' ? 'herbs' : 'wheat') }}" class="{{ state == 'empty' ? 'w-44' : 'w-28 text-sage' }}" />
+        </twig:Empty:Media>
+        <twig:Empty:Header>
+            {% if state == 'empty' %}
+                <twig:Empty:Title class="font-display text-xl">Pas encore de producteur {{ where }}</twig:Empty:Title>
+                <twig:Empty:Description class="text-ink-soft">
+                    {% if not criteria.filters.isEmpty() %}
+                        Aucun producteur ne correspond à tes filtres à moins de {{ criteria.radiusKm }} km.
+                    {% else %}
+                        Aucun producteur de l'annuaire à moins de {{ criteria.radiusKm }} km pour le moment.
+                        {% if criteria.radiusKm < max_radius %}Essaie un rayon plus large.{% else %}Parles-en à ceux de ton marché : ils peuvent s'inscrire, c'est fait pour eux.{% endif %}
+                    {% endif %}
+                </twig:Empty:Description>
+            {% elseif state == 'not_found' %}
+                <twig:Empty:Title class="font-display text-xl">On ne trouve pas ce lieu</twig:Empty:Title>
+                <twig:Empty:Description class="text-ink-soft">Vérifie l'orthographe, ou tape le code postal de ta commune (par exemple 31000).</twig:Empty:Description>
+            {% elseif state == 'unavailable' %}
+                <twig:Empty:Title class="font-display text-xl">La recherche fait une pause</twig:Empty:Title>
+                <twig:Empty:Description class="text-ink-soft">Le service qui situe les communes ne répond pas. Réessaie dans quelques minutes, ou utilise « Autour de moi ».</twig:Empty:Description>
+            {% elseif state == 'rate_limited' %}
+                <twig:Empty:Title class="font-display text-xl">Doucement, ça pousse</twig:Empty:Title>
+                <twig:Empty:Description class="text-ink-soft">Tu as lancé beaucoup de recherches d'un coup. Réessaie dans quelques minutes.</twig:Empty:Description>
+            {% endif %}
+        </twig:Empty:Header>
+        {% if state == 'empty' and not criteria.filters.isEmpty() %}
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ path('producer_directory', criteria.withoutFilters()) }}#resultats" variant="secondary" data-clear-filters>
+                    Retirer les filtres
+                </twig:Button>
+            </twig:Empty:Content>
+        {% elseif state == 'empty' and criteria.radiusKm < max_radius %}
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ path('producer_directory', criteria.withRadius(max_radius)) }}#resultats" variant="secondary" data-widen-radius>
+                    Chercher à {{ max_radius }} km
+                </twig:Button>
+            </twig:Empty:Content>
+        {% endif %}
+    </twig:Empty>
+{% endif %}

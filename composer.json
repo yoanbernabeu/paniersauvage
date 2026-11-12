@@ -1,0 +1,177 @@
+{
+    "type": "project",
+    "license": "AGPL-3.0-or-later",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.4",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "doctrine/doctrine-bundle": "^3.3.4",
+        "doctrine/doctrine-migrations-bundle": "^4.0.1",
+        "doctrine/orm": "^3.7.6",
+        "dompdf/dompdf": "^3.1.6",
+        "phpdocumentor/reflection-docblock": "^6.0.3",
+        "phpstan/phpdoc-parser": "^2.4.1",
+        "stripe/stripe-php": "^22.1",
+        "symfony/asset": "8.1.*",
+        "symfony/asset-mapper": "8.1.*",
+        "symfony/brevo-mailer": "8.1.*",
+        "symfony/console": "8.1.*",
+        "symfony/doctrine-messenger": "8.1.*",
+        "symfony/dotenv": "8.1.*",
+        "symfony/expression-language": "8.1.*",
+        "symfony/flex": "^2.12",
+        "symfony/form": "8.1.*",
+        "symfony/framework-bundle": "8.1.*",
+        "symfony/http-client": "8.1.*",
+        "symfony/intl": "8.1.*",
+        "symfony/mailer": "8.1.*",
+        "symfony/mime": "8.1.*",
+        "symfony/monolog-bundle": "^3.0|^4.1",
+        "symfony/notifier": "8.1.*",
+        "symfony/process": "8.1.*",
+        "symfony/property-access": "8.1.*",
+        "symfony/property-info": "8.1.*",
+        "symfony/rate-limiter": "8.1.*",
+        "symfony/runtime": "8.1.*",
+        "symfony/scheduler": "8.1.*",
+        "symfony/security-bundle": "8.1.*",
+        "symfony/serializer": "8.1.*",
+        "symfony/stimulus-bundle": "^3.7",
+        "symfony/string": "8.1.*",
+        "symfony/translation": "8.1.*",
+        "symfony/twig-bundle": "8.1.*",
+        "symfony/ux-icons": "^3.7",
+        "symfony/ux-live-component": "^3.7.2",
+        "symfony/ux-turbo": "^3.7",
+        "symfony/ux-twig-component": "^3.7",
+        "symfony/validator": "8.1.*",
+        "symfony/web-link": "8.1.*",
+        "symfony/yaml": "8.1.*",
+        "symfonycasts/tailwind-bundle": "^1.0",
+        "tales-from-a-dev/twig-tailwind-extra": "^1.5",
+        "twig/extra-bundle": "^2.12|^3.29",
+        "twig/html-extra": "^3.29",
+        "twig/twig": "^2.12|^3.30"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true,
+            "phpstan/extension-installer": true,
+            "infection/extension-installer": true
+        },
+        "bump-after-update": true,
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "replace": {
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php72": "*",
+        "symfony/polyfill-php73": "*",
+        "symfony/polyfill-php74": "*",
+        "symfony/polyfill-php80": "*",
+        "symfony/polyfill-php81": "*",
+        "symfony/polyfill-php82": "*",
+        "symfony/polyfill-php83": "*",
+        "symfony/polyfill-php84": "*"
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ],
+        "lint": [
+            "@php bin/console lint:container",
+            "@php bin/console lint:twig templates",
+            "@php bin/console lint:yaml config --parse-tags",
+            "@php bin/console doctrine:schema:validate --skip-sync"
+        ],
+        "lsp": "symfony lsp:check",
+        "analyse": [
+            "@php bin/console cache:warmup --env=dev",
+            "phpstan analyse --memory-limit=1G"
+        ],
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "rector": "rector process --dry-run",
+        "test": "phpunit",
+        "mutation:databases": "for token in '' 1 2 3 4; do TEST_TOKEN=$token php bin/console doctrine:database:create --if-not-exists --env=test -q && TEST_TOKEN=$token php bin/console doctrine:schema:update --force --env=test -q || exit 1; done",
+        "mutation": "@php -d memory_limit=1G vendor/bin/infection --threads=4",
+        "mutation:diff": "@php -d memory_limit=1G vendor/bin/infection --threads=4 --git-diff-lines --git-diff-base=origin/main --min-covered-msi=90 --ignore-msi-with-no-mutations",
+        "audit:all": [
+            "@composer audit",
+            "@php bin/console importmap:audit"
+        ],
+        "ci": [
+            "@composer validate --strict --no-check-publish",
+            "@lint",
+            "@lsp",
+            "@analyse",
+            "@cs",
+            "@rector",
+            "@test",
+            "@audit:all"
+        ]
+    },
+    "scripts-descriptions": {
+        "lint": "Symfony linters (container, Twig, YAML, Doctrine mapping)",
+        "lsp": "Symfony-aware diagnostics (Symfony Language Tools, needs Symfony CLI >= 5.20)",
+        "analyse": "PHPStan at level max",
+        "cs": "PHP-CS-Fixer, dry run",
+        "rector": "Rector, dry run",
+        "test": "PHPUnit",
+        "mutation:databases": "Create the test databases of the Infection threads (TEST_TOKEN 1 to 4)",
+        "mutation": "Mutation testing of the whole code base (needs PCOV or Xdebug)",
+        "mutation:diff": "Mutation testing of the lines changed since origin/main",
+        "audit:all": "Security advisories of the Composer and import map dependencies",
+        "ci": "Every CI check except mutation testing and the Docker build"
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": "true",
+            "require": "8.1.*"
+        }
+    },
+    "require-dev": {
+        "dama/doctrine-test-bundle": "^8.7",
+        "doctrine/doctrine-fixtures-bundle": "^4.3.1",
+        "friendsofphp/php-cs-fixer": "^3.95.30",
+        "infection/infection": "^0.35.10",
+        "phpstan/extension-installer": "^1.4.3",
+        "phpstan/phpstan": "^2.3.5",
+        "phpstan/phpstan-doctrine": "^2.1.2",
+        "phpstan/phpstan-symfony": "^2.1.1",
+        "phpunit/phpunit": "^13.4.6",
+        "rector/rector": "^2.8.4",
+        "symfony/browser-kit": "8.1.*",
+        "symfony/css-selector": "8.1.*",
+        "symfony/debug-bundle": "8.1.*",
+        "symfony/maker-bundle": "^1.68",
+        "symfony/stopwatch": "8.1.*",
+        "symfony/ux-toolkit": "^3.7.1",
+        "symfony/web-profiler-bundle": "8.1.*",
+        "zenstruck/foundry": "^2.16"
+    }
+}

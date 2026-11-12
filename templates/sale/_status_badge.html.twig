@@ -1,0 +1,3 @@
+{# Status badge of a sale. Variable: sale. #}
+{%- set status_variants = {scheduled: 'outline', open: 'secondary', closed: 'default', done: 'muted', cancelled: 'destructive'} -%}
+<twig:Badge variant="{{ status_variants[sale.status.value] }}" data-sale-status="{{ sale.status.value }}">{{ sale.status.label }}</twig:Badge>

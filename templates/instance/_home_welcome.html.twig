@@ -1,0 +1,31 @@
+{#
+    Home page of a territorial instance (docs/INSTANCE.md): the words of the territory
+    (INSTANCE_WELCOME_TEXT), its carrier (INSTANCE_CARRIER_*) and the sponsorship of the
+    subscription. Nothing on Panier Sauvage itself.
+#}
+{% if instance.welcomeText is not empty or instance.hasCarrier() %}
+    {% set territory_name = instance.territory.name %}
+    <section aria-labelledby="territoire" class="border-y border-line-soft bg-white" data-instance-welcome>
+        <div class="mx-auto grid w-full max-w-5xl gap-6 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
+            <div>
+                <h2 id="territoire" class="font-display text-2xl leading-tight font-semibold text-balance text-ink sm:text-3xl">
+                    {{ territory_name ? 'Pour les producteurs de ' ~ territory_name : 'Pour les producteurs du territoire' }}
+                </h2>
+                {% if instance.hasCarrier() %}
+                    <p class="mt-3 leading-relaxed text-ink-soft" data-instance-carrier-intro>{{ include('instance/_carrier.html.twig', {prefix: 'Un service porté par '}) }}</p>
+                {% endif %}
+            </div>
+            <div class="flex flex-col gap-4">
+                {% if instance.welcomeText is not empty %}
+                    <p class="text-lg leading-relaxed whitespace-pre-line text-ink" data-instance-welcome-text>{{ instance.welcomeText }}</p>
+                {% endif %}
+                {% if instance.isSponsored() %}
+                    <p class="flex items-start gap-3 rounded-xl bg-wheat-soft px-4 py-3 font-medium text-wheat-ink" data-instance-sponsored>
+                        <twig:ux:icon name="lucide:gift" class="mt-0.5 size-5 shrink-0" />
+                        <span>{{ instance.sponsorshipMention() }} : rien à payer pour toi, ni aujourd'hui ni après un essai.</span>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endif %}

@@ -1,0 +1,143 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+{% block page_title %}Bonjour{{ producer and producer.firstName ? ' ' ~ producer.firstName }}{% endblock %}
+{% block page_subtitle %}Voici où en sont tes ventes et tes livraisons.{% endblock %}
+
+{% block page_actions %}
+    {% if allows_new_sales and not needs_onboarding %}
+        <twig:Button as="a" href="{{ path('pro_sale_new') }}">
+            <twig:ux:icon name="lucide:plus" />
+            Nouvelle vente
+        </twig:Button>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if not allows_new_sales %}
+        {{ include('sale/_subscription_alert.html.twig') }}
+    {% endif %}
+
+    {% if needs_onboarding %}
+        <twig:Empty class="rounded-xl border border-line bg-white py-12" data-onboarding>
+            <twig:Empty:Media><twig:Illustration name="basket" class="w-44" /></twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Bienvenue chez toi</twig:Empty:Title>
+                <twig:Empty:Description>Ta boutique est encore vide. En quelques minutes, ajoute tes produits, un point de livraison, et ouvre ta première vente.</twig:Empty:Description>
+                <p class="amount text-sm font-medium text-sage-dark" data-onboarding-count>{{ onboarding.doneCount }}/{{ onboarding.total }} étapes faites</p>
+            </twig:Empty:Header>
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ safe_path('pro_onboarding', '/pro/bienvenue') }}">
+                    Préparer ma boutique
+                    <twig:ux:icon name="lucide:arrow-right" />
+                </twig:Button>
+            </twig:Empty:Content>
+        </twig:Empty>
+    {% else %}
+        {% if not onboarding.complete %}
+            {{ include('shop/onboarding/_progress.html.twig', {progress: onboarding, class: 'mb-5'}) }}
+        {% endif %}
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            <div class="flex flex-col gap-5 lg:col-span-2">
+                <twig:Card data-upcoming-deliveries>
+                    <twig:Card:Header>
+                        <twig:Card:Title>Prochaines livraisons</twig:Card:Title>
+                    </twig:Card:Header>
+                    <twig:Card:Content>
+                        {% if upcoming_deliveries is empty %}
+                            <twig:Empty class="border border-line py-8">
+                                <twig:Empty:Header>
+                                    <twig:Empty:Title>Aucune livraison prévue</twig:Empty:Title>
+                                    <twig:Empty:Description>Tes prochaines livraisons s'afficheront ici dès qu'une vente sera ouverte.</twig:Empty:Description>
+                                </twig:Empty:Header>
+                            </twig:Empty>
+                        {% else %}
+                            <ul class="divide-y divide-line-soft">
+                                {% for sale in upcoming_deliveries %}
+                                    {% set order_count = order_counts[sale.id] ?? 0 %}
+                                    <li class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-4">
+                                        <div class="min-w-0 flex-1">
+                                            <a href="{{ path('pro_sale_show', {id: sale.id}) }}" class="font-medium text-ink hover:underline">{{ sale.deliveryDate|date_long|capitalize }}</a>
+                                            <p class="text-sm text-ink-soft">
+                                                {{ sale.title }}
+                                                {%- for delivery in sale.deliveries %} · {{ delivery.deliveryPoint.name }}, {{ time_range(delivery.startsAt, delivery.endsAt) }}{% endfor %}
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <span class="amount text-sm text-ink-soft">{{ order_count }} commande{{ order_count > 1 ? 's' }}</span>
+                                            {{ include('sale/_status_badge.html.twig') }}
+                                            <twig:Button as="a" href="{{ path('pro_sale_delivery_sheet', {id: sale.id}) }}" variant="secondary" size="sm">
+                                                <twig:ux:icon name="lucide:truck" />
+                                                Livrer
+                                            </twig:Button>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </twig:Card:Content>
+                </twig:Card>
+
+                <twig:Card data-open-sales>
+                    <twig:Card:Header>
+                        <twig:Card:Title>Ventes ouvertes</twig:Card:Title>
+                        <twig:Card:Action><a class="link text-sm" href="{{ path('pro_sale_index') }}">Toutes les ventes</a></twig:Card:Action>
+                    </twig:Card:Header>
+                    <twig:Card:Content>
+                        {% if open_sales is empty %}
+                            <twig:Empty class="border border-line py-8">
+                                <twig:Empty:Header>
+                                    <twig:Empty:Title>Aucune vente ouverte</twig:Empty:Title>
+                                    <twig:Empty:Description>Tes clients ne peuvent rien commander pour l'instant.</twig:Empty:Description>
+                                </twig:Empty:Header>
+                                {% if allows_new_sales %}
+                                    <twig:Empty:Content>
+                                        <twig:Button as="a" href="{{ path('pro_sale_new') }}" variant="secondary">Créer une vente</twig:Button>
+                                    </twig:Empty:Content>
+                                {% endif %}
+                            </twig:Empty>
+                        {% else %}
+                            <ul class="divide-y divide-line-soft">
+                                {% for sale in open_sales %}
+                                    {% set order_count = order_counts[sale.id] ?? 0 %}
+                                    <li class="py-3 first:pt-0 last:pb-0">
+                                        <a href="{{ path('pro_sale_show', {id: sale.id}) }}" class="flex min-h-11 items-center gap-3 hover:underline">
+                                            <span class="min-w-0 flex-1">
+                                                <span class="block truncate font-medium text-ink">{{ sale.title }}</span>
+                                                <span class="block text-sm text-ink-soft">Commandes jusqu'au {{ sale.deadlineAt|datetime_long }}</span>
+                                            </span>
+                                            <span class="amount rounded-full bg-sage-mist px-2.5 py-1 text-sm font-semibold text-sage-deep">{{ order_count }} commande{{ order_count > 1 ? 's' }}</span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </twig:Card:Content>
+                </twig:Card>
+            </div>
+
+            <twig:Card class="self-start" data-shortcuts>
+                <twig:Card:Header><twig:Card:Title>Raccourcis</twig:Card:Title></twig:Card:Header>
+                <twig:Card:Content>
+                    {% set shortcuts = [
+                        {label: 'Nouvelle vente', icon: 'lucide:plus', url: allows_new_sales ? path('pro_sale_new') : null},
+                        {label: 'Mes récurrences', icon: 'lucide:repeat', url: path('pro_schedule_index')},
+                        {label: 'Mes produits', icon: 'lucide:wheat', url: route_exists('pro_product_index') ? path('pro_product_index') : null},
+                        {label: 'Mes points de livraison', icon: 'lucide:map-pin', url: route_exists('pro_delivery_point_index') ? path('pro_delivery_point_index') : null},
+                        {label: 'Ma page publique', icon: 'lucide:external-link', url: route_exists('shop_show') ? path('shop_show', {slug: shop.slug}) : null},
+                    ] %}
+                    <ul class="flex flex-col gap-1">
+                        {% for shortcut in shortcuts|filter(shortcut => shortcut.url is not null) %}
+                            <li>
+                                <a href="{{ shortcut.url }}" class="-mx-2 flex min-h-11 items-center gap-3 rounded-lg px-2 text-sm font-medium text-sage-dark hover:bg-sage-soft">
+                                    <twig:ux:icon name="{{ shortcut.icon }}" class="size-4" />
+                                    {{ shortcut.label }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </twig:Card:Content>
+            </twig:Card>
+        </div>
+    {% endif %}
+{% endblock %}

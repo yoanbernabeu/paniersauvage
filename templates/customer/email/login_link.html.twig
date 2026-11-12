@@ -1,0 +1,21 @@
+{% extends 'notification/layout.html.twig' %}
+{# Variables: url, first_name, minutes. Same frame as every other e-mail (notification/layout.html.twig). #}
+{% set subject = 'Ton lien de connexion à ' ~ instance.name %}
+
+{% block preheader %}Un clic suffit pour te connecter. Le lien est valable {{ minutes }} minutes.{% endblock %}
+
+{% block title %}{% if first_name %}Bonjour {{ first_name }},{% else %}Bonjour,{% endif %}{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Voici ton lien pour te connecter à {{ instance.name }}. Pas de mot de passe : un clic suffit.</p>
+    {{ include('notification/_button.html.twig', {url: url, label: 'Me connecter'}) }}
+    <p style="{{ p_css }}{{ box_css }}">Ce lien est valable {{ minutes }} minutes. Passé ce délai, demande-en simplement un nouveau.</p>
+    <p style="{{ muted_css }}">
+        Le bouton ne marche pas ? Copie cette adresse dans ton navigateur :<br>
+        <a href="{{ url }}" style="{{ link_css }}word-break:break-all;">{{ url }}</a>
+    </p>
+{% endblock %}
+
+{% block footer %}
+    <p style="margin:0;">Tu n'as rien demandé ? Ignore ce message, personne ne peut se connecter sans ce lien.</p>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}{{ summary.orderCount }} commande{{ summary.orderCount > 1 ? 's' }} pour la livraison du {{ sale.deliveryDate|date_long }}.{% endblock %}
+
+{% block title %}Les commandes sont closes{% endblock %}
+
+{% block content %}
+    {% set cell_css = 'padding:8px 0;border-bottom:1px solid #ECE8DE;' ~ font_text ~ 'font-size:16px;line-height:22px;color:#1F2A24;' %}
+    <p style="{{ p_css }}">Bonjour{% if producer.firstName %} {{ producer.firstName }}{% endif %},</p>
+    {% if summary.orderCount == 0 %}
+        <p style="{{ p_css }}">La vente « {{ sale.title }} » est close. Aucune commande cette fois-ci pour la livraison du {{ sale.deliveryDate|date_long }}.</p>
+    {% else %}
+        <p style="{{ p_css }}">
+            La vente « {{ sale.title }} » est close. Tu as
+            <strong style="font-weight:600;">{{ summary.orderCount }} commande{{ summary.orderCount > 1 ? 's' }}</strong>
+            à préparer pour le {{ sale.deliveryDate|date_long }}, pour un total de {{ summary.totalCents|money }}.
+        </p>
+
+        <h2 style="{{ h2_css }}">À produire</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+            {% for item in summary.production %}
+                <tr>
+                    <td style="{{ cell_css }}">{{ item.label }}</td>
+                    <td align="right" style="{{ cell_css }}padding-left:12px;font-weight:600;white-space:nowrap;">{{ item.quantity|quantity(item.unit) }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        {% for group in summary.groups %}
+            {% set delivery = group.delivery %}
+            <h2 style="{{ h2_css }}">{{ delivery.deliveryPoint.name }} · {{ time_range(delivery.startsAt, delivery.endsAt) }}</h2>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+                {% for order in group.orders %}
+                    <tr>
+                        <td style="{{ cell_css }}">
+                            <strong style="font-weight:600;">{{ order.customerDisplayName }}</strong>{% if order.customerPhone %} · {{ order.customerPhone }}{% endif %}<br>
+                            <span style="font-size:14px;line-height:21px;color:#56635B;">
+                                {% for line in order.lines %}{{ line.quantity|line_quantity(line.unit) }} {{ line.label }}{{ not loop.last ? ', ' }}{% endfor %}
+                                {% if delivery.home and order.deliveryAddress %}<br>Adresse : {{ order.deliveryAddress }}{% endif %}
+                                {% if order.note %}<br>Note : {{ order.note }}{% endif %}
+                            </span>
+                        </td>
+                        <td align="right" valign="top" style="{{ cell_css }}padding-left:12px;white-space:nowrap;">{{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endfor %}
+    {% endif %}
+
+    {{ include('notification/_button.html.twig', {url: sale_url, label: 'Voir la vente'}) }}
+{% endblock %}
+
+{% block footer %}<p style="margin:0;">Tu reçois cet e-mail parce que tu gères la boutique {{ shop.name }}.</p>{% endblock %}

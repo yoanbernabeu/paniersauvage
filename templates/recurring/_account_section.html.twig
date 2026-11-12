@@ -1,0 +1,24 @@
+{# "Mon compte": the customer's subscriptions. Variables: customer. #}
+{% set recurring_orders = customer_recurring_orders(customer) %}
+{% if recurring_orders is not empty %}
+    <section aria-labelledby="abonnements" class="mb-12" data-section="recurring-orders">
+        <h2 id="abonnements" class="font-display mb-4 text-2xl font-semibold text-ink">Tes paniers récurrents</h2>
+        <ul class="flex flex-col gap-3">
+            {% for recurring_order in recurring_orders %}
+                {% set plan = recurring_order.plan %}
+                <li>
+                    <a href="{{ path('customer_recurring_show', {id: recurring_order.id}) }}" class="flex items-center justify-between gap-3 rounded-xl bg-white p-4 shadow-card ring-1 ring-line transition-colors hover:ring-sage sm:p-5" data-recurring-order="{{ recurring_order.id }}">
+                        <span class="min-w-0">
+                            <span class="font-display block text-lg leading-snug font-semibold text-ink">{{ plan.title }}</span>
+                            <span class="block text-sm text-ink-soft">{{ plan.shop.name }} · chaque {{ plan.weekdayName }} · environ {{ recurring_order.estimatedPriceCents|money }}</span>
+                        </span>
+                        <span class="flex shrink-0 items-center gap-2">
+                            <twig:Badge variant="{{ recurring_order.status.badge }}">{{ recurring_order.ending ? 'Résilié' : recurring_order.status.label }}</twig:Badge>
+                            <twig:ux:icon name="lucide:chevron-right" class="size-5 text-ink-soft" />
+                        </span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

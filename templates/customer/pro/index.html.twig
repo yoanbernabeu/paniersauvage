@@ -1,0 +1,100 @@
+{#
+    "Mes clients": the customers of the current shop. Variables: customers (list of
+    App\Customer\Model\ShopCustomer), search, sort and sorts (App\Customer\Enum\CustomerSort), followers (int).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Mes clients{% endblock %}
+{% block page_title %}Mes clients{% endblock %}
+{% block page_subtitle %}Ceux qui ont commandé chez toi ou suivent ta boutique. Tes clients restent les tiens.{% endblock %}
+
+{% block page_actions %}
+    <twig:Button as="a" variant="secondary" size="sm" href="{{ path('pro_customer_csv') }}" data-turbo="false" data-customers-csv>
+        <twig:ux:icon name="lucide:download" />
+        CSV
+    </twig:Button>
+{% endblock %}
+
+{% block content %}
+    <form method="get" action="{{ path('pro_customer_index') }}" role="search" class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end" data-customer-search>
+        <div class="flex-1">
+            <twig:Label for="customer-search">Rechercher</twig:Label>
+            <twig:Input id="customer-search" type="search" name="q" value="{{ search }}" placeholder="Nom, e-mail ou téléphone" class="mt-1.5 w-full" autocomplete="off" />
+        </div>
+        <div class="sm:w-60">
+            <twig:Label for="customer-sort">Trier par</twig:Label>
+            <twig:NativeSelect id="customer-sort" name="tri" class="mt-1.5 w-full">
+                {% for option in sorts %}
+                    <twig:NativeSelect:Option value="{{ option.value }}" :selected="option == sort">{{ option.label }}</twig:NativeSelect:Option>
+                {% endfor %}
+            </twig:NativeSelect>
+        </div>
+        <twig:Button type="submit" variant="secondary">
+            <twig:ux:icon name="lucide:search" />
+            Afficher
+        </twig:Button>
+    </form>
+
+    {% if customers is empty %}
+        {% if search %}
+            <twig:Empty class="rounded-xl border border-line bg-white py-12">
+                <twig:Empty:Header>
+                    <twig:Empty:Title>Personne ne correspond à « {{ search }} »</twig:Empty:Title>
+                    <twig:Empty:Description>Essaie une partie du nom, de l'adresse e-mail ou au moins trois chiffres du téléphone.</twig:Empty:Description>
+                </twig:Empty:Header>
+                <twig:Empty:Content>
+                    <twig:Button as="a" variant="secondary" href="{{ path('pro_customer_index') }}">Voir tous mes clients</twig:Button>
+                </twig:Empty:Content>
+            </twig:Empty>
+        {% else %}
+            <twig:Empty class="rounded-xl border border-line bg-white py-12">
+                <twig:Empty:Media><twig:Illustration name="basket" class="w-40" /></twig:Empty:Media>
+                <twig:Empty:Header>
+                    <twig:Empty:Title>Pas encore de client</twig:Empty:Title>
+                    <twig:Empty:Description>Tes clients apparaissent ici dès leur première commande ou quand ils suivent ta boutique. Partage le lien de ta boutique pour commencer.</twig:Empty:Description>
+                </twig:Empty:Header>
+                <twig:Empty:Content>
+                    <twig:Button as="a" href="{{ safe_path('pro_shop_settings', '/pro/boutique') }}">Le lien de ma boutique</twig:Button>
+                </twig:Empty:Content>
+            </twig:Empty>
+        {% endif %}
+    {% else %}
+        <p class="mb-3 text-sm text-ink-soft" data-customer-count>
+            {{ customers|length }} client{{ customers|length > 1 ? 's' }}{% if not search %}, dont {{ followers }} abonné{{ followers > 1 ? 's' }} à ta boutique{% endif %}
+        </p>
+        <ul class="divide-y divide-line-soft overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-line" data-customers>
+            {% for customer in customers %}
+                <li>
+                    <a href="{{ path('pro_customer_show', {id: customer.id}) }}" class="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-sage-soft/70" data-customer="{{ customer.id }}">
+                        <div class="min-w-0 flex-1">
+                            <p class="flex flex-wrap items-center gap-2 font-medium text-ink">
+                                <span class="truncate">{{ customer.displayName }}</span>
+                                {% if customer.withoutEmail %}<twig:Badge variant="muted">Sans e-mail</twig:Badge>{% endif %}
+                                {% if customer.follower %}
+                                    <twig:Badge variant="secondary">{{ customer.emailConsent ? 'Abonné, reçoit les annonces' : 'Abonné, sans annonces' }}</twig:Badge>
+                                {% endif %}
+                                {% if customer.absences > 0 %}
+                                    <twig:Badge variant="muted" class="font-normal">{{ customer.absences }} absence{{ customer.absences > 1 ? 's' }}</twig:Badge>
+                                {% endif %}
+                            </p>
+                            {% if customer.email and customer.displayName != customer.email %}
+                                <p class="truncate text-sm text-ink-soft">{{ customer.email }}</p>
+                            {% endif %}
+                            <dl class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-ink-soft">
+                                <div class="flex gap-1"><dt>Commandes</dt><dd class="amount font-medium text-ink">{{ customer.orderCount }}</dd></div>
+                                {% if customer.lastOrderDate %}
+                                    <div class="flex gap-1"><dt>Dernière</dt><dd class="text-ink">{{ customer.lastOrderDate|date_short }}</dd></div>
+                                {% endif %}
+                                <div class="flex gap-1"><dt>Retiré</dt><dd class="amount font-medium text-ink">{{ customer.deliveredCents|money }}</dd></div>
+                                {% if customer.followedAt %}
+                                    <div class="flex gap-1"><dt>Abonné depuis le</dt><dd class="text-ink">{{ customer.followedAt|date_short }}</dd></div>
+                                {% endif %}
+                            </dl>
+                        </div>
+                        <twig:ux:icon name="lucide:chevron-right" class="size-4 shrink-0 text-ink-soft" />
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

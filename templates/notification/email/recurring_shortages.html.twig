@@ -1,0 +1,29 @@
+{% extends 'notification/layout.html.twig' %}
+
+{# To the producer. Variables: sale, shop, producer, occurrences (shortages only), pro_url. #}
+
+{% block preheader %}{{ occurrences|length }} abonné{{ occurrences|length > 1 ? 's' }} sans commande complète pour le {{ sale.deliveryDate|date_long }}.{% endblock %}
+
+{% block title %}Commandes d'abonnés incomplètes{% endblock %}
+
+{% block content %}
+    {% set cell_css = 'padding:8px 0;border-bottom:1px solid #ECE8DE;' ~ font_text ~ 'font-size:16px;line-height:22px;color:#1F2A24;' %}
+    <p style="{{ p_css }}">Bonjour{% if producer.firstName %} {{ producer.firstName }}{% endif %},</p>
+    <p style="{{ p_css }}">À l'ouverture de la vente « {{ sale.title }} » (livraison du {{ sale.deliveryDate|date_long }}), le stock ou les points de retrait n'ont pas permis de servir entièrement ces abonnés. Chacun a été prévenu par e-mail.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+        {% for occurrence in occurrences %}
+            <tr>
+                <td style="{{ cell_css }}">
+                    <strong style="font-weight:600;">{{ occurrence.recurringOrder.customer.displayName }}</strong> · {{ occurrence.outcome.label }}<br>
+                    <span style="font-size:14px;line-height:21px;color:#56635B;">
+                        {% for item in occurrence.missingItems %}{{ include('recurring/_missing_item.txt.twig') }}{{ not loop.last ? ' · ' }}{% endfor %}
+                    </span>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <p style="{{ p_css }}">Tu peux augmenter le stock de la vente puis compléter leurs commandes, ou les laisser telles quelles.</p>
+    {{ include('notification/_button.html.twig', {url: pro_url, label: 'Voir mes abonnés'}) }}
+{% endblock %}
+
+{% block footer %}<p style="margin:0;">Tu reçois cet e-mail parce que tu gères la boutique {{ shop.name }}.</p>{% endblock %}

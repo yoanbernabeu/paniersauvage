@@ -1,0 +1,18 @@
+{#
+    Status of an order, the same everywhere (customer and producer). Colour + icon + word, so that
+    "Livrée" and "Annulée" never look alike.
+    Variables: order, hide_confirmed (bool, optional: nothing for a plain confirmed order),
+               class (optional).
+#}
+{%- set badge = {
+    confirmed: {variant: 'secondary', icon: 'lucide:circle-check'},
+    delivered: {variant: 'sage', icon: 'lucide:check'},
+    not_delivered: {variant: 'default', icon: 'lucide:triangle-alert'},
+    cancelled: {variant: 'destructive', icon: 'lucide:x'},
+}[order.status.value] -%}
+{%- if not (hide_confirmed|default(false) and order.status.value == 'confirmed') -%}
+    <twig:Badge variant="{{ badge.variant }}" class="{{ class|default('') }}" data-order-status="{{ order.status.value }}">
+        <twig:ux:icon name="{{ badge.icon }}" />
+        {{ order.status.label }}
+    </twig:Badge>
+{%- endif -%}

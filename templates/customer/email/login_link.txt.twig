@@ -1,0 +1,15 @@
+{% autoescape false %}
+{% if first_name %}Bonjour {{ first_name }},{% else %}Bonjour,{% endif %}
+
+
+Voici ton lien pour te connecter à {{ instance.name }}. Pas de mot de passe : un clic suffit.
+
+{{ url }}
+
+Ce lien est valable {{ minutes }} minutes. Passé ce délai, demande-en simplement un nouveau.
+
+Tu n'as rien demandé ? Ignore ce message, personne ne peut se connecter sans ce lien.
+
+🌾 {{ instance.name }}, les précommandes de tes producteurs.
+CGU : {{ url('legal_terms') }} · Confidentialité : {{ url('legal_privacy') }}
+{% endautoescape %}

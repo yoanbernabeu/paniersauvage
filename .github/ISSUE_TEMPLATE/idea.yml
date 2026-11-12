@@ -1,0 +1,34 @@
+name: Idée
+description: Proposer une évolution ou une nouvelle fonctionnalité.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pars du problème vécu, pas de la solution technique. Panier Sauvage reste l'outil du
+        producteur qui vend en direct : pas de place de marché ni de paiement enregistré
+        (voir `docs/produit/decisions.md`).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Le problème
+      description: Qui le rencontre (producteur, client, porteur d'instance) et dans quelle situation ?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: Comment ça se passe aujourd'hui
+      description: Le contournement actuel, s'il y en a un.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Ce que tu proposes
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: Je suis prêt·e à proposer une pull request si l'idée est acceptée.

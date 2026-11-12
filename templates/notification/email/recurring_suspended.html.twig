@@ -1,0 +1,14 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Plus aucune commande n'est créée pour toi tant que {{ shop.name }} ne le reprend pas.{% endblock %}
+
+{% block title %}Abonnement suspendu{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},</p>
+    <p style="{{ p_css }}">{{ shop.name }} a suspendu ton abonnement « {{ plan.title }} ». Aucune nouvelle commande ne sera créée pour toi tant qu'il ne l'a pas repris.</p>
+    <p style="{{ p_css }}">Les commandes déjà créées restent prévues, sauf si {{ shop.name }} te dit le contraire. Une question ? Réponds simplement à cet e-mail{% if shop.phone %} ou appelle le {{ shop.phone }}{% endif %}.</p>
+    {{ include('notification/_button.html.twig', {url: recurring_url, label: 'Voir mon abonnement'}) }}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_recurring_footer.html.twig') }}{% endblock %}

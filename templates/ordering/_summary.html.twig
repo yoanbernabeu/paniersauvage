@@ -1,0 +1,66 @@
+{#
+    Read-only summary of an order: lines, total to settle on delivery, delivery slot, note.
+    Never a payment status: only the amount due and the means of payment the producer accepts (SPEC §1).
+    Variables: order.
+#}
+{% set delivery = order.saleDelivery %}
+{% set point = delivery.deliveryPoint %}
+{% set shop = order.shop %}
+<twig:Card data-order-summary>
+    <twig:Card:Content>
+        <h2 class="font-display mb-3 text-xl font-semibold text-ink">Ton panier</h2>
+        <ul class="divide-y divide-line-soft">
+            {% for line in order.lines %}
+                <li class="flex items-baseline justify-between gap-3 py-2.5 text-base">
+                    <span class="min-w-0"><span class="amount font-semibold">{{ line.quantity|line_quantity(line.unit) }}</span> {{ line.label }}{% if line.actualQuantity is not null %} · pesé {{ line.actualQuantity|quantity(line.unit) }}{% endif %}</span>
+                    <span class="amount text-ink-soft">{{ line.estimated ? 'environ ' }}{{ line.totalCents|money }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-4">
+            <span class="font-semibold text-ink">À régler à la livraison</span>
+            <span class="amount font-display text-2xl font-semibold text-ink" data-order-total>{{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}</span>
+        </div>
+        {% if order.vatExempt %}
+            <p class="mt-2 text-sm text-ink-soft" data-vat-mention>{{ constant('App\\Shop\\Enum\\VatRegime::FRANCHISE_MENTION') }}</p>
+        {% endif %}
+        {% if order.estimated %}
+            <p class="mt-2 text-sm text-ink-soft" data-weighing-notice>Produits au poids : le montant exact est calculé à la pesée, à la livraison.</p>
+        {% endif %}
+        {% if shop.paymentSummary %}
+            <p class="mt-2 text-sm text-ink-soft" data-payment-info>
+                Moyens de paiement acceptés : {{ shop.paymentSummary }}
+            </p>
+        {% endif %}
+    </twig:Card:Content>
+</twig:Card>
+
+<twig:Card class="mt-4" data-order-delivery>
+    <twig:Card:Content>
+        <h2 class="font-display mb-3 text-xl font-semibold text-ink">Livraison</h2>
+        <dl class="flex flex-col gap-3 text-base">
+            <div class="flex items-start gap-3">
+                <dt class="mt-0.5 shrink-0"><twig:ux:icon name="lucide:calendar" class="block size-5 text-sage-dark" aria-hidden="true" /><span class="sr-only">Date</span></dt>
+                <dd><span class="inline-block font-semibold first-letter:uppercase">{{ delivery.startsAt|date_long }}</span>, {{ time_range(delivery.startsAt, delivery.endsAt) }}</dd>
+            </div>
+            <div class="flex items-start gap-3">
+                <dt class="mt-0.5 shrink-0"><twig:ux:icon name="{{ delivery.home ? 'lucide:home' : 'lucide:map-pin' }}" class="block size-5 text-sage-dark" aria-hidden="true" /><span class="sr-only">Lieu</span></dt>
+                <dd>
+                    <span class="font-semibold">{{ point.name }}</span>
+                    {% if delivery.home %}
+                        {% if order.deliveryAddress %}<span class="block text-ink-soft">{{ order.deliveryAddress|nl2br }}</span>{% endif %}
+                    {% elseif point.address %}
+                        <span class="block text-ink-soft">{{ point.address }}</span>
+                    {% endif %}
+                    {% if point.instructions %}<span class="mt-1 block text-sm text-ink-soft">{{ point.instructions }}</span>{% endif %}
+                </dd>
+            </div>
+            {% if order.note %}
+                <div class="flex items-start gap-3">
+                    <dt class="mt-0.5 shrink-0"><twig:ux:icon name="lucide:message-circle" class="block size-5 text-sage-dark" aria-hidden="true" /><span class="sr-only">Ton mot pour le producteur</span></dt>
+                    <dd class="text-ink-soft">{{ order.note|nl2br }}</dd>
+                </div>
+            {% endif %}
+        </dl>
+    </twig:Card:Content>
+</twig:Card>

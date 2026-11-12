@@ -1,0 +1,22 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}La livraison du {{ sale.deliveryDate|date_long }} n'aura pas lieu. Tu n'as rien à régler.{% endblock %}
+
+{% block title %}Livraison annulée{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if orders[0].customerFirstName ?? false %} {{ orders[0].customerFirstName }}{% endif %},</p>
+    <p style="{{ p_css }}">{{ shop.name }} a dû annuler la livraison du <strong style="font-weight:600;">{{ sale.deliveryDate|date_long }}</strong>.</p>
+    <p style="{{ p_css }}">
+        {% if orders|length > 1 %}
+            Tes commandes {{ orders|map(o => o.reference)|join(', ', ' et ') }} sont donc annulées.
+        {% else %}
+            Ta commande {{ orders|map(o => o.reference)|join(', ') }} est donc annulée.
+        {% endif %}
+        Tu n'as rien à régler ni à venir chercher.
+    </p>
+    <p style="{{ p_css }}">Une question ? Contacte directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.</p>
+    <p style="{{ p_css }}">Les prochaines ventes sont sur <a href="{{ shop_url }}" style="{{ link_css }}">la page de {{ shop.name }}</a>.</p>
+{% endblock %}
+
+{% block footer %}{{ include('notification/_customer_footer.html.twig') }}{% endblock %}

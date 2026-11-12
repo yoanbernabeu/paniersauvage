@@ -1,0 +1,105 @@
+{% extends 'layout/customer.html.twig' %}
+
+{#
+    The producer directory (SPEC §11). Variables: criteria (App\Shop\Search\SearchCriteria), state
+    ('idle', 'results', 'empty', 'not_found', 'unavailable', 'rate_limited'), place_label (name of
+    the searched place, null for a search by position), results (list of App\Shop\Search\NearbyShop),
+    radii (choices in km), max_radius, categories (list of ShopCategory), map (data of the map of the
+    results, null without located result or without a tile server: App\Shop\Search\SearchMap),
+    communes (list of App\Shop\Search\DirectoryCommune, idle page only). On the idle page of a
+    territorial instance with a centre (docs/INSTANCE.md), results and map are those of its territory.
+#}
+
+{% set searching = state != 'idle' %}
+
+{% block title %}{{ searching ? 'Producteurs près de chez toi' : 'Trouver un producteur près de chez toi' }}{% endblock %}
+{% block meta_description %}L'annuaire des producteurs qui prennent leurs précommandes avec {{ instance.name }} : cherche autour de chez toi, commande avant la date limite, règle directement au producteur.{% endblock %}
+
+{% block head_extra %}
+    {% if searching %}<meta name="robots" content="noindex">{% else %}<link rel="canonical" href="{{ url('producer_directory') }}">{% endif %}
+{% endblock %}
+
+{% block stylesheets %}
+    {# Leaflet's stylesheet first, so that app.css restyles it (.ps-map-*); linked, never imported from JS (CSP). #}
+    {% if map|default(null) %}<link rel="stylesheet" href="{{ asset('vendor/leaflet/dist/leaflet.min.css') }}">{% endif %}
+    {{ parent() }}
+{% endblock %}
+
+{% block main %}
+    <main id="contenu" class="flex-1">
+        <section aria-labelledby="annuaire-titre" class="mx-auto w-full max-w-5xl px-4 {{ searching ? 'pt-6 pb-6 sm:pt-10' : 'pt-8 pb-10 sm:pt-14' }} sm:px-6">
+            <div class="max-w-3xl">
+                <h1 id="annuaire-titre" class="{{ searching ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl' }} leading-[1.08] font-semibold text-balance text-ink">
+                    Trouver un producteur près de chez toi
+                </h1>
+                <p class="mt-3 max-w-2xl text-base leading-relaxed text-ink-soft" data-directory-transparency>
+                    Producteurs qui utilisent {{ instance.name }} et ont choisi d'apparaître ici, classés uniquement par distance. Aucune mise en avant payée.
+                </p>
+                {{ include('instance/_directory_territory.html.twig') }}
+
+                {{ include('shop/directory/_search_form.html.twig') }}
+            </div>
+        </section>
+
+        {% if searching %}
+            <section id="resultats" aria-labelledby="resultats-titre" class="mx-auto w-full max-w-5xl px-4 pb-14 sm:px-6" data-search-state="{{ state }}">
+                <div class="max-w-3xl lg:has-data-[map=on]:max-w-none">
+                    {{ include('layout/_flashes.html.twig', {class: 'mb-5'}) }}
+                    {{ include('shop/directory/_results.html.twig') }}
+                </div>
+            </section>
+        {% else %}
+            {% if results is not empty %}
+                {# The producers of the territory of the instance (INSTANCE_TERRITORY_CENTER). #}
+                <section id="resultats" aria-labelledby="resultats-titre" class="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6" data-territory-results>
+                    <div class="max-w-3xl lg:has-data-[map=on]:max-w-none">
+                        {{ include('shop/directory/_results.html.twig', {state: 'results', place_label: instance.territory.name ?: instance.name, criteria: territory_criteria}) }}
+                    </div>
+                </section>
+            {% endif %}
+
+            {% if communes is not empty %}
+                <section aria-labelledby="par-commune" class="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6" data-communes>
+                    <h2 id="par-commune" class="font-display text-2xl font-semibold text-ink">Par commune</h2>
+                    <ul class="mt-4 flex flex-wrap gap-2">
+                        {% for commune in communes %}
+                            <li>
+                                <a href="{{ path('producer_directory_commune', {commune: commune.slug}) }}" class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white px-4 text-sm font-medium text-ink hover:border-sage hover:text-sage-dark">
+                                    {{ commune.label }}
+                                    <span class="text-ink-soft">{{ commune.shopCount }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            <section aria-labelledby="comment-ca-marche" class="border-y border-line-soft bg-white">
+                <div class="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
+                    <h2 id="comment-ca-marche" class="font-display text-2xl leading-tight font-semibold text-ink">Comment ça marche</h2>
+                    <ol class="mt-6 grid gap-6 md:grid-cols-3" data-how-it-works>
+                        <li>
+                            <h3 class="font-semibold text-ink"><span class="text-sage-dark">1.</span> Choisis ton producteur</h3>
+                            <p class="mt-1 leading-relaxed text-ink-soft">Sa page dit ce qu'il produit, où il livre et quand ouvre sa prochaine vente.</p>
+                        </li>
+                        <li>
+                            <h3 class="font-semibold text-ink"><span class="text-sage-dark">2.</span> Commande avant la date limite</h3>
+                            <p class="mt-1 leading-relaxed text-ink-soft">Quelques clics, sans mot de passe. Il prépare exactement ce qui a été commandé.</p>
+                        </li>
+                        <li>
+                            <h3 class="font-semibold text-ink"><span class="text-sage-dark">3.</span> Récupère et règle sur place</h3>
+                            <p class="mt-1 leading-relaxed text-ink-soft">Tu règles directement au producteur, comme au marché. Rien n'est payé en ligne.</p>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <section aria-label="Pour les producteurs" class="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
+                <p class="text-ink-soft" data-pro-teaser>
+                    Tu es producteur ? Les boutiques {{ instance.name }} n'apparaissent ici que si elles le choisissent.
+                    <a href="{{ path('home') }}" class="link">Découvre {{ instance.name }}</a>.
+                </p>
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

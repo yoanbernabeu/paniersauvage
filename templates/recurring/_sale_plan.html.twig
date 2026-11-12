@@ -1,0 +1,14 @@
+{# Sale page: invitation to subscribe to the plan of its recurrence. Variables: sale, shop. #}
+{% set plan = recurring_plan_for_sale(sale) %}
+{% if plan %}
+    <aside class="mb-8 flex flex-col gap-3 rounded-xl bg-sage-soft p-4 text-sage-deep sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-label="Panier récurrent" data-sale-recurring-plan="{{ plan.id }}">
+        <p class="flex items-start gap-2.5">
+            <twig:ux:icon name="lucide:repeat" class="mt-0.5 size-5 shrink-0" />
+            <span>Tu reviens chaque {{ plan.weekdayName }} ? Abonne-toi à « {{ plan.title }} » : ta commande se fera toute seule.</span>
+        </p>
+        <a href="{{ path('recurring_plan_show', {slug: shop.slug, id: plan.id}) }}" class="inline-flex min-h-11 shrink-0 items-center gap-1.5 font-semibold underline underline-offset-4">
+            Voir le panier
+            <twig:ux:icon name="lucide:arrow-right" class="size-4" />
+        </a>
+    </aside>
+{% endif %}

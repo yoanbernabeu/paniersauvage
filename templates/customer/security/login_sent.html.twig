@@ -1,0 +1,26 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Regarde ta boîte mail{% endblock %}
+{% block auth_title %}Regarde ta boîte mail{% endblock %}
+{% block auth_intro %}Si tout va bien, un lien de connexion t'attend déjà.{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col items-center gap-5 text-center">
+        <span class="flex size-16 items-center justify-center rounded-full bg-sage-mist text-sage-deep">
+            <twig:ux:icon name="lucide:mail" class="size-7" />
+        </span>
+        <p class="text-base leading-relaxed text-ink">
+            On vient d'envoyer un lien à<br>
+            <strong class="font-semibold break-all" data-sent-email>{{ email }}</strong>
+        </p>
+        <ul class="flex w-full flex-col gap-2 rounded-lg bg-sage-soft p-4 text-left text-sm text-sage-deep">
+            <li class="flex gap-2"><twig:ux:icon name="lucide:clock" class="mt-0.5 size-4 shrink-0" /> Le lien est valable 15 minutes.</li>
+            <li class="flex gap-2"><twig:ux:icon name="lucide:search" class="mt-0.5 size-4 shrink-0" /> Rien reçu ? Jette un œil dans tes indésirables.</li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block auth_footer %}
+    Mauvaise adresse, ou lien expiré ?
+    <a href="{{ path('customer_login') }}" class="link">Demande un nouveau lien</a>
+{% endblock %}

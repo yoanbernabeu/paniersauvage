@@ -1,0 +1,8 @@
+{#
+    The organisation carrying the instance (INSTANCE_CARRIER_NAME / _URL), linked when it has a URL;
+    nothing without carrier. Variables: prefix (text before the name, e.g. ' Un service porté par '),
+    suffix (optional, '.' by default).
+#}
+{%- if instance.hasCarrier() -%}
+    {{ prefix|default('') }}<span data-instance-carrier>{% if instance.carrierUrl %}<a href="{{ instance.carrierUrl }}" class="link" rel="noopener">{{ instance.carrierName }}</a>{% else %}{{ instance.carrierName }}{% endif %}</span>{{ suffix ?? '.' }}
+{%- endif -%}

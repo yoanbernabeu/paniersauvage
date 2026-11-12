@@ -1,0 +1,9 @@
+<th
+    data-slot="table-head"
+    {{ attributes.defaults({
+        class: 'h-10 px-3 text-start align-middle text-xs font-semibold tracking-wide whitespace-nowrap text-ink-soft uppercase [&:has([role=checkbox])]:pe-0'|tailwind_classes,
+    }) }}
+>
+    {##- The header cell content. -#}
+    {%- block content %}{% endblock -%}
+</th>

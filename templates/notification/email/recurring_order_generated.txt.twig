@@ -1,0 +1,42 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},
+
+{% if outcome == 'placed' %}
+Ton abonnement « {{ plan.title }} » a créé ta commande pour la livraison du {{ occurrence.deliveryDate|date_long }}. 🧺
+{% elseif outcome == 'partial' %}
+Ton abonnement « {{ plan.title }} » a créé ta commande pour la livraison du {{ occurrence.deliveryDate|date_long }}, mais il manquait des produits cette semaine.
+{% elseif outcome == 'unavailable' %}
+La vente du {{ occurrence.deliveryDate|date_long }} ne passe pas par ton point de retrait ({{ recurring_order.deliveryPoint.name }}) : aucune commande n'a été créée.
+{% else %}
+{{ shop.name }} n'a plus assez de produits pour la livraison du {{ occurrence.deliveryDate|date_long }} : aucune commande n'a été créée cette fois. Tu n'as rien à venir chercher ni à régler.
+{% endif %}
+{% if occurrence.missingItems is not empty and order %}
+
+CE QUI MANQUE
+{% for item in occurrence.missingItems %}
+- {{ include('recurring/_missing_item.txt.twig') }}
+{% endfor %}
+{% endif %}
+{% if order %}
+
+{{ include('notification/_order_summary.txt.twig') }}
+LIVRAISON
+{{ include('notification/_delivery.txt.twig') }}
+{{ include('notification/_edit_info.txt.twig') }}
+Voir ma commande : {{ order_url }}
+
+Absent cette semaine ? Mets cette livraison en pause{% if editable_until %} avant le {{ editable_until|datetime_long }}{% endif %}, ou change tes quantités pour les suivantes : {{ recurring_url }}
+
+{{ include('legal/email/_order_information.txt.twig') }}
+{% else %}
+
+Ton abonnement continue : la prochaine commande sera créée à la prochaine vente.
+Voir mon abonnement : {{ recurring_url }}
+{% endif %}
+{% endblock %}
+
+{% block footer %}Tu reçois cet e-mail parce que tu es abonné à « {{ plan.title }} » chez {{ shop.name }} ({{ shop_url }}).
+Une question ? Réponds simplement à cet e-mail, {{ shop.name }} le recevra.
+{% endblock %}

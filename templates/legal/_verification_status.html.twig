@@ -1,0 +1,16 @@
+{#
+    Where the check of the SIRET stands, under the SIRET field of the shop settings. Variables: shop.
+#}
+{% set verification = shop_verification(shop) %}
+{% if shop.siret is null %}
+    <p class="-mt-2 mb-5 text-sm text-ink-soft" data-verification-status="none">
+        Sans SIRET, ta boutique reste accessible par son lien, mais n'apparaît pas dans l'annuaire des producteurs.
+    </p>
+{% elseif verification and verification.siret == shop.siret %}
+    {% set status = verification.status %}
+    <twig:Alert variant="{{ status.value == 'verified' ? 'success' : (status.value in ['pending', 'to_review'] ? 'info' : 'warning') }}" class="-mt-2 mb-5" data-verification-status="{{ status.value }}">
+        <twig:ux:icon name="{{ status.value == 'verified' ? 'lucide:badge-check' : 'lucide:info' }}" />
+        <twig:Alert:Title>{{ status.label }}{% if status.value == 'verified' and verification.companyName %} : {{ verification.companyName }}{% endif %}</twig:Alert:Title>
+        <twig:Alert:Description class="text-current">{{ status.explanation }}</twig:Alert:Description>
+    </twig:Alert>
+{% endif %}

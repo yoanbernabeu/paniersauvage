@@ -1,0 +1,52 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Points de livraison{% endblock %}
+{% block page_title %}Points de livraison{% endblock %}
+{% block page_subtitle %}Là où tes clients récupèrent leurs commandes.{% endblock %}
+{% block page_actions %}
+    {% if active or archived %}
+        <twig:Button as="a" href="{{ path('pro_delivery_point_new') }}">
+            <twig:ux:icon name="lucide:plus" />
+            Ajouter un point
+        </twig:Button>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if not active and not archived %}
+        <twig:Empty class="rounded-xl bg-white py-12 shadow-card ring-1 ring-line">
+            <twig:Empty:Media>
+                <twig:Illustration name="herbs" class="w-32 text-sage" />
+            </twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Aucun point de livraison</twig:Empty:Title>
+                <twig:Empty:Description>Une place de village, un arrêt de ta tournée ou la livraison à domicile : dis où tu livres.</twig:Empty:Description>
+            </twig:Empty:Header>
+            <twig:Empty:Content>
+                <twig:Button as="a" href="{{ path('pro_delivery_point_new') }}">
+                    <twig:ux:icon name="lucide:plus" />
+                    Ajouter mon premier point
+                </twig:Button>
+            </twig:Empty:Content>
+        </twig:Empty>
+    {% else %}
+        <div class="flex flex-col gap-8">
+            <section aria-labelledby="points-active" data-section="active">
+                <h2 id="points-active" class="mb-3 text-base font-semibold text-ink">Actifs <span class="font-normal text-ink-soft">({{ active|length }})</span></h2>
+                {% if active %}
+                    {{ include('delivery/point/_list.html.twig', {points: active}) }}
+                {% else %}
+                    <p class="rounded-xl border border-dashed border-line bg-white px-4 py-5 text-sm text-ink-soft">Tous tes points sont archivés. Ajoute-en un ou désarchive-en un pour tes prochaines ventes.</p>
+                {% endif %}
+            </section>
+
+            {% if archived %}
+                <section aria-labelledby="points-archived" data-section="archived">
+                    <h2 id="points-archived" class="mb-1 text-base font-semibold text-ink">Archivés <span class="font-normal text-ink-soft">({{ archived|length }})</span></h2>
+                    <p class="mb-3 text-sm text-ink-soft">Ils ne sont plus proposés dans tes nouvelles ventes.</p>
+                    {{ include('delivery/point/_list.html.twig', {points: archived}) }}
+                </section>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

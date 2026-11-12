@@ -1,0 +1,38 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Connexion producteur{% endblock %}
+{% block auth_title %}Te revoilà{% endblock %}
+{% block auth_intro %}Connecte-toi pour retrouver tes ventes et tes commandes.{% endblock %}
+
+{% block content %}
+    {% if error %}
+        <twig:Alert variant="destructive" class="mb-5">
+            <twig:ux:icon name="lucide:circle-alert" />
+            <twig:Alert:Description class="text-current font-medium">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    <form method="post" action="{{ path('pro_login') }}" class="flex flex-col gap-5">
+        <div class="flex flex-col gap-1.5">
+            <twig:Label for="username">Adresse e-mail</twig:Label>
+            <twig:Input type="email" id="username" name="_username" value="{{ last_username }}" autocomplete="email" inputmode="email" required autofocus />
+        </div>
+        <div class="flex flex-col gap-1.5">
+            <twig:Label for="password">Mot de passe</twig:Label>
+            <twig:Input type="password" id="password" name="_password" autocomplete="current-password" required />
+            <a href="{{ path('pro_password_forgot') }}" class="link -my-1.5 inline-flex min-h-11 items-center self-start text-sm">Mot de passe oublié ?</a>
+        </div>
+        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+        <twig:Button type="submit" class="w-full">
+            Me connecter
+            <twig:ux:icon name="lucide:arrow-right" />
+        </twig:Button>
+    </form>
+{% endblock %}
+
+{% block auth_footer %}
+    Pas encore de boutique ?
+    <a href="{{ safe_path('pro_register', '/pro/inscription') }}" class="link">Crée la tienne, c'est gratuit pendant 30 jours</a>
+{% endblock %}

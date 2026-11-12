@@ -1,0 +1,70 @@
+framework:
+    rate_limiter:
+        # Magic-link requests of customers (customer_login): throttled per e-mail address and per IP.
+        customer_login_email:
+            policy: sliding_window
+            limit: 3
+            interval: '15 minutes'
+        customer_login_ip:
+            policy: sliding_window
+            limit: 20
+            interval: '15 minutes'
+        # Orders placed without being signed in (sale_show): per client IP and per e-mail address.
+        guest_order_ip:
+            policy: sliding_window
+            limit: 10
+            interval: '1 hour'
+        guest_order_email:
+            policy: sliding_window
+            limit: 3
+            interval: '1 hour'
+        # Producer sign-up form (pro_register): submissions per client IP.
+        registration:
+            policy: sliding_window
+            limit: 10
+            interval: '30 minutes'
+            lock_factory: null
+        # Producer "forgotten password" requests (pro_password_forgot): per e-mail address and per IP.
+        producer_password_reset_email:
+            policy: sliding_window
+            limit: 3
+            interval: '1 hour'
+        producer_password_reset_ip:
+            policy: sliding_window
+            limit: 20
+            interval: '15 minutes'
+        # Producer search of the home page (by place or by position): searches per client IP.
+        producer_search_ip:
+            policy: sliding_window
+            limit: 30
+            interval: '5 minutes'
+        # Shop reports (shop_report): submissions per client IP.
+        shop_report_ip:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+
+when@test:
+    # In memory: counters live as long as one kernel and never leak from one test to the next.
+    services:
+        customer_login.limiter_storage:
+            class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+
+    framework:
+        rate_limiter:
+            customer_login_email:
+                storage_service: customer_login.limiter_storage
+            customer_login_ip:
+                storage_service: customer_login.limiter_storage
+            guest_order_ip:
+                storage_service: customer_login.limiter_storage
+            guest_order_email:
+                storage_service: customer_login.limiter_storage
+            producer_password_reset_email:
+                storage_service: customer_login.limiter_storage
+            producer_password_reset_ip:
+                storage_service: customer_login.limiter_storage
+            producer_search_ip:
+                storage_service: customer_login.limiter_storage
+            shop_report_ip:
+                storage_service: customer_login.limiter_storage

@@ -1,0 +1,17 @@
+{#
+    Producer header on customer-side order pages: logo (or initial), name, link to the public page.
+    Variables: shop.
+#}
+<a href="{{ safe_path('shop_show', '/' ~ shop.slug, {slug: shop.slug}) }}" class="mb-6 flex items-center gap-3 rounded-xl no-underline" data-shop-header>
+    <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sage-mist font-display text-xl font-semibold text-sage-deep">
+        {% if shop.logoPath %}
+            <img src="{{ shop.logoPath|image_url }}" alt="" class="size-full object-cover">
+        {% else %}
+            {{ shop.name|first|upper }}
+        {% endif %}
+    </span>
+    <span class="min-w-0">
+        <span class="block truncate font-display text-xl leading-tight font-semibold text-ink">{{ shop.name }}</span>
+        <span class="block text-sm text-sage-dark">Voir la page du producteur</span>
+    </span>
+</a>

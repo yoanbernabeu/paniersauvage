@@ -1,0 +1,318 @@
+{#
+    Delivery sheet: used on the phone while delivering. One delivery (point + time window) at a time.
+    Nothing about payment (SPEC §1): only the amount each customer will settle.
+
+    Without JavaScript, ticking an order posts to pro_order_mark (weights to pro_order_weigh), which
+    redirects here. With JavaScript (delivery_sheet_controller.js, SPEC §20), every action is applied on
+    screen at once, queued in the browser and replayed to pro_order_sheet_action when the network is
+    there: each card holds every state of its buttons (`data-when`), the script shows the right one.
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-2xl' %}
+
+{% block title %}Feuille de livraison · {{ sale.title }}{% endblock %}
+
+{% block head_extra %}
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
+{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% macro order_card(order, explicit_delivery, position) %}
+    {% set status = order.status.value %}
+    <li class="rounded-2xl bg-white p-3 shadow-card ring-1 ring-line data-[order-status=delivered]:opacity-80"
+        data-delivery-sheet-target="item"
+        data-search="{{ order.customerDisplayName }} {{ order.reference }}"
+        data-order="{{ order.reference }}"
+        data-order-id="{{ order.id }}"
+        data-order-name="{{ order.customerDisplayName }}"
+        data-order-status="{{ status }}"
+        data-action-url="{{ path('pro_order_sheet_action', {id: order.id}) }}"
+        data-position="{{ position }}">
+        <form method="post" action="{{ path('pro_order_mark', {id: order.id}) }}" class="flex items-start gap-3" data-action="delivery-sheet#mark">
+            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('order-mark') }}">
+            {% if explicit_delivery %}<input type="hidden" name="explicit_delivery" value="1">{% endif %}
+
+            <button type="submit" name="status" value="confirmed" role="checkbox" aria-checked="true"
+                    aria-label="Commande de {{ order.customerDisplayName }} livrée. Décocher"
+                    data-when="delivered" {{ status != 'delivered' ? 'hidden' }}
+                    class="flex size-12 shrink-0 items-center justify-center rounded-xl border-2 border-sage-dark bg-sage-dark text-white outline-none">
+                <twig:ux:icon name="lucide:check" class="size-7" />
+            </button>
+            <button type="submit" name="status" value="delivered" role="checkbox" aria-checked="false"
+                    aria-label="Marquer la commande de {{ order.customerDisplayName }} comme livrée"
+                    data-when="confirmed not_delivered" {{ status == 'delivered' ? 'hidden' }}
+                    class="flex size-12 shrink-0 items-center justify-center rounded-xl border-2 border-sage bg-white text-transparent outline-none hover:bg-sage-soft">
+                <twig:ux:icon name="lucide:check" class="size-7" />
+            </button>
+
+            <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                    <p class="min-w-0 text-base leading-tight font-semibold text-ink">
+                        {{ order.customerDisplayName }}
+                        <span data-when="not_delivered" {{ status != 'not_delivered' ? 'hidden' }}>
+                            <twig:Badge variant="default" class="ms-1 align-middle"><twig:ux:icon name="lucide:triangle-alert" />Non livrée</twig:Badge>
+                        </span>
+                        {{ include('customer/pro/_absence_badge.html.twig', {class: 'ms-1 align-middle'}) }}
+                    </p>
+                    <p class="amount shrink-0 text-end text-base font-semibold text-ink">
+                        <span class="block text-xs font-normal text-ink-soft">À régler</span>
+                        <span data-order-total>{{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}</span>
+                    </p>
+                </div>
+                {% if order.containsAlcohol() %}
+                    <p class="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-wheat-soft px-2.5 py-1 text-sm font-semibold text-wheat-ink" data-age-check-reminder>
+                        <twig:ux:icon name="lucide:id-card" class="size-4 shrink-0" />
+                        Vérifie l'âge au retrait
+                    </p>
+                {% endif %}
+                <ul class="mt-1 text-sm text-ink">
+                    {% for line in order.lines %}
+                        <li data-line="{{ line.id }}" data-offer="{{ line.saleOffer.id }}" data-quantity="{{ line.quantity }}"
+                            data-unit-price="{{ line.unitPriceCents }}" data-weighed="{{ line.weighed ? 1 : 0 }}" data-actual="{{ line.actualQuantity }}">
+                            <span class="amount font-semibold">{{ line.quantity|line_quantity(line.unit) }}</span> {{ line.label }}<span data-line-weight>{% if line.actualQuantity is not null %} · pesé {{ line.actualQuantity|quantity(line.unit) }}{% endif %}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% if order.note %}
+                    <p class="mt-2 inline-flex items-start gap-1.5 rounded-lg bg-wheat-soft px-2.5 py-1.5 text-sm font-medium text-wheat-ink" data-order-note>
+                        <twig:ux:icon name="lucide:message-circle" class="mt-0.5 size-4 shrink-0" />
+                        {{ order.note }}
+                    </p>
+                {% endif %}
+                {% if order.saleDelivery.home and order.deliveryAddress %}
+                    <p class="mt-2 flex items-start gap-1.5 text-sm text-ink" data-order-address>
+                        <twig:ux:icon name="lucide:home" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+                        <span class="whitespace-pre-line">{{ order.deliveryAddress }}</span>
+                    </p>
+                {% endif %}
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    {% if order.customerPhone %}
+                        <twig:Button as="a" href="tel:{{ order.customerPhone|replace({' ': ''}) }}" variant="secondary" class="px-4">
+                            <twig:ux:icon name="lucide:phone" />
+                            Appeler
+                        </twig:Button>
+                    {% endif %}
+                    <twig:Button type="submit" name="status" value="not_delivered" variant="ghost" class="px-3 font-medium text-ink-soft"
+                                 data-when="confirmed" :hidden="status != 'confirmed'">
+                        Non livrée
+                    </twig:Button>
+                    <twig:Button type="submit" name="status" value="confirmed" variant="ghost" class="px-3 font-medium text-ink-soft"
+                                 data-when="not_delivered" :hidden="status != 'not_delivered'">
+                        Remettre à livrer
+                    </twig:Button>
+                </div>
+            </div>
+        </form>
+
+        {# Products sold by weight: the producer enters the actual weight, the amount follows. #}
+        {% set weighed_lines = order.lines|filter(line => line.weighed) %}
+        {% if weighed_lines is not empty %}
+            <form method="post" action="{{ path('pro_order_weigh', {id: order.id}) }}" class="mt-3 rounded-xl bg-sage-mist p-3 sm:ms-15" data-weigh-form
+                  data-action="delivery-sheet#weigh">
+                <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('order-mark') }}">
+                {% if explicit_delivery %}<input type="hidden" name="explicit_delivery" value="1">{% endif %}
+                <p class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-sage-deep">
+                    <twig:ux:icon name="lucide:scale" class="size-4" />
+                    Poids réel
+                </p>
+                <div class="flex flex-col gap-2">
+                    {% for line in weighed_lines %}
+                        <div class="flex items-center gap-2">
+                            <label for="poids-{{ line.id }}" class="min-w-0 flex-1 text-sm text-ink">
+                                {{ line.label }}
+                                <span class="block text-xs text-ink-soft">commandé {{ line.quantity|quantity(line.unit) }}</span>
+                            </label>
+                            <input type="text" inputmode="decimal" autocomplete="off"
+                                   id="poids-{{ line.id }}"
+                                   name="weights[{{ line.id }}]"
+                                   value="{{ line.actualQuantity is null ? '' : line.actualQuantity|quantity(line.unit, false) }}"
+                                   placeholder="{{ line.quantity|quantity(line.unit, false) }}"
+                                   aria-describedby="poids-{{ line.id }}-unit poids-{{ order.id }}-erreur"
+                                   data-line-input="{{ line.id }}"
+                                   class="amount h-12 w-24 rounded-xl border border-line bg-white px-3 text-end text-base font-semibold text-ink focus-visible:ring-2 focus-visible:ring-sage-dark focus-visible:outline-none aria-invalid:border-danger">
+                            <span id="poids-{{ line.id }}-unit" class="text-sm font-medium text-ink-soft">kg</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                <p id="poids-{{ order.id }}-erreur" class="mt-2 text-sm font-medium text-danger" data-weigh-error hidden></p>
+                <twig:Button type="submit" variant="sage" class="mt-3 h-12 w-full">Enregistrer le poids</twig:Button>
+            </form>
+        {% endif %}
+    </li>
+{% endmacro %}
+
+{% block content %}
+    {% set total = todo|length + done|length %}
+    <div class="flex flex-col gap-4" data-controller="delivery-sheet"
+         data-action="turbo:morph@document->delivery-sheet#refresh online@window->delivery-sheet#sync offline@window->delivery-sheet#wentOffline storage@window->delivery-sheet#storageChanged visibilitychange@document->delivery-sheet#sync"
+         data-delivery-sheet-queue-key-value="panier-sauvage:feuille-de-livraison:{{ app.user.id|default(0) }}"
+         data-delivery-sheet-csrf-value="{{ csrf_token('order-mark') }}"
+         data-delivery-sheet-worker-value="{{ path('pro_delivery_sheet_worker') }}"
+         data-delivery-sheet-scope-value="/pro/">
+        <header class="surface-dark rounded-2xl bg-sage-dark px-4 py-4 text-white" data-sheet-header>
+            <a href="{{ path('pro_sale_show', {id: sale.id}) }}" class="-ms-1 mb-1 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-white/85 hover:text-white">
+                <twig:ux:icon name="lucide:chevron-left" class="size-4" />
+                {{ sale.title }}
+            </a>
+            <h1 class="font-display text-2xl leading-tight font-semibold">{{ sale.deliveryDate|date_long|capitalize }}</h1>
+            {% if current %}
+                <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-white/90">
+                    <span class="inline-flex items-center gap-1.5">
+                        <twig:ux:icon name="lucide:{{ current.deliveryPoint.type.icon }}" class="size-4" />
+                        {{ current.deliveryPoint.name }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <twig:ux:icon name="lucide:clock" class="size-4" />
+                        {{ time_range(current.startsAt, current.endsAt) }}
+                    </span>
+                </p>
+                {% if current.deliveryPoint.address and not current.home %}
+                    <p class="mt-1 text-sm text-white/75">{{ current.deliveryPoint.address }}</p>
+                {% endif %}
+            {% endif %}
+            {% if deliveries|length > 1 %}
+                <nav aria-label="Livraisons de cette vente" class="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1">
+                    {% for delivery in deliveries %}
+                        <a href="{{ path('pro_sale_delivery_sheet', {id: sale.id, creneau: delivery.id}) }}"
+                           {% if delivery == current %}aria-current="page"{% endif %}
+                           class="inline-flex h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold {{ delivery == current ? 'bg-white text-sage-deep' : 'bg-white/15 text-white hover:bg-white/25' }}">
+                            {{ delivery.deliveryPoint.name }}
+                        </a>
+                    {% endfor %}
+                </nav>
+            {% endif %}
+
+            {# Saving state, shown by the script only (without it, every tick is a page load). #}
+            <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1" data-delivery-sheet-target="syncBar" hidden>
+                <p role="status" data-delivery-sheet-target="sync" data-sync-state="saved"
+                   class="inline-flex min-h-11 items-center gap-2 rounded-full bg-white/15 px-4 text-sm font-semibold text-white data-[sync-state=offline]:bg-wheat data-[sync-state=offline]:text-ink data-[sync-state=session]:bg-wheat data-[sync-state=session]:text-ink">
+                    <span data-sync-icon="saved"><twig:ux:icon name="lucide:circle-check" class="size-4" /></span>
+                    <span data-sync-icon="pending" hidden><twig:ux:icon name="lucide:refresh-cw" class="size-4" /></span>
+                    <span data-sync-icon="offline session" hidden><twig:ux:icon name="lucide:cloud-off" class="size-4" /></span>
+                    <span data-delivery-sheet-target="syncLabel">Tout est enregistré</span>
+                </p>
+                <a href="{{ path('pro_login') }}" data-delivery-sheet-target="login" data-turbo="false" hidden
+                   class="inline-flex min-h-11 items-center text-sm font-semibold text-white underline underline-offset-4">Me reconnecter</a>
+            </div>
+        </header>
+
+        {# Actions refused when they were replayed (order cancelled or changed in the meantime). #}
+        <div data-delivery-sheet-target="conflicts" hidden>
+            <twig:Alert variant="warning">
+                <twig:ux:icon name="lucide:triangle-alert" />
+                <twig:Alert:Title>À vérifier</twig:Alert:Title>
+                <twig:Alert:Description class="text-current">
+                    <ul class="list-disc ps-4" data-delivery-sheet-target="conflictList"></ul>
+                    <twig:Button type="button" variant="outline" size="sm" class="mt-2" data-action="delivery-sheet#dismissConflicts">C'est noté</twig:Button>
+                </twig:Alert:Description>
+            </twig:Alert>
+        </div>
+
+        {% if sale.cancelled %}
+            <twig:Alert variant="warning">
+                <twig:ux:icon name="lucide:triangle-alert" />
+                <twig:Alert:Description class="font-medium text-current">Cette vente est annulée : il n'y a rien à livrer.</twig:Alert:Description>
+            </twig:Alert>
+        {% elseif not current %}
+            <twig:Empty class="rounded-xl border border-line bg-white py-10">
+                <twig:Empty:Header>
+                    <twig:Empty:Title>Aucune livraison prévue</twig:Empty:Title>
+                    <twig:Empty:Description>Ajoute un point de livraison à cette vente pour préparer ta tournée.</twig:Empty:Description>
+                </twig:Empty:Header>
+            </twig:Empty>
+        {% elseif total == 0 %}
+            <twig:Empty class="rounded-xl border border-line bg-white py-10">
+                <twig:Empty:Media><twig:Illustration name="basket" class="w-36" /></twig:Empty:Media>
+                <twig:Empty:Header>
+                    <twig:Empty:Title>Aucune commande à livrer ici</twig:Empty:Title>
+                    <twig:Empty:Description>Les commandes de ce point de livraison s'afficheront ici.</twig:Empty:Description>
+                </twig:Empty:Header>
+            </twig:Empty>
+        {% else %}
+            {# Progress #}
+            <div data-progress>
+                <p class="mb-1.5 flex items-baseline justify-between text-sm">
+                    <span class="font-semibold text-ink" data-delivery-sheet-target="progressLabel"><span class="amount">{{ done|length }}</span> livrée{{ done|length > 1 ? 's' }} sur <span class="amount">{{ total }}</span></span>
+                    <span class="font-medium text-sage-dark" data-delivery-sheet-target="finished" {{ todo is not empty ? 'hidden' }}>Tournée terminée</span>
+                </p>
+                <div role="progressbar" aria-label="Commandes livrées" aria-valuemin="0" aria-valuemax="{{ total }}" aria-valuenow="{{ done|length }}"
+                     data-delivery-sheet-target="progress" class="h-3 overflow-hidden rounded-full bg-sage-mist">
+                    <div class="h-full rounded-full bg-sage-dark transition-[width]" data-delivery-sheet-target="progressBar" style="width: {{ (done|length * 100 / total)|round }}%"></div>
+                </div>
+            </div>
+
+            {# Truck load #}
+            <section aria-labelledby="truck-title" class="rounded-2xl bg-white p-3 shadow-card ring-1 ring-line" data-truck>
+                <h2 id="truck-title" class="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+                    <twig:ux:icon name="lucide:truck" class="size-4 text-sage-dark" />
+                    Dans le camion
+                </h2>
+                <ul class="flex flex-wrap gap-2">
+                    {% for item in truck %}
+                        <li class="inline-flex items-center gap-1.5 rounded-full bg-sage-mist px-3 py-1.5 text-sm text-sage-deep"
+                            data-delivery-sheet-target="truckItem" data-offer="{{ item.offer }}" data-total="{{ item.total }}" data-weighed="{{ item.unit.weighed ? 1 : 0 }}">
+                            <span class="amount font-semibold">{{ item.total|quantity(item.unit) }}</span>
+                            {{ item.label }}
+                            <span class="amount text-xs text-sage-dark" data-truck-remaining {{ item.remaining == item.total ? 'hidden' }}>(reste {{ item.remaining|quantity(item.unit) }})</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            {# Customer search (filtered client-side) #}
+            <div class="relative">
+                <twig:Label for="delivery-search" class="sr-only">Chercher un client</twig:Label>
+                <twig:ux:icon name="lucide:search" class="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-ink-soft" />
+                <twig:Input id="delivery-search" type="search" placeholder="Chercher un client" autocomplete="off" data-turbo-permanent
+                            data-delivery-sheet-target="search" data-action="input->delivery-sheet#filter"
+                            class="h-12! rounded-full! ps-11! pe-4!" />
+            </div>
+
+            {# Tabs: shown by the Stimulus controller; without JavaScript both lists follow each other. #}
+            <div role="tablist" aria-label="Commandes" hidden data-delivery-sheet-target="tablist" class="grid grid-cols-2 gap-1 rounded-full bg-sage-mist p-1">
+                <button type="button" role="tab" id="tab-todo" aria-controls="panel-todo" aria-selected="true" tabindex="0" data-tab="todo"
+                        data-delivery-sheet-target="tab" data-action="delivery-sheet#select keydown->delivery-sheet#navigate"
+                        class="h-11 rounded-full text-sm font-semibold text-sage-deep aria-selected:bg-white aria-selected:shadow-sm">
+                    À livrer (<span class="amount" data-count="todo">{{ todo|length }}</span>)
+                </button>
+                <button type="button" role="tab" id="tab-done" aria-controls="panel-done" aria-selected="false" tabindex="-1" data-tab="done"
+                        data-delivery-sheet-target="tab" data-action="delivery-sheet#select keydown->delivery-sheet#navigate"
+                        class="h-11 rounded-full text-sm font-semibold text-sage-deep aria-selected:bg-white aria-selected:shadow-sm">
+                    Livrées (<span class="amount" data-count="done">{{ done|length }}</span>)
+                </button>
+            </div>
+
+            <section id="panel-todo" aria-labelledby="heading-todo" data-tab="todo" data-delivery-sheet-target="panel">
+                <h2 id="heading-todo" class="mb-2 text-sm font-semibold text-ink" data-delivery-sheet-target="heading">À livrer (<span data-count="todo">{{ todo|length }}</span>)</h2>
+                <p class="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-sm text-ink-soft" data-empty-list {{ todo is not empty ? 'hidden' }}>Tout est livré. Belle tournée !</p>
+                <ul class="flex flex-col gap-3" data-list="todo">
+                    {% for order in todo %}{{ _self.order_card(order, explicit_delivery, loop.index0) }}{% endfor %}
+                </ul>
+                <p hidden data-delivery-sheet-target="noMatch" class="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-sm text-ink-soft">Aucun client ne correspond à ta recherche.</p>
+            </section>
+
+            <section id="panel-done" aria-labelledby="heading-done" data-tab="done" data-delivery-sheet-target="panel">
+                <h2 id="heading-done" class="mb-2 text-sm font-semibold text-ink" data-delivery-sheet-target="heading">Livrées (<span data-count="done">{{ done|length }}</span>)</h2>
+                <p class="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-sm text-ink-soft" data-empty-list {{ done is not empty ? 'hidden' }}>Aucune commande livrée pour l'instant.</p>
+                <ul class="flex flex-col gap-3" data-list="done">
+                    {% for order in done %}{{ _self.order_card(order, explicit_delivery, todo|length + loop.index0) }}{% endfor %}
+                </ul>
+                <p hidden data-delivery-sheet-target="noMatch" class="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-sm text-ink-soft">Aucun client ne correspond à ta recherche.</p>
+            </section>
+
+            {# The PDF stays the fallback when the phone gives up. #}
+            <p class="flex items-start gap-2 text-sm text-ink-soft" data-offline-help>
+                <twig:ux:icon name="lucide:cloud-off" class="mt-0.5 size-4 shrink-0" />
+                <span>
+                    Pas de réseau sur la tournée ? Ouvre cette page une fois avant de partir : tes coches restent enregistrées sur ton téléphone et partent dès que le réseau revient.
+                    {% if route_exists('pro_sale_delivery_pdf') %}
+                        Au cas où, <a href="{{ safe_path('pro_sale_delivery_pdf', '/pro/ventes/' ~ sale.id ~ '/livraison.pdf', {id: sale.id}) }}" class="link" data-turbo="false">télécharge aussi la feuille en PDF</a>.
+                    {% endif %}
+                </span>
+            </p>
+        {% endif %}
+    </div>
+{% endblock %}

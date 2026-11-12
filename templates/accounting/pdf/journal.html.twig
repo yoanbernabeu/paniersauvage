@@ -1,0 +1,146 @@
+{# Monthly sales journal. Variables: journal (App\Accounting\Model\SalesJournal), shop, generated_at. #}
+{% extends 'accounting/pdf/_base.html.twig' %}
+
+{% set shop_name = shop.name %}
+{% set month_label = journal.month|month_label %}
+
+{% block title %}Journal des ventes – {{ month_label }}{% endblock %}
+{% block kicker %}Journal des ventes · commandes livrées{% endblock %}
+{% block heading %}{{ month_label|capitalize }}{% endblock %}
+
+{% block meta %}
+    {% if shop.siret %}<p>SIRET {{ shop.siret }}</p>{% endif %}
+    {% if shop.address %}<p>{{ shop.address|replace({"\r": '', "\n": ', '}) }}</p>{% endif %}
+    <p>Édité le {{ generated_at|date_short }}</p>
+{% endblock %}
+
+{% block content %}
+    <table class="figures">
+        <tr>
+            <td>
+                <div class="label">Commandes livrées</div>
+                <div class="value">{{ journal.orderCount }}</div>
+            </td>
+            <td>
+                <div class="label">Chiffre d'affaires TTC</div>
+                <div class="value nowrap">{{ journal.total.grossCents|money }}</div>
+            </td>
+            <td>
+                <div class="label">Chiffre d'affaires HT</div>
+                <div class="value nowrap">{{ journal.total.netCents|money }}</div>
+            </td>
+            <td>
+                <div class="label">TVA</div>
+                <div class="value nowrap">{{ journal.total.vatCents|money }}</div>
+            </td>
+        </tr>
+    </table>
+
+    {% if journal.empty %}
+        <p class="empty">Aucune commande livrée ce mois-ci.</p>
+    {% else %}
+        <h2>Par taux de TVA</h2>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>Taux de TVA</th>
+                    <th class="right" style="width: 20%;">TTC</th>
+                    <th class="right" style="width: 20%;">HT</th>
+                    <th class="right" style="width: 20%;">TVA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in journal.byVatRate %}
+                    <tr>
+                        <td>{{ row.vatExempt ? 'Franchise en base de TVA' : row.vatRateBp|vat_rate }}</td>
+                        <td class="right nowrap">{{ row.amounts.grossCents|money }}</td>
+                        <td class="right nowrap">{{ row.amounts.netCents|money }}</td>
+                        <td class="right nowrap">{{ row.amounts.vatCents|money }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="total">
+                    <td>Total</td>
+                    <td class="right nowrap">{{ journal.total.grossCents|money }}</td>
+                    <td class="right nowrap">{{ journal.total.netCents|money }}</td>
+                    <td class="right nowrap">{{ journal.total.vatCents|money }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Par vente</h2>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th style="width: 14%;">Livraison</th>
+                    <th>Vente</th>
+                    <th class="right" style="width: 12%;">Commandes</th>
+                    <th class="right" style="width: 15%;">TTC</th>
+                    <th class="right" style="width: 15%;">HT</th>
+                    <th class="right" style="width: 13%;">TVA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in journal.bySale %}
+                    <tr>
+                        <td class="nowrap">{{ row.deliveryDate|date_short }}</td>
+                        <td>{{ row.title }} <span class="small muted">({{ row.code }})</span></td>
+                        <td class="right">{{ row.orderCount }}</td>
+                        <td class="right nowrap">{{ row.amounts.grossCents|money }}</td>
+                        <td class="right nowrap">{{ row.amounts.netCents|money }}</td>
+                        <td class="right nowrap">{{ row.amounts.vatCents|money }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="total">
+                    <td colspan="2">Total</td>
+                    <td class="right">{{ journal.orderCount }}</td>
+                    <td class="right nowrap">{{ journal.total.grossCents|money }}</td>
+                    <td class="right nowrap">{{ journal.total.netCents|money }}</td>
+                    <td class="right nowrap">{{ journal.total.vatCents|money }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Par produit</h2>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th class="right" style="width: 10%;">TVA</th>
+                    <th class="right" style="width: 11%;">Quantité</th>
+                    <th class="right" style="width: 15%;">TTC</th>
+                    <th class="right" style="width: 15%;">HT</th>
+                    <th class="right" style="width: 13%;">TVA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in journal.byProduct %}
+                    <tr>
+                        <td>{{ row.label }}</td>
+                        <td class="right nowrap">{{ row.vatExempt ? 'Franchise' : row.vatRateBp|vat_rate }}</td>
+                        <td class="right nowrap">{{ row.amounts.quantity|quantity(row.unit) }}</td>
+                        <td class="right nowrap">{{ row.amounts.grossCents|money }}</td>
+                        <td class="right nowrap">{{ row.amounts.netCents|money }}</td>
+                        <td class="right nowrap">{{ row.amounts.vatCents|money }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="total">
+                    <td colspan="2">Total</td>
+                    <td class="right"></td>
+                    <td class="right nowrap">{{ journal.total.grossCents|money }}</td>
+                    <td class="right nowrap">{{ journal.total.netCents|money }}</td>
+                    <td class="right nowrap">{{ journal.total.vatCents|money }}</td>
+                </tr>
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if journal.vatExempt %}
+        <p class="note strong" data-vat-mention>{{ constant('App\\Shop\\Enum\\VatRegime::FRANCHISE_MENTION') }}.</p>
+    {% endif %}
+    <p class="note">
+        Ce journal reprend les commandes marquées « livrées » dont la livraison a eu lieu dans le mois.
+        Il ne décrit pas les règlements reçus : {{ instance.name }} n'en enregistre aucun.
+        Les prix sont TTC ; la TVA est calculée à partir du TTC, ligne de commande par ligne de commande,
+        puis arrondie au centime le plus proche. Les totaux sont la somme de ces lignes.
+    </p>
+{% endblock %}

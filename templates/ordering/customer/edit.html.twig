@@ -1,0 +1,38 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}Modifier ma commande chez {{ shop.name }}{% endblock %}
+
+{# The fixed order bar replaces the footer on this screen. #}
+{% block footer %}{% endblock %}
+
+{% block content %}
+    <a href="{{ path('customer_order_show', {reference: order.reference}) }}" class="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-sage-dark">
+        <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+        Retour à ma commande
+    </a>
+
+    {{ include('ordering/_shop_header.html.twig') }}
+
+    <section class="mb-8 rounded-xl bg-sage-soft p-5" data-sale-banner>
+        <twig:Badge variant="sage">Commande {{ order.reference }}</twig:Badge>
+        <h1 class="mt-3 text-3xl leading-tight font-semibold text-ink">Modifier ma commande</h1>
+        <p class="mt-2 text-base text-sage-deep">
+            Livraison {{ sale.deliveryDate|date_long }}. Tu peux la modifier jusqu'au {{ sale.effectiveEditCutoffAt|datetime_long }}.
+            Si tu retires tous les produits, ta commande est annulée.
+        </p>
+    </section>
+
+    {{ form_start(form, {attr: {'data-controller': 'order-form'}}) }}
+        {{ include('ordering/_form_fields.html.twig') }}
+        {% if form.adultCertified is defined %}
+            <section class="mb-6 rounded-xl border border-line bg-white p-4 sm:p-5" data-age-section>
+                <p class="mb-3 rounded-lg bg-wheat-soft px-3 py-2 text-sm font-medium text-wheat-ink" data-alcohol-warning>
+                    L'abus d'alcool est dangereux pour la santé, à consommer avec modération. La vente d'alcool aux mineurs est interdite.
+                </p>
+                {{ form_row(form.adultCertified, {row_attr: {class: 'mb-0', 'data-age-check': ''}, help: 'Obligatoire si ton panier contient une boisson alcoolisée.'}) }}
+            </section>
+        {% endif %}
+        {{ form_rest(form) }}
+        {{ include('ordering/_submit_bar.html.twig', {submit_label: 'Enregistrer'}) }}
+    {{ form_end(form, {render_rest: false}) }}
+{% endblock %}

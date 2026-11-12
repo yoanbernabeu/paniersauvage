@@ -1,0 +1,51 @@
+{#
+    A small bar chart drawn on the server (inline SVG, attributes only: no script, no style), with
+    the same figures in a table for screen readers and for whoever wants the exact numbers.
+    Variables: id, title, bars (list of App\Shop\Statistics\Bar), unit ('week' or 'month'), money (bool).
+#}
+{% set month_names = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'] %}
+{% set count = bars|length %}
+{% set slot = 10 %}
+<figure class="flex flex-col gap-2" data-chart="{{ id }}">
+    <svg viewBox="0 0 {{ count * slot }} 100" preserveAspectRatio="none" class="h-36 w-full" role="img" aria-labelledby="{{ id }}-title {{ id }}-desc">
+        <title id="{{ id }}-title">{{ title }}</title>
+        <desc id="{{ id }}-desc">
+            {%- for bar in bars -%}
+                {{ unit == 'week' ? 'Semaine du ' ~ bar.period|date('d/m') : month_names[bar.period|date('n') - 1] ~ ' ' ~ bar.period|date('Y') }} : {{ money ? bar.value|money : bar.value }}{{ not loop.last ? ' ; ' }}
+            {%- endfor -%}
+        </desc>
+        <line x1="0" y1="100" x2="{{ count * slot }}" y2="100" class="stroke-line" stroke-width="1" vector-effect="non-scaling-stroke" />
+        {% for bar in bars %}
+            {% set height = bar.heightIn(bars) %}
+            {% if height > 0 %}
+                <rect x="{{ loop.index0 * slot + 1.5 }}" y="{{ 100 - height }}" width="{{ slot - 3 }}" height="{{ height }}" rx="1" class="{{ loop.last ? 'fill-sage-dark' : 'fill-sage' }}" />
+            {% endif %}
+        {% endfor %}
+    </svg>
+    <div class="grid text-center text-xs text-ink-soft {{ count == 12 ? 'grid-cols-12' : 'grid-cols-6' }}" aria-hidden="true">
+        {% for bar in bars %}
+            <span class="truncate">{% if loop.index0 % 3 == 0 or loop.last %}{{ unit == 'week' ? bar.period|date('d/m') : month_names[bar.period|date('n') - 1] }}{% endif %}</span>
+        {% endfor %}
+    </div>
+    <figcaption>
+        <details class="text-sm text-ink-soft">
+            <summary class="inline-flex min-h-11 cursor-pointer items-center font-medium text-sage-dark">Voir les chiffres</summary>
+            <table class="mt-2 w-full text-left">
+                <thead>
+                    <tr class="border-b border-line">
+                        <th scope="col" class="py-1.5 font-semibold text-ink">{{ unit == 'week' ? 'Semaine du' : 'Mois' }}</th>
+                        <th scope="col" class="py-1.5 text-end font-semibold text-ink">{{ money ? 'Montant retiré' : 'Commandes retirées' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bar in bars|reverse %}
+                        <tr class="border-b border-line-soft">
+                            <td class="py-1.5">{{ unit == 'week' ? bar.period|date_short : month_names[bar.period|date('n') - 1] ~ ' ' ~ bar.period|date('Y') }}</td>
+                            <td class="amount py-1.5 text-end text-ink">{{ money ? bar.value|money : bar.value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
+    </figcaption>
+</figure>

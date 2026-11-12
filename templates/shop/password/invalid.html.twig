@@ -1,0 +1,18 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Lien expiré{% endblock %}
+{% block auth_title %}Ce lien ne marche plus{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-5 text-sm text-ink">
+        <p>Un lien de réinitialisation est valable une heure et ne sert qu'une fois. Celui-ci a expiré, a déjà servi, ou une demande plus récente l'a remplacé.</p>
+        <twig:Button as="a" href="{{ path('pro_password_forgot') }}" class="w-full">
+            Demander un nouveau lien
+            <twig:ux:icon name="lucide:arrow-right" />
+        </twig:Button>
+    </div>
+{% endblock %}
+
+{% block auth_footer %}
+    <a href="{{ path('pro_login') }}" class="link">Retour à la connexion</a>
+{% endblock %}

@@ -1,0 +1,91 @@
+{#
+    What a plan holds, when, where and on which terms (public page of the plan). Variables: plan,
+    shop, season_dates (remaining deliveries of a season contract).
+#}
+{% set schedule = plan.schedule %}
+<section aria-labelledby="contenu" class="mb-8 rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6" data-section="plan-content">
+    <h2 id="contenu" class="font-display text-xl font-semibold text-ink">{{ plan.basket ? 'Dans chaque panier' : 'Les produits au choix' }}</h2>
+    <ul class="mt-3 divide-y divide-line-soft">
+        {% for item in plan.items %}
+            {% set product = item.product %}
+            <li class="flex items-start justify-between gap-3 py-2.5" data-plan-item="{{ product.id }}">
+                <span class="text-ink">
+                    {% if plan.basket %}<span class="font-semibold">{{ item.quantity|line_quantity(product.unit) }}</span> {% endif %}{{ product.name }}
+                    {% if not plan.basket %}<span class="block text-sm text-ink-soft">jusqu'à {{ item.quantity|quantity(product.unit) }} par livraison</span>{% endif %}
+                    {% if product.alcoholic %}<span class="block text-xs text-wheat-ink">Boisson alcoolisée : réservée aux 18 ans et plus.</span>{% endif %}
+                </span>
+                <span class="amount shrink-0 text-sm text-ink-soft">{{ product.priceCents|money }} / {{ product.unit.short }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+    {% if plan.basket %}
+        <p class="mt-3 rounded-lg bg-sage-soft p-3 text-sage-deep" data-basket-price>
+            Environ <strong class="amount font-semibold">{{ plan.basketPriceCents|money }}</strong> le panier, aux prix d'aujourd'hui.
+        </p>
+    {% endif %}
+</section>
+
+<section aria-labelledby="quand" class="mb-8 rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6" data-section="plan-when">
+    <h2 id="quand" class="font-display text-xl font-semibold text-ink">Quand et où</h2>
+    <dl class="mt-3 flex flex-col gap-2.5 text-ink">
+        <div class="flex items-start gap-3">
+            <dt><twig:ux:icon name="lucide:calendar" class="mt-0.5 size-5 text-sage-dark" /><span class="sr-only">Livraison</span></dt>
+            <dd>Chaque <strong class="font-semibold">{{ plan.weekdayName }}</strong>, {{ time_range(schedule.deliveryStartTime, schedule.deliveryEndTime) }}</dd>
+        </div>
+        {% if plan.season %}
+            <div class="flex items-start gap-3" data-season>
+                <dt><twig:ux:icon name="lucide:calendar-days" class="mt-0.5 size-5 text-sage-dark" /><span class="sr-only">Contrat</span></dt>
+                <dd>
+                    Du {{ plan.seasonStartsOn|date_long(true) }} au {{ plan.seasonEndsOn|date_long(true) }}
+                    <span class="block text-sm text-ink-soft">{{ season_dates|length }} livraison{{ season_dates|length > 1 ? 's' }} à venir</span>
+                </dd>
+            </div>
+        {% endif %}
+    </dl>
+    <ul class="mt-4 flex flex-col gap-2 rounded-lg bg-sage-soft p-4 text-sm text-sage-deep" aria-label="Points de retrait">
+        {% for point in plan.schedule.deliveryPoints|filter(p => not p.archived) %}
+            <li class="flex items-start gap-2.5">
+                <twig:ux:icon name="lucide:{{ point.type.icon }}" class="mt-0.5 size-4 shrink-0" />
+                <span><span class="font-semibold">{{ point.name }}</span>{% if point.address %}, {{ point.address|replace({"\n": ', '}) }}{% endif %}</span>
+            </li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section aria-labelledby="regles" class="mb-8 rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6" data-section="plan-rules">
+    <h2 id="regles" class="font-display text-xl font-semibold text-ink">Les règles</h2>
+    <ul class="mt-3 flex flex-col gap-2.5 text-ink">
+        <li class="flex items-start gap-3">
+            <twig:ux:icon name="lucide:badge-check" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+            {% if plan.season %}
+                <span><strong class="font-semibold">Contrat de saison</strong> : tu t'engages jusqu'à la dernière livraison, le {{ plan.seasonEndsOn|date_long }}.</span>
+            {% elseif plan.noticeDays > 0 %}
+                <span><strong class="font-semibold">Sans engagement</strong>, avec un préavis de {{ plan.noticeDays }} jour{{ plan.noticeDays > 1 ? 's' }} : les livraisons de ce délai restent dues.</span>
+            {% else %}
+                <span><strong class="font-semibold">Sans engagement</strong> : tu arrêtes quand tu veux, depuis ton compte.</span>
+            {% endif %}
+        </li>
+        <li class="flex items-start gap-3">
+            <twig:ux:icon name="lucide:calendar-days" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+            <span>
+                {% if plan.maxPauses is null %}
+                    Absent ? Mets une livraison en pause depuis ton compte, avant la date limite de commande.
+                {% elseif plan.maxPauses == 0 %}
+                    Pas d'absence prévue : chaque livraison est due.
+                {% else %}
+                    Jusqu'à {{ plan.maxPauses }} absence{{ plan.maxPauses > 1 ? 's' }} : mets une livraison en pause depuis ton compte, avant la date limite de commande.
+                {% endif %}
+            </span>
+        </li>
+        <li class="flex items-start gap-3">
+            <twig:ux:icon name="lucide:wallet" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+            <span>Rien n'est payé en ligne : tu règles chaque livraison directement à {{ shop.name }}{% if shop.paymentSummary %} ({{ shop.paymentSummary }}){% endif %}.</span>
+        </li>
+    </ul>
+    {% if plan.conditions %}
+        <div class="mt-4 rounded-lg border border-line-soft bg-cream p-4 text-sm text-ink" data-plan-conditions>
+            <p class="mb-1 font-semibold">Ce que {{ shop.name }} te demande</p>
+            <p>{{ plan.conditions|nl2br }}</p>
+        </div>
+    {% endif %}
+</section>

@@ -1,0 +1,289 @@
+{% extends 'legal/_page.html.twig' %}
+
+{% block title %}Conditions d'utilisation{% endblock %}
+{% block meta_description %}Conditions d'utilisation de Panier Sauvage pour les producteurs et pour leurs clients, accord de sous-traitance des données et formulaire de rétractation.{% endblock %}
+{% block legal_title %}Conditions générales d'utilisation{% endblock %}
+{% block legal_intro %}Les règles du jeu, pour les producteurs qui utilisent Panier Sauvage et pour les clients qui commandent chez eux. On a essayé de les écrire simplement.{% endblock %}
+
+{% block legal_content %}
+    <nav aria-labelledby="sommaire-cgu" class="rounded-xl border border-line bg-white p-4">
+        <h2 id="sommaire-cgu" class="mt-0! text-lg!">Sommaire</h2>
+        <ol>
+            <li><a href="#general">Dispositions communes</a></li>
+            <li><a href="#producteurs">Partie producteurs</a></li>
+            <li><a href="#clients">Partie clients</a></li>
+            <li><a href="#sous-traitance">Annexe 1 : accord de sous-traitance des données (art. 28 RGPD)</a></li>
+            <li><a href="#formulaire-retractation">Annexe 2 : formulaire type de rétractation</a></li>
+        </ol>
+    </nav>
+
+    {# ---------------------------------------------------------------------------------------- #}
+    <h2 id="general">1. Dispositions communes</h2>
+
+    <h3>1.1 Qui fait quoi</h3>
+    <p>
+        Panier Sauvage (ci-après « la plateforme ») est un logiciel en ligne édité par {{ publisher.name }}
+        (voir les <a href="{{ path('legal_notice') }}">mentions légales</a>). Il permet à des
+        <strong>producteurs</strong> (agriculteurs, artisans des métiers de bouche, transformateurs) de
+        publier des ventes, de recevoir des précommandes et de préparer leurs livraisons, et à leurs
+        <strong>clients</strong> de commander chez eux.
+    </p>
+    <p>
+        <strong>Panier Sauvage n'est pas une place de marché et ne vend rien.</strong> Chaque vente est un
+        contrat conclu directement entre le client et le producteur : le producteur est le seul vendeur,
+        fixe ses prix, prépare et remet les produits, encaisse lui-même le paiement et répond de ses produits
+        envers ses clients. La plateforme ne prend aucune commission, n'encaisse aucun paiement pour le compte
+        des producteurs et ne garantit pas l'exécution des ventes.
+    </p>
+
+    <h3>1.2 Acceptation et évolution des conditions</h3>
+    <p>
+        En créant un compte ou en passant une commande, tu acceptes les présentes conditions, dans leur
+        version affichée en haut de cette page. La date et la version acceptées sont enregistrées. Si nous
+        les modifions, nous changeons leur numéro de version : les producteurs doivent alors les accepter à
+        nouveau avant de continuer, et les clients au moment de leur commande suivante. Une modification ne
+        s'applique jamais aux commandes déjà passées.
+    </p>
+
+    <h3>1.3 Disponibilité</h3>
+    <p>
+        Nous faisons de notre mieux pour que la plateforme fonctionne en continu, mais nous ne pouvons pas
+        garantir l'absence d'interruption (maintenance, panne d'un prestataire, incident réseau). Nous
+        prévenons des maintenances prévues quand c'est possible.
+    </p>
+
+    <h3>1.4 Usages interdits</h3>
+    <ul>
+        <li>se faire passer pour quelqu'un d'autre, ou créer une boutique pour un producteur sans son accord ;</li>
+        <li>proposer des produits interdits, dangereux, contrefaits, ou présentés de façon trompeuse (origine, labels, mode de production) ;</li>
+        <li>passer des commandes fictives, tenter de contourner les limites techniques ou de perturber le service ;</li>
+        <li>utiliser les coordonnées obtenues via la plateforme à d'autres fins que la commande concernée, sauf accord de la personne.</li>
+    </ul>
+    <p>
+        Tout le monde peut nous signaler un abus avec le lien « Signaler cette boutique » ou à
+        <a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a>. En cas d'abus avéré,
+        nous pouvons retirer un contenu, masquer une boutique ou fermer un compte, après avoir demandé des
+        explications sauf urgence.
+    </p>
+
+    <h3>1.5 Données personnelles</h3>
+    <p>
+        Notre <a href="{{ path('legal_privacy') }}">politique de confidentialité</a> détaille les données
+        traitées. Pour les commandes, chaque producteur est responsable du traitement des données de ses
+        clients ; Panier Sauvage agit pour lui comme sous-traitant, selon l'<a href="#sous-traitance">annexe 1</a>.
+    </p>
+
+    <h3>1.6 Droit applicable et litiges</h3>
+    <p>
+        Les présentes conditions sont soumises au droit français. En cas de difficulté, écris-nous d'abord :
+        on cherche toujours une solution amiable. Un litige entre un client et un producteur sur une vente
+        se règle entre eux ; le client consommateur peut recourir gratuitement au médiateur de la
+        consommation désigné par le producteur, et à la plateforme européenne de règlement en ligne des
+        litiges. À défaut d'accord, les tribunaux compétents sont ceux prévus par la loi.
+    </p>
+
+    {# ---------------------------------------------------------------------------------------- #}
+    <h2 id="producteurs">2. Partie producteurs</h2>
+
+    <h3>2.1 Qui peut s'inscrire</h3>
+    <p>
+        Panier Sauvage est réservé aux professionnels qui vendent leur propre production alimentaire (ou
+        celle de leur exploitation) en vente directe. À l'inscription, tu certifies agir pour ton activité
+        professionnelle et que les informations données sont exactes. Ton SIRET est obligatoire pour
+        apparaître dans l'annuaire des producteurs : nous le vérifions auprès du répertoire public des
+        entreprises (Recherche d'entreprises, données de l'Insee). Une activité qui n'est ni agricole ni
+        alimentaire est examinée par notre équipe avant l'affichage dans l'annuaire.
+    </p>
+
+    <h3>2.2 Abonnement, essai et prix</h3>
+    <ul>
+        <li><strong>Essai gratuit</strong> de 30 jours à l'inscription, sans carte bancaire et sans engagement.</li>
+        <li>Ensuite, abonnement de <strong>10 € par mois</strong> ou <strong>100 € par an</strong>, au prix affiché sur la page des tarifs au jour de la souscription, payé par carte via notre prestataire Stripe.</li>
+        <li><strong>Zéro commission</strong> sur tes ventes, aujourd'hui et pour toujours (voir nos <a href="{{ path('legal_commitments') }}">engagements</a>).</li>
+        <li>Un changement de prix t'est annoncé par e-mail au moins 30 jours à l'avance et ne s'applique qu'à la période suivante ; tu peux résilier avant.</li>
+    </ul>
+
+    <h3>2.3 Fin de l'essai, impayé et résiliation</h3>
+    <p>
+        Tu résilies quand tu veux depuis la page « Abonnement » : la résiliation prend effet à la fin de la
+        période déjà payée, sans frais ni remboursement au prorata. Si l'essai se termine sans abonnement,
+        si un paiement échoue durablement ou après une résiliation, les ventes déjà ouvertes vont à leur
+        terme, mais <strong>aucune nouvelle vente ne peut être créée ni ouverte</strong> ; tes données restent
+        consultables et exportables. Tu peux demander la suppression de ton compte et de ta boutique à
+        <a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a>.
+    </p>
+    <p>
+        Nous pouvons mettre fin à un abonnement en cas de manquement grave à ces conditions (faux producteur,
+        produits interdits, fraude), après t'avoir demandé des explications, ou avec un préavis de 3 mois si
+        nous arrêtons le service ; dans ce cas, la période payée et non utilisée t'est remboursée.
+    </p>
+
+    <h3>2.4 Tes responsabilités de vendeur</h3>
+    <p>Tu es le vendeur de tes produits. À ce titre, tu t'engages notamment à :</p>
+    <ul>
+        <li>renseigner dans tes réglages ton identité de vendeur (nom de l'activité, SIRET, adresse, téléphone), affichée à tes clients avant et après chaque commande ;</li>
+        <li>décrire honnêtement tes produits et afficher des prix toutes taxes comprises, avec les allergènes, et respecter les règles d'hygiène, d'étiquetage et de traçabilité de ton activité ;</li>
+        <li>indiquer si un produit n'est pas une denrée périssable : tes clients ont alors, pour ce produit, un droit de rétractation de 14 jours que tu dois respecter (voir 3.5) ;</li>
+        <li>pour les boissons alcoolisées : les signaler comme telles, détenir la licence ou le statut qui te permet de les vendre à distance, et <strong>vérifier l'âge de l'acheteur au retrait</strong> ; la vente aux mineurs est interdite ;</li>
+        <li>désigner un médiateur de la consommation et en informer tes clients, si la loi t'y oblige ;</li>
+        <li>honorer les commandes confirmées, ou prévenir tes clients au plus tôt (la plateforme leur envoie un e-mail à chaque modification ou annulation) ;</li>
+        <li>encaisser toi-même le paiement : Panier Sauvage n'enregistre aucun paiement et ne fait pas office de caisse. Tes obligations comptables et fiscales (caisse, facturation, TVA) restent les tiennes.</li>
+    </ul>
+
+    <h3>2.5 Tes contenus</h3>
+    <p>
+        Tu restes propriétaire de tes textes, photos et logos. Tu nous autorises à les héberger et à les
+        afficher sur la plateforme (ta page, tes ventes, l'annuaire, les e-mails à tes clients), pour la
+        durée de ton compte. Tu garantis avoir le droit de les publier.
+    </p>
+
+    <h3>2.6 Tes clients et tes données</h3>
+    <ul>
+        <li><strong>Tes clients restent les tiens.</strong> Nous ne les démarchons pas pour d'autres producteurs, nous ne vendons ni ne louons leurs données, et nous ne les utilisons pas pour de la publicité.</li>
+        <li>Tu peux exporter tes commandes et ton journal des ventes (CSV, PDF) à tout moment, y compris après la fin de ton abonnement.</li>
+        <li>Pour les données de tes clients, tu es responsable du traitement et Panier Sauvage ton sous-traitant : l'<a href="#sous-traitance">annexe 1</a> fixe nos obligations réciproques. Tu n'utilises ces données que pour tes commandes et, avec leur accord, pour annoncer tes ventes.</li>
+    </ul>
+
+    <h3>2.7 Responsabilité de la plateforme</h3>
+    <p>
+        Nous fournissons un outil : nous ne sommes pas partie aux ventes et ne répondons pas de leur
+        exécution, de la qualité des produits ni des paiements entre toi et tes clients. Notre
+        responsabilité envers toi est limitée aux dommages directs causés par une faute de notre part, dans
+        la limite des sommes que tu nous as payées sur les 12 derniers mois. Garde l'habitude d'exporter ou
+        d'imprimer ta feuille de livraison avant une tournée.
+    </p>
+
+    {# ---------------------------------------------------------------------------------------- #}
+    <h2 id="clients">3. Partie clients</h2>
+
+    <h3>3.1 Ton compte</h3>
+    <p>
+        Commander ne coûte rien et ne demande pas de mot de passe : tu te connectes avec un lien envoyé
+        par e-mail. Un seul compte te permet de commander chez plusieurs producteurs. Tu peux supprimer ton
+        compte à tout moment depuis « Mon compte » (sauf tant qu'une commande reste à te livrer).
+    </p>
+
+    <h3>3.2 Commander</h3>
+    <p>
+        Sur la page d'une vente, tu choisis tes produits, le lieu et le créneau de retrait. Avant de valider,
+        tu vois l'identité du producteur qui te vend, le prix toutes taxes comprises de chaque produit, le
+        total, les modalités de retrait et les moyens de paiement qu'il accepte. Ta commande est conclue
+        avec ce producteur dès que tu la valides ; tu reçois aussitôt un e-mail de confirmation qui reprend
+        ces informations. Les quantités sont réservées pour toi : il n'y a pas de survente.
+    </p>
+
+    <h3>3.3 Retrait ou livraison</h3>
+    <p>
+        Tu récupères ta commande au point de rendez-vous, à l'arrêt de tournée ou à l'adresse que tu as
+        choisi, dans le créneau indiqué. Si tu ne peux pas venir, préviens le producteur au plus tôt (il
+        suffit de répondre à l'e-mail de confirmation). Une commande non retirée peut être due au producteur
+        s'il s'agit de denrées préparées pour toi.
+    </p>
+
+    <h3>3.4 Paiement</h3>
+    <p>
+        <strong>Tu ne paies rien en ligne.</strong> Tu règles <strong>directement le producteur</strong>, à la
+        livraison ou selon ce qu'il indique, avec l'un des moyens de paiement qu'il accepte (espèces, chèque,
+        virement, carte, Wero, monnaie locale…). Panier Sauvage ne voit passer aucun paiement.
+    </p>
+
+    <h3>3.5 Modifier, annuler, se rétracter</h3>
+    <ul>
+        <li>Tu peux modifier ou annuler ta commande en ligne jusqu'à l'heure limite indiquée sur la vente, si le producteur l'autorise. Après, contacte-le directement.</li>
+        <li>Le producteur peut modifier ou annuler une commande (rupture, intempérie, annulation de la livraison) : tu es prévenu par e-mail et tu ne paies que ce qui t'est remis.</li>
+        <li><strong>Droit de rétractation.</strong> Les denrées alimentaires périssables (pain, légumes, fromages, viandes…) en sont exclues par la loi (article L221-28 du Code de la consommation). Pour un produit que le producteur indique comme <em>non périssable</em> (vin, miel, huile, conserves…), tu disposes de 14 jours à compter du retrait pour te rétracter, sans avoir à te justifier : informe le producteur de ta décision par une déclaration claire (le <a href="#formulaire-retractation">formulaire de l'annexe 2</a> ou un simple e-mail), puis rends-lui le produit, non ouvert, dans les 14 jours suivants. Le producteur te rembourse au plus tard 14 jours après avoir été informé, par le moyen de paiement utilisé, sauf accord pour un autre moyen ; il peut attendre d'avoir récupéré le produit. Les produits descellés qui ne peuvent être renvoyés pour des raisons d'hygiène ne sont pas concernés.</li>
+    </ul>
+
+    <h3>3.6 Boissons alcoolisées</h3>
+    <p>
+        La vente d'alcool aux mineurs est interdite. Pour commander une boisson alcoolisée, tu certifies avoir
+        18 ans ou plus ; le producteur peut te demander une pièce d'identité au retrait et refuser de te
+        remettre la boisson. L'abus d'alcool est dangereux pour la santé, à consommer avec modération.
+    </p>
+
+    <h3>3.7 En cas de problème avec une commande</h3>
+    <p>
+        Le producteur est ton interlocuteur : réponds simplement à un e-mail de commande, il le reçoit. Il
+        répond de la conformité de ses produits (garantie légale de conformité, vices cachés). Si un
+        différend persiste, tu peux saisir le médiateur de la consommation qu'il a désigné. Tu peux aussi
+        nous signaler une boutique qui ne respecte pas ces règles.
+    </p>
+
+    {# ---------------------------------------------------------------------------------------- #}
+    <h2 id="sous-traitance">Annexe 1 : accord de sous-traitance des données (article 28 du RGPD)</h2>
+    <p>
+        Cette annexe fait partie des conditions acceptées par chaque producteur. Elle s'applique aux données
+        personnelles de ses clients traitées pour ses commandes.
+    </p>
+
+    <h3>A. Rôles</h3>
+    <p>
+        Le <strong>producteur</strong> est responsable du traitement : il détermine pourquoi (prendre et livrer
+        ses commandes, annoncer ses ventes à ceux qui l'ont accepté) et avec quels moyens essentiels
+        (contenu de ses ventes, de ses e-mails, durée de son activité). {{ publisher.name }}, éditeur de
+        Panier Sauvage, est son <strong>sous-traitant</strong>. Pour le compte client lui-même (identifiant,
+        connexion, suivi des producteurs, sécurité de la plateforme), Panier Sauvage est responsable de
+        traitement, comme le décrit la politique de confidentialité.
+    </p>
+
+    <h3>B. Objet, nature et durée</h3>
+    <dl>
+        <dt>Finalités</dt>
+        <dd>enregistrement des précommandes, préparation et suivi des livraisons, envoi des e-mails de commande, de rappel et d'annonce des ventes, export des commandes et du journal des ventes.</dd>
+        <dt>Personnes concernées</dt>
+        <dd>les clients du producteur, et les personnes qui suivent sa boutique.</dd>
+        <dt>Données</dt>
+        <dd>nom, prénom, adresse e-mail, téléphone, adresse de livraison (livraison à domicile), contenu et historique des commandes, note laissée au producteur, consentement aux annonces. Aucune donnée de paiement, aucune donnée sensible au sens de l'article 9 du RGPD.</dd>
+        <dt>Durée</dt>
+        <dd>celle de l'abonnement du producteur et de la conservation de son compte.</dd>
+    </dl>
+
+    <h3>C. Engagements du sous-traitant</h3>
+    <ol>
+        <li>ne traiter les données que sur instruction documentée du producteur, c'est-à-dire pour faire fonctionner les fonctions de la plateforme qu'il utilise, et l'informer si une instruction lui paraît contraire au droit ;</li>
+        <li>ne jamais utiliser ces données pour son propre compte, ne pas les vendre, les louer ni les communiquer à d'autres producteurs ;</li>
+        <li>garantir la confidentialité des données par les personnes autorisées à y accéder ;</li>
+        <li>mettre en œuvre des mesures de sécurité adaptées : hébergement dans l'Union européenne, connexions chiffrées (HTTPS), mots de passe hachés, liens de connexion à usage unique, cloisonnement strict des données de chaque boutique, sauvegardes chiffrées, mises à jour de sécurité ;</li>
+        <li>ne recourir qu'aux sous-traitants ultérieurs listés ci-dessous, soumis à des obligations équivalentes, et informer les producteurs de tout changement envisagé au moins 30 jours à l'avance, ce qui leur permet de s'y opposer en résiliant ;</li>
+        <li>aider le producteur à répondre aux demandes d'exercice des droits de ses clients (accès, rectification, effacement, opposition) — un client peut d'ailleurs supprimer lui-même son compte — et à remplir ses obligations de sécurité et d'analyse d'impact ;</li>
+        <li>notifier au producteur toute violation de données le concernant dans les meilleurs délais, et au plus tard 48 heures après en avoir pris connaissance, avec les informations utiles à sa propre notification à la CNIL ;</li>
+        <li>au terme de l'abonnement et sur demande du producteur, supprimer ses données ou les lui restituer (exports CSV), sous réserve des obligations légales de conservation ;</li>
+        <li>mettre à sa disposition les informations nécessaires pour démontrer le respect de ces obligations, et permettre des audits raisonnables, à ses frais et avec un préavis de 30 jours.</li>
+    </ol>
+
+    <h3>D. Sous-traitants ultérieurs autorisés</h3>
+    <ul>
+        <li><strong>{{ publisher.hostName }}</strong> : hébergement des serveurs et de la base de données (Union européenne) ;</li>
+        <li><strong>Brevo</strong> (Sendinblue SAS, France) : envoi des e-mails transactionnels ;</li>
+        <li>l'<strong>API Adresse</strong> de l'État (IGN / DINUM) reçoit uniquement l'adresse publique des points de retrait, jamais celle des clients.</li>
+    </ul>
+
+    <h3>E. Engagements du producteur</h3>
+    <p>
+        Le producteur informe ses clients du traitement de leurs données (la politique de confidentialité de
+        la plateforme, à laquelle renvoient ses pages et ses e-mails, y contribue), ne collecte via les notes
+        ou les champs libres aucune donnée inutile ou sensible, et n'utilise les coordonnées de ses clients
+        que pour ses commandes ou, avec leur accord, pour annoncer ses ventes.
+    </p>
+
+    {# ---------------------------------------------------------------------------------------- #}
+    <h2 id="formulaire-retractation">Annexe 2 : formulaire type de rétractation</h2>
+    <p>
+        Ce formulaire ne concerne que les produits non périssables (voir 3.5). Remplis-le et envoie-le
+        <strong>au producteur</strong> (et non à Panier Sauvage) : réponds à l'e-mail de confirmation de ta
+        commande, ou utilise les coordonnées du producteur qui y figurent.
+    </p>
+    <div class="rounded-xl border border-line bg-white p-4 sm:p-6" data-withdrawal-form>
+        <p>À l'attention de [nom du producteur, adresse, adresse e-mail] :</p>
+        <p>Je vous notifie par la présente ma rétractation du contrat portant sur la vente du bien ci-dessous :</p>
+        <ul>
+            <li>Produit(s) : …</li>
+            <li>Référence de la commande : …</li>
+            <li>Commandé le : … / reçu le : …</li>
+            <li>Nom du consommateur : …</li>
+            <li>Adresse du consommateur : …</li>
+            <li>Date : …</li>
+            <li>Signature du consommateur (uniquement en cas de notification sur papier) : …</li>
+        </ul>
+    </div>
+{% endblock %}

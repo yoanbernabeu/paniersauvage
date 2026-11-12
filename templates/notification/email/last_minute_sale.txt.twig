@@ -1,0 +1,25 @@
+{% extends 'notification/layout.txt.twig' %}
+{% set following = true %}
+
+{% block content %}
+Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},
+
+{{ shop.name }} remet en vente ce qu'il lui reste pour la livraison du {{ sale.deliveryDate|date_long }}. 🧺
+Tu as jusqu'au {{ sale.orderDeadline|datetime_long }} pour commander, premier arrivé, premier servi.
+
+Je commande : {{ sale_url }}
+{% if offers is not empty %}
+
+CE QU'IL RESTE
+{% for offer in offers %}
+- {{ offer.product.name }} (reste {{ offer.remaining|quantity(offer.product.unit) }}) : {{ offer.priceCents|money }} / {{ offer.product.unit.short }}
+{% endfor %}
+{% endif %}
+{% if sale.deliveries is not empty %}
+
+OÙ ET QUAND
+{% for delivery in sale.deliveries %}
+{{ include('notification/_delivery.txt.twig') }}
+{% endfor %}
+{% endif %}
+{% endblock %}

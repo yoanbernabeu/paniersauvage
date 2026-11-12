@@ -1,0 +1,80 @@
+{#
+    Opening the last-minute sale of a closed sale (SPEC §21, App\Sale\Service\LastMinuteSale).
+    Variables: sale, form (LastMinuteSaleType), offers (all the sale's offers), latest_end, followers
+               (number of followers who accept e-mails).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}Vente de dernière minute · {{ sale.title }}{% endblock %}
+{% block page_title %}Vente de dernière minute{% endblock %}
+{% block page_subtitle %}{{ sale.title }} · livraison {{ sale.deliveryDate|date_long }}{% endblock %}
+
+{% block content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-5'}}) }}
+        {% if form.vars.errors|length > 0 %}
+            <div data-form-errors>{{ form_errors(form) }}</div>
+        {% endif %}
+
+        <twig:Card>
+            <twig:Card:Header>
+                <twig:Card:Title>Jusqu'à quand ?</twig:Card:Title>
+                <twig:Card:Description>
+                    Mêmes points et mêmes créneaux de livraison. Termine au plus tard le {{ latest_end|datetime_long }}, une heure avant la livraison.
+                </twig:Card:Description>
+            </twig:Card:Header>
+            <twig:Card:Content>
+                {{ form_row(form.until, {row_attr: {class: 'sm:max-w-72'}}) }}
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card>
+            <twig:Card:Header>
+                <twig:Card:Title>Ce que tu remets en vente</twig:Card:Title>
+                <twig:Card:Description>Le reste des produits limités est déjà indiqué. Corrige-le, ou ajoute un produit sans limite dont il te reste quelques-uns. Laisse vide ce que tu ne remets pas en vente.</twig:Card:Description>
+            </twig:Card:Header>
+            <twig:Card:Content>
+                <ul class="divide-y divide-line-soft">
+                    {% for offer in offers %}
+                        {% set field = form.quantities[offer.id] %}
+                        <li class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-4" data-last-minute-offer="{{ offer.id }}">
+                            <div class="min-w-0 flex-1">
+                                <label for="{{ field.vars.id }}" class="text-sm font-semibold text-ink">{{ offer.product.name }}</label>
+                                <p class="text-sm text-ink-soft">
+                                    <span class="amount">{{ offer.priceCents|money }}</span>{% if offer.product.unit.weighed %} / kg{% endif %} ·
+                                    {% if offer.limited %}
+                                        reste <span class="amount">{{ offer.remaining|quantity(offer.product.unit) }}</span> sur <span class="amount">{{ offer.maxQty|quantity(offer.product.unit) }}</span>
+                                    {% else %}
+                                        sans limite, commandé : <span class="amount">{{ offer.reservedQty|quantity(offer.product.unit) }}</span>
+                                    {% endif %}
+                                </p>
+                                {{ form_errors(field) }}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {{ form_widget(field, {attr: {class: 'w-28 text-end', 'aria-describedby': 'unite-' ~ offer.id}}) }}
+                                <span id="unite-{{ offer.id }}" class="w-8 text-sm text-ink-soft">{{ offer.product.unit.weighed ? 'kg' : '' }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Alert variant="info">
+            <twig:ux:icon name="lucide:mail" />
+            <twig:Alert:Description class="text-current">
+                {% if followers == 0 %}
+                    Aucun de tes abonnés n'accepte tes e-mails pour l'instant : partage le lien de la vente toi-même, sur WhatsApp par exemple.
+                {% else %}
+                    {{ followers }} abonné{{ followers > 1 ? 's' }} qui accepte{{ followers > 1 ? 'nt' }} tes e-mails {{ followers > 1 ? 'seront prévenus' : 'sera prévenu' }}, une seule fois (sauf ceux qui ont déjà commandé). Tu pourras aussi partager le lien.
+                {% endif %}
+            </twig:Alert:Description>
+        </twig:Alert>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <twig:Button type="submit" size="lg">Ouvrir la vente de dernière minute</twig:Button>
+            <twig:Button as="a" href="{{ path('pro_sale_show', {id: sale.id}) }}" variant="ghost">Annuler</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

@@ -1,0 +1,229 @@
+name: CI
+
+# Quality gate of every push and pull request. The jobs run in parallel; deploy.yml waits for the
+# whole workflow on main. Every step has a local equivalent: `composer ci` (see AGENTS.md).
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.4'
+  PHP_EXTENSIONS: ctype, gd, iconv, intl, mbstring, pdo_pgsql, zip
+
+jobs:
+  quality:
+    name: Lint and static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+          tools: composer:v2, symfony-cli
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Composer manifest
+        run: composer validate --strict --no-check-publish
+
+      - name: JavaScript and CSS vendors
+        run: |
+          php bin/console importmap:install
+          php bin/console tailwind:build
+
+      - name: Symfony linters
+        run: |
+          php bin/console lint:container
+          php bin/console lint:twig templates
+          php bin/console lint:yaml config --parse-tags
+          php bin/console doctrine:schema:validate --skip-sync
+
+      # Symfony-aware diagnostics (unknown routes, templates, services…): Symfony Language Tools.
+      - name: Symfony LSP
+        run: symfony lsp:check --format=github
+
+      # PHPStan reads var/cache/dev/App_KernelDevDebugContainer.xml.
+      - name: Warm up the dev container
+        run: php bin/console cache:warmup --env=dev
+
+      - name: PHPStan (level max)
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G --error-format=github
+
+      - name: PHP-CS-Fixer
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: Rector
+        run: vendor/bin/rector process --dry-run --no-progress-bar
+
+  tests:
+    name: Migrations and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      database:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -d app -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The test environment appends "_test" to the database name (config/packages/doctrine.yaml).
+      DATABASE_URL: postgresql://app:ci_password@127.0.0.1:5432/app?serverVersion=18&charset=utf8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: pcov
+          tools: composer:v2
+
+      - uses: ramsey/composer-install@v3
+
+      - name: JavaScript and CSS vendors
+        run: |
+          php bin/console importmap:install
+          php bin/console tailwind:build
+
+      # The migrations alone must build the exact schema of the mapping (single initial migration).
+      - name: Migrations match the mapping
+        run: |
+          php bin/console doctrine:database:create --if-not-exists
+          php bin/console doctrine:migrations:migrate --no-interaction
+          php bin/console doctrine:schema:validate
+
+      - name: The demo data set loads
+        run: php bin/console doctrine:fixtures:load --no-interaction
+
+      - name: Test database
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --env=test
+          php bin/console doctrine:schema:update --force --env=test
+
+      - name: PHPUnit with coverage
+        run: vendor/bin/phpunit --coverage-text --only-summary-for-coverage-text --coverage-clover=var/coverage/clover.xml
+
+      - name: Coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: var/coverage/clover.xml
+          if-no-files-found: ignore
+
+  mutation:
+    name: Mutation testing (changed lines)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      database:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -d app -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://app:ci_password@127.0.0.1:5432/app?serverVersion=18&charset=utf8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: pcov
+          tools: composer:v2
+
+      - uses: ramsey/composer-install@v3
+
+      - name: JavaScript and CSS vendors
+        run: |
+          php bin/console importmap:install
+          php bin/console tailwind:build
+
+      # One test database per Infection thread (TEST_TOKEN), plus the plain one.
+      - name: Test databases
+        run: composer mutation:databases
+
+      # Only the mutants of the lines this pull request changes: every new or changed line must
+      # be pinned down by a test.
+      - name: Infection
+        run: >-
+          php -d memory_limit=1G vendor/bin/infection
+          --git-diff-lines
+          --git-diff-base=origin/${{ github.base_ref }}
+          --threads=4
+          --min-covered-msi=90
+          --ignore-msi-with-no-mutations
+          --logger-github
+          --no-progress
+
+  security:
+    name: Dependency advisories
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+          tools: composer:v2
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Composer audit
+        run: composer audit
+
+      - name: Import map audit (JavaScript)
+        run: php bin/console importmap:audit
+
+  docker:
+    name: Production image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build (not pushed)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: app
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

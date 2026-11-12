@@ -1,0 +1,77 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}{{ schedule ? 'Modifier la récurrence' : 'Nouvelle récurrence' }}{% endblock %}
+{% block page_title %}{{ schedule ? 'Modifier la récurrence' : 'Nouvelle récurrence' }}{% endblock %}
+{% block page_subtitle %}
+    {%- if schedule -%}
+        Tes changements s'appliquent aux prochaines ventes créées. Les ventes déjà créées ne changent pas.
+    {%- else -%}
+        Chaque semaine, une vente est créée, ouverte puis fermée toute seule.
+    {%- endif -%}
+{% endblock %}
+
+{% block content %}
+    {% if not allows_new_sales %}
+        {{ include('sale/_subscription_alert.html.twig') }}
+    {% endif %}
+
+    {% if not has_points or not has_products %}
+        <twig:Alert variant="warning" class="mb-5">
+            <twig:ux:icon name="lucide:triangle-alert" />
+            <twig:Alert:Title>Il te manque {{ not has_points ? 'un point de livraison' }}{{ not has_points and not has_products ? ' et ' }}{{ not has_products ? 'des produits' }}</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">
+                Une récurrence a besoin d'au moins un point de livraison et un produit.
+                {% if not has_points %}<a class="font-semibold underline underline-offset-4" href="{{ safe_path('pro_delivery_point_index', '/pro/points-de-livraison') }}">Ajouter un point de livraison</a>{% endif %}
+                {% if not has_products %}<a class="font-semibold underline underline-offset-4" href="{{ safe_path('pro_product_index', '/pro/produits') }}">Ajouter des produits</a>{% endif %}
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-5', 'data-controller': 'schedule-preview', 'data-action': 'input->schedule-preview#refresh change->schedule-preview#refresh'}}) }}
+        {% if form.vars.errors|length > 0 %}
+            <div data-form-errors>{{ form_errors(form) }}</div>
+        {% endif %}
+
+        <twig:Card>
+            <twig:Card:Header><twig:Card:Title>Livraison</twig:Card:Title></twig:Card:Header>
+            <twig:Card:Content>
+                {{ form_row(form.name) }}
+                <div class="grid gap-x-4 sm:grid-cols-3">
+                    {{ form_row(form.weekday, {attr: {'data-schedule-preview-target': 'weekday'}}) }}
+                    {{ form_row(form.deliveryStartTime, {attr: {'data-schedule-preview-target': 'start'}}) }}
+                    {{ form_row(form.deliveryEndTime, {attr: {'data-schedule-preview-target': 'end'}}) }}
+                </div>
+                {{ form_row(form.deliveryPoints) }}
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card>
+            <twig:Card:Header><twig:Card:Title>Commandes</twig:Card:Title></twig:Card:Header>
+            <twig:Card:Content>
+                <div class="grid gap-x-4 sm:grid-cols-2">
+                    {{ form_row(form.opensDaysBefore, {attr: {'data-schedule-preview-target': 'opens'}}) }}
+                    <div class="hidden sm:block"></div>
+                    {{ form_row(form.deadlineDaysBefore, {attr: {'data-schedule-preview-target': 'deadlineDays'}}) }}
+                    {{ form_row(form.deadlineTime, {attr: {'data-schedule-preview-target': 'deadlineTime'}}) }}
+                </div>
+                {{ form_row(form.editCutoffHours, {row_attr: {class: 'sm:max-w-md'}}) }}
+                {# Filled in live by the schedule-preview controller (hidden without JavaScript). #}
+                <p class="flex items-start gap-2 rounded-lg bg-sage-soft p-3 text-sm text-sage-deep" aria-live="polite" hidden data-schedule-preview-target="output" data-schedule-preview></p>
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card>
+            <twig:Card:Header><twig:Card:Title>Produits</twig:Card:Title></twig:Card:Header>
+            <twig:Card:Content>
+                {{ form_row(form.products) }}
+            </twig:Card:Content>
+        </twig:Card>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <twig:Button type="submit">{{ schedule ? 'Enregistrer' : 'Créer la récurrence' }}</twig:Button>
+            <twig:Button as="a" href="{{ path('pro_schedule_index') }}" variant="ghost">Retour</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

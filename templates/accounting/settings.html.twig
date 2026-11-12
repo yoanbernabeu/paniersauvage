@@ -1,0 +1,44 @@
+{# Accounts of the accounting entries export. Variables: form (AccountingSettingsType). #}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}Comptes comptables{% endblock %}
+{% block page_title %}Comptes comptables{% endblock %}
+{% block page_subtitle %}Les comptes de ton export d'écritures. Les valeurs par défaut conviennent souvent : demande à ton comptable s'il en préfère d'autres.{% endblock %}
+
+{% block content %}
+    <p class="mb-4">
+        <a href="{{ path('pro_accounting') }}" class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-sage-dark hover:underline">
+            <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+            Comptabilité
+        </a>
+    </p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-6'}}) }}
+        {{ form_errors(form) }}
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="comptes-ventes">
+            <h2 id="comptes-ventes" class="mb-4 text-base font-semibold text-ink">Ventes et TVA</h2>
+            <div class="grid gap-x-4 sm:grid-cols-2">
+                {{ form_row(form.salesAccount) }}
+                {{ form_row(form.vatAccount) }}
+            </div>
+            {{ form_row(form.journalCode, {row_attr: {class: 'sm:max-w-[calc(50%-0.5rem)]'}}) }}
+        </section>
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="comptes-contrepartie">
+            <h2 id="comptes-contrepartie" class="mb-4 text-base font-semibold text-ink">Contrepartie</h2>
+            {{ form_row(form.counterpart) }}
+            <div class="grid gap-x-4 sm:grid-cols-2">
+                {{ form_row(form.customerAccount) }}
+                {{ form_row(form.cashAccount) }}
+            </div>
+        </section>
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <twig:Button type="submit" class="w-full sm:w-auto">Enregistrer</twig:Button>
+            <twig:Button as="a" variant="ghost" href="{{ path('pro_accounting') }}" class="w-full sm:w-auto">Annuler</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

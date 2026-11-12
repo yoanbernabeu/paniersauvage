@@ -1,0 +1,18 @@
+{#
+    Shown when the subscription no longer allows new sales (SPEC §7) — only when the layout banner
+    (billing/_banner.html.twig) does not already say so, e.g. for a shop without subscription record.
+#}
+{% if not billing_banner() %}
+    <twig:Alert variant="warning" class="mb-5" data-subscription-alert>
+        <twig:ux:icon name="lucide:triangle-alert" />
+        <twig:Alert:Title>Ton abonnement ne permet plus de nouvelles ventes</twig:Alert:Title>
+        <twig:Alert:Description class="text-current">
+            Tes ventes en cours vont à leur terme et tes données restent consultables, mais aucune nouvelle vente ne peut s'ouvrir ni se créer.
+            {% if is_granted('ROLE_SHOP_OWNER') %}
+                <a href="{{ safe_path('pro_billing', '/pro/abonnement') }}" class="font-semibold underline underline-offset-4">Voir mon abonnement</a>
+            {% else %}
+                Seul le propriétaire de la boutique peut gérer l'abonnement.
+            {% endif %}
+        </twig:Alert:Description>
+    </twig:Alert>
+{% endif %}

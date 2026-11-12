@@ -1,0 +1,59 @@
+{#
+    Pre-contractual information on the order page, just before the "Valider" button: who sells,
+    prices including VAT, pick-up and payment, right of withdrawal, alcohol. Then the mandatory boxes
+    of the form (age, terms) when the form has them.
+    Variables: shop, sale, form (OrderFormType view).
+#}
+{% set has_alcohol = sale.offers|filter(o => o.product.alcoholic)|length > 0 %}
+{% set has_withdrawable = sale.offers|filter(o => not o.product.perishable)|length > 0 %}
+
+<section aria-labelledby="titre-avant-de-valider" class="mb-6 rounded-xl border border-line bg-white p-4 sm:p-5" data-precontractual>
+    <h2 id="titre-avant-de-valider" class="font-display mb-3 text-xl font-semibold text-ink">Avant de valider</h2>
+
+    {{ include('legal/_seller_identity.html.twig') }}
+
+    <ul class="mt-4 flex flex-col gap-2 text-sm text-ink-soft">
+        <li class="flex items-start gap-2">
+            <twig:ux:icon name="lucide:receipt" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+            <span>Les prix sont <strong class="font-semibold text-ink">toutes taxes comprises</strong>. Ta commande est conclue avec {{ shop.name }}, pas avec {{ instance.name }}.</span>
+        </li>
+        <li class="flex items-start gap-2" data-payment-info>
+            <twig:ux:icon name="lucide:wallet" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+            <span>Rien à payer en ligne : tu règles {{ shop.name }} directement, au retrait.{% if shop.paymentSummary %} Moyens acceptés : {{ shop.paymentSummary }}{% endif %}</span>
+        </li>
+        <li class="flex items-start gap-2">
+            <twig:ux:icon name="lucide:map-pin" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+            <span>Retrait au lieu et dans le créneau que tu as choisis plus haut.</span>
+        </li>
+        <li class="flex items-start gap-2" data-withdrawal-info>
+            <twig:ux:icon name="lucide:undo-2" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+            {% if has_withdrawable %}
+                <span>
+                    Les denrées périssables sont exclues du droit de rétractation. Pour les produits marqués
+                    « rétractation 14 jours », tu as 14 jours après le retrait pour changer d'avis : préviens {{ shop.name }}
+                    (<a href="{{ path('legal_terms') }}#formulaire-retractation" class="link" target="_blank" rel="noopener">formulaire type</a>)
+                    et rends-lui le produit non ouvert ; il te rembourse sous 14 jours.
+                </span>
+            {% else %}
+                <span>Ces produits sont des denrées périssables : ils sont exclus du droit de rétractation (article L221-28 du Code de la consommation).</span>
+            {% endif %}
+        </li>
+    </ul>
+
+    {% if has_alcohol %}
+        <p class="mt-4 rounded-lg bg-wheat-soft px-3 py-2 text-sm font-medium text-wheat-ink" data-alcohol-warning>
+            L'abus d'alcool est dangereux pour la santé, à consommer avec modération. La vente d'alcool aux mineurs est interdite : une pièce d'identité peut t'être demandée au retrait.
+        </p>
+    {% endif %}
+
+    {% if form.adultCertified is defined or form.acceptTerms is defined %}
+        <div class="mt-4 flex flex-col">
+            {% if form.adultCertified is defined %}
+                {{ form_row(form.adultCertified, {row_attr: {class: 'mb-2', 'data-age-check': ''}, help: 'Obligatoire si ton panier contient une boisson alcoolisée.'}) }}
+            {% endif %}
+            {% if form.acceptTerms is defined %}
+                {{ form_row(form.acceptTerms, {row_attr: {class: 'mb-0', 'data-terms-check': ''}}) }}
+            {% endif %}
+        </div>
+    {% endif %}
+</section>

@@ -1,0 +1,24 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},
+
+{% if actor == 'producer' %}
+{{ shop.name }} a enregistré une commande pour toi. Voici le récapitulatif.
+{% else %}
+Merci ! Ta commande chez {{ shop.name }} est confirmée. 🧺
+{% endif %}
+
+{{ include('notification/_order_summary.txt.twig') }}
+{% if new_customer_deposit|default(null) %}
+Première commande chez {{ shop.name }} : acompte demandé, {{ new_customer_deposit }}. Il se règle directement avec {{ shop.name }}, hors de Panier Sauvage.
+
+{% endif %}
+LIVRAISON
+{{ include('notification/_delivery.txt.twig') }}
+{{ include('notification/_edit_info.txt.twig') }}
+Voir ma commande : {{ order_url }}
+
+{{ include('legal/email/_order_information.txt.twig') }}
+{{ include('notification/_nearby_shops.txt.twig', {nearby_shops: nearby_shops|default([])}) }}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Créer ma boutique{% endblock %}
+{% block meta_description %}Crée ta boutique de précommandes en deux minutes. {{ instance.isSponsored() ? instance.sponsorshipMention() ~ ', sans carte bancaire.' : '30 jours d\'essai gratuit, sans carte bancaire.' }}{% endblock %}
+{% block auth_title %}Crée ta boutique{% endblock %}
+{% block auth_intro %}{{ instance.isSponsored() ? instance.sponsorshipMention() ~ ', sans carte bancaire.' : '30 jours d\'essai gratuit, sans carte bancaire.' }} Deux minutes suffisent.{% endblock %}
+
+{% block content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_errors(form) }}
+        <div class="grid gap-x-4 sm:grid-cols-2">
+            {{ form_row(form.firstName) }}
+            {{ form_row(form.lastName) }}
+        </div>
+        {{ form_row(form.shopName) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.plainPassword) }}
+        {{ form_row(form.acceptTerms) }}
+        <twig:Button type="submit" class="mt-1 w-full">
+            Créer ma boutique
+            <twig:ux:icon name="lucide:arrow-right" />
+        </twig:Button>
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block auth_footer %}
+    Tu as déjà une boutique ?
+    <a href="{{ path('pro_login') }}" class="link">Connecte-toi</a>
+{% endblock %}

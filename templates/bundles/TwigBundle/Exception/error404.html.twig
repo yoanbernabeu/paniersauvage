@@ -1,0 +1,32 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% set pro_area = app.request is not null and (app.request.pathInfo == '/pro' or app.request.pathInfo starts with '/pro/') %}
+
+{% block title %}Page introuvable{% endblock %}
+
+{% block flashes %}{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col items-center py-6 text-center sm:py-12" data-error-404="{{ pro_area ? 'pro' : 'public' }}">
+        <twig:Illustration name="herbs" class="w-56" />
+        <p class="mt-8 text-sm font-semibold tracking-widest text-sage-dark uppercase">Erreur 404</p>
+        <h1 class="mt-2 text-3xl leading-tight font-semibold text-balance text-ink sm:text-4xl">Ce chemin ne mène nulle part</h1>
+        {% if pro_area %}
+            <p class="mt-4 max-w-md leading-relaxed text-ink-soft">
+                Cette page n'existe pas, plus, ou elle ne fait pas partie de ta boutique. Repars de ton tableau de bord pour retrouver tes ventes.
+            </p>
+            <twig:Button as="a" href="{{ safe_path('pro_dashboard', '/pro') }}" class="mt-8">
+                <twig:ux:icon name="lucide:arrow-left" />
+                Revenir à mon tableau de bord
+            </twig:Button>
+        {% else %}
+            <p class="mt-4 max-w-md leading-relaxed text-ink-soft">
+                La page que tu cherches n'existe pas, ou plus. Vérifie le lien que ton producteur t'a envoyé, ou repars de l'accueil.
+            </p>
+            <twig:Button as="a" href="{{ path('home') }}" class="mt-8">
+                <twig:ux:icon name="lucide:arrow-left" />
+                Revenir à l'accueil
+            </twig:Button>
+        {% endif %}
+    </div>
+{% endblock %}

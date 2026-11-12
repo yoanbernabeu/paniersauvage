@@ -1,0 +1,9 @@
+<div
+    data-slot="card-title"
+    {{ attributes.defaults({
+        class: 'text-base leading-snug font-semibold text-ink group-data-[size=sm]/card:text-sm'|tailwind_classes,
+    }) }}
+>
+    {##- The title text of the card. -#}
+    {%- block content %}{% endblock -%}
+</div>

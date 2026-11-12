@@ -1,0 +1,12 @@
+{#
+    Under the transparency sentence of the directory, on an instance restricted to a territory
+    (INSTANCE_TERRITORY, docs/INSTANCE.md): what the directory covers. Nothing otherwise.
+#}
+{% if instance.territory.isRestricted() %}
+    <p class="mt-2 flex max-w-2xl items-start gap-2 text-sm text-ink-soft" data-directory-territory>
+        <twig:ux:icon name="lucide:map" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+        <span>
+            Cet annuaire couvre {{ instance.territory.name ?: 'le territoire de ' ~ instance.name }} : seuls les points de retrait et de livraison situés sur ce territoire y figurent.
+        </span>
+    </p>
+{% endif %}

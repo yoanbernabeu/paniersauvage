@@ -1,0 +1,13 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},
+
+Petit rappel : ta commande chez {{ shop.name }} t'attend demain. 🌾
+
+{{ include('notification/_delivery.txt.twig') }}
+{{ include('notification/_order_summary.txt.twig') }}
+Voir ma commande : {{ order_url }}
+
+Un empêchement ? Préviens directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.
+{% endblock %}

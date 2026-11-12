@@ -1,0 +1,68 @@
+{#
+    Catalogue in the Data Food Consortium format.
+    Variables: publication (CatalogPublication), public_url, context_url.
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}Partager mon catalogue{% endblock %}
+{% block page_title %}Partager mon catalogue{% endblock %}
+{% block page_subtitle %}Au format ouvert du Data Food Consortium, pour d'autres outils des circuits courts.{% endblock %}
+
+{% block content %}
+    <p class="mb-4">
+        <a href="{{ path('pro_product_index') }}" class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-sage-dark hover:underline">
+            <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+            Tous les produits
+        </a>
+    </p>
+
+    <section aria-labelledby="dfc-quoi" class="rounded-2xl border border-line bg-white p-4 sm:p-5">
+        <h2 id="dfc-quoi" class="text-base font-semibold text-ink">Ce que contient le fichier</h2>
+        <p class="mt-2 text-sm text-ink">
+            Le Data Food Consortium est un standard ouvert qui permet aux outils des circuits courts (boutiques en ligne, logiciels de
+            groupements, plateformes de collectivités) d'échanger des catalogues sans ressaisie. Le fichier reprend ce que ta page boutique montre déjà :
+        </p>
+        <ul class="mt-2 flex flex-col gap-1.5 text-sm text-ink" data-dfc-content>
+            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" /><span>ta boutique (nom, présentation, adresse) ;</span></li>
+            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" /><span>tes produits actifs : prix TTC, TVA, unité (pièce, kilo, botte), photo, labels bio et officiels ;</span></li>
+            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" /><span>tes ventes ouvertes ou programmées : dates de commande, prix et quantités encore disponibles ;</span></li>
+            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-sage-dark" /><span>tes points de retrait (pas tes zones de livraison à domicile).</span></li>
+        </ul>
+        <p class="mt-2 text-sm text-ink-soft">Jamais tes clients ni leurs commandes.</p>
+
+        <twig:Button as="a" variant="secondary" href="{{ path('pro_catalog_dfc_download') }}" data-turbo="false" class="mt-4 w-full sm:w-auto">
+            <twig:ux:icon name="lucide:download" />
+            Télécharger le fichier (JSON-LD)
+        </twig:Button>
+    </section>
+
+    <section aria-labelledby="dfc-public" class="mt-5 rounded-2xl border border-line bg-white p-4 sm:p-5" data-dfc-publication="{{ publication.dfcPublic ? 'public' : 'private' }}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="dfc-public" class="text-base font-semibold text-ink">Adresse publique</h2>
+            {% if publication.dfcPublic %}
+                <twig:Badge variant="sage">Publié</twig:Badge>
+            {% else %}
+                <twig:Badge variant="muted">Non publié</twig:Badge>
+            {% endif %}
+        </div>
+        <p class="mt-2 text-sm text-ink">
+            Si tu l'actives, ton catalogue est lisible à une adresse fixe, toujours à jour. Tu la donnes à une plateforme compatible
+            (un groupement, une épicerie, une collectivité) pour qu'elle reprenne tes produits sans ressaisie. Tu peux l'arrêter à tout moment.
+        </p>
+        <p class="mt-3 rounded-xl bg-sage-soft px-3 py-2.5 font-mono text-sm break-all text-sage-deep" data-dfc-url>{{ public_url }}</p>
+
+        <form method="post" action="{{ path('pro_catalog_dfc_publish') }}" class="mt-4" data-turbo="false">
+            <input type="hidden" name="_token" value="{{ csrf_token('dfc_publish') }}">
+            <input type="hidden" name="public" value="{{ publication.dfcPublic ? '0' : '1' }}">
+            <twig:Button type="submit" variant="{{ publication.dfcPublic ? 'outline' : 'default' }}" class="w-full sm:w-auto">
+                {{ publication.dfcPublic ? 'Arrêter la publication' : 'Publier mon catalogue' }}
+            </twig:Button>
+        </form>
+    </section>
+
+    <p class="mt-5 text-xs text-ink-soft">
+        Format : JSON-LD, ontologie Data Food Consortium 1.16 (contexte <span class="break-all">{{ context_url }}</span>).
+    </p>
+{% endblock %}

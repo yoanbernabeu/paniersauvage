@@ -1,0 +1,14 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+La boutique {{ shop.name }} ({{ shop_url }}) a un SIRET actif, mais son activité n'est ni agricole ni alimentaire. Elle reste hors de l'annuaire tant que tu n'as pas décidé.
+
+SIRET : {{ verification.siret }}
+Entreprise : {{ verification.companyName ?? '-' }}
+Code NAF : {{ verification.nafCode ?? '-' }}
+
+Vérifie l'entreprise sur https://annuaire-entreprises.data.gouv.fr/etablissement/{{ verification.siret }}, puis sur le serveur :
+
+php bin/console app:shops:review --approve={{ shop.slug }}
+php bin/console app:shops:review --reject={{ shop.slug }} --note="…"
+{% endblock %}

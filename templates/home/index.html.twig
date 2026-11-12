@@ -1,0 +1,423 @@
+{% extends 'layout/customer.html.twig' %}
+
+{#
+    Home page: Panier Sauvage presented to producers (SPEC §8, customer tone). The running example
+    is the baker of the SPEC, Léa: orders until Friday 8 pm, baking on Sunday, delivery on Monday
+    6-7 pm on a village square. The page shows the tool rather than describing it: the order page
+    on a phone, the WhatsApp thread it replaces, the week, and the prices "on the slate", the way a
+    market stall shows them. Customers looking for a producer get a band to the directory.
+    The mock-ups are decorative (aria-hidden), each one has a text equivalent next to it.
+#}
+
+{% block title %}Les précommandes de tes clients, sans WhatsApp{% endblock %}
+{% block title_suffix %} · {{ instance.name }}{% endblock %}
+{% block meta_description %}{{ instance.name }} : tes clients précommandent en ligne, tu sais quoi produire et quoi livrer. {% if instance.isSponsored() %}{{ instance.sponsorshipMention() }}, zéro commission, tes clients restent les tiens, logiciel libre.{% else %}10 € par mois, zéro commission, tes clients restent les tiens, logiciel libre. 30 jours d'essai gratuit.{% endif %}{% endblock %}
+
+{% block head_extra %}
+    <link rel="canonical" href="{{ url('home') }}">
+{% endblock %}
+
+{% set register_path = safe_path('pro_register', '/pro/inscription') %}
+{% set login_path = safe_path('pro_login', '/pro/connexion') %}
+
+{% block header_nav %}
+    <a href="{{ path('producer_directory') }}" class="hidden h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-sage-dark hover:bg-sage-soft sm:inline-flex">
+        <twig:ux:icon name="lucide:map-pin" class="size-5" />
+        Trouver un producteur
+    </a>
+    <a href="{{ login_path }}" class="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-sage-dark hover:bg-sage-soft">
+        <twig:ux:icon name="lucide:store" class="size-5" />
+        <span class="sm:hidden">Espace pro</span><span class="hidden sm:inline">Espace producteur</span>
+    </a>
+{% endblock %}
+
+{% block main %}
+    <main id="contenu" class="flex-1 overflow-x-clip">
+        {# Hero: the promise, and the two sides of a sale: the customer's phone, Léa's baking sheet. #}
+        <section aria-labelledby="accroche" class="relative">
+            <div class="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-10 pb-20 sm:px-6 sm:pt-16 lg:grid-cols-[1fr_1fr] lg:gap-8 lg:pb-28">
+                <div class="min-w-0">
+                    <p class="inline-flex items-center gap-2 rounded-full bg-sage-mist px-3 py-1.5 text-sm font-medium text-sage-deep">
+                        <twig:ux:icon name="lucide:wheat" class="size-4" />
+                        Pour les fermes, fournils, ruchers et maraîchers
+                    </p>
+                    <h1 id="accroche" class="mt-6 max-w-xl text-[2.5rem] leading-[1.02] font-semibold tracking-tight text-balance text-ink sm:text-[4rem]">
+                        Tes clients précommandent. Toi, tu produis juste ce qu'il faut.
+                    </h1>
+                    <p class="mt-6 max-w-lg text-lg leading-relaxed text-ink-soft">
+                        Une page de commande pour ta ferme ou ton fournil, ouverte jusqu'à ta date limite. Tu sais quoi produire, qui vient chercher quoi, et tu ne recopies plus rien depuis WhatsApp.
+                    </p>
+                    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <twig:Button as="a" href="{{ register_path }}" size="lg" data-cta="register">
+                            Créer ma boutique
+                            <twig:ux:icon name="lucide:arrow-right" />
+                        </twig:Button>
+                        <twig:Button as="a" href="{{ login_path }}" variant="secondary" size="lg">J'ai déjà un compte</twig:Button>
+                    </div>
+                    <p class="mt-4 text-sm text-ink-soft" data-hero-pricing>{{ instance.isSponsored() ? instance.sponsorshipMention() ~ ', sans carte bancaire.' : '30 jours d\'essai gratuit, sans carte bancaire.' }}</p>
+                </div>
+
+                <figure class="relative mx-auto w-full max-w-[30rem] lg:mr-0" data-hero-example>
+                    <div class="relative h-[31rem] sm:h-[34rem]" aria-hidden="true">
+                        {# The field behind: a soft sage plot with wild grass. #}
+                        <div class="absolute inset-x-0 top-10 bottom-0 rounded-[2rem] bg-sage-mist"></div>
+                        <twig:Illustration name="herbs" class="absolute right-4 -bottom-1 w-56 text-sage" />
+
+                        {# Léa's baking sheet, pinned behind the phone. #}
+                        <div class="absolute top-0 right-0 hidden w-52 rotate-3 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:block">
+                            <p class="font-display text-lg font-semibold text-ink">À cuire dimanche</p>
+                            <p class="text-xs text-ink-soft">Commandes closes vendredi, 20 h</p>
+                            <ul class="mt-3 flex flex-col gap-1.5 text-sm">
+                                <li class="flex justify-between gap-2"><span class="text-ink">Levain 1 kg</span><span class="amount font-semibold text-ink">14</span></li>
+                                <li class="flex justify-between gap-2"><span class="text-ink">Grand épeautre</span><span class="amount font-semibold text-ink">6</span></li>
+                                <li class="flex justify-between gap-2"><span class="text-ink">Brioche</span><span class="amount font-semibold text-ink">8 / 8</span></li>
+                                <li class="flex justify-between gap-2 border-t border-line-soft pt-1.5"><span class="text-ink-soft">Clients</span><span class="amount font-semibold text-ink">11</span></li>
+                            </ul>
+                        </div>
+
+                        {# The customer's phone: the order page of the Fournil du Pont. #}
+                        <div class="absolute top-16 left-1/2 w-[15.5rem] -translate-x-1/2 -rotate-2 sm:left-0 sm:translate-x-0 rounded-[2.25rem] bg-ink p-2 shadow-[0_30px_60px_-20px_rgb(31_42_36/0.45)] sm:w-[16.5rem]">
+                            <div class="overflow-hidden rounded-[1.75rem] bg-cream">
+                                <div class="mx-auto mt-2 h-1.5 w-16 rounded-full bg-ink/15"></div>
+                                <div class="px-4 pt-3 pb-4">
+                                    <p class="font-display text-lg leading-tight font-semibold text-ink">Fournil du Pont</p>
+                                    <p class="mt-0.5 text-[0.7rem] leading-snug text-ink-soft">Livraison lundi, 18 h à 19 h, place de l'église</p>
+                                    <p class="mt-2 inline-flex items-center gap-1 rounded-full bg-wheat-soft px-2 py-0.5 text-[0.65rem] font-medium text-wheat-ink">
+                                        <twig:ux:icon name="lucide:clock" class="size-3" />
+                                        Encore 2 jours pour commander
+                                    </p>
+                                    <ul class="mt-3 flex flex-col gap-2">
+                                        {% for item in [
+                                            {name: 'Pain au levain, 1 kg', price: '5,20 €', qty: 2},
+                                            {name: 'Grand épeautre', price: '6,50 €', qty: 1},
+                                            {name: 'Brioche au beurre', price: '7,00 €', qty: 0, out: true},
+                                        ] %}
+                                            <li class="flex items-center justify-between gap-2 rounded-xl bg-white p-2.5 ring-1 ring-line-soft">
+                                                <span class="min-w-0">
+                                                    <span class="block truncate text-xs font-semibold text-ink">{{ item.name }}</span>
+                                                    <span class="block text-[0.7rem] text-ink-soft">{{ item.out|default(false) ? 'Épuisée' : item.price }}</span>
+                                                </span>
+                                                {% if item.out|default(false) %}
+                                                    <span class="rounded-full bg-sage-soft px-2 py-1 text-[0.65rem] font-medium text-ink-soft">8 / 8</span>
+                                                {% else %}
+                                                    <span class="flex shrink-0 items-center gap-1.5">
+                                                        <span class="grid size-6 place-items-center rounded-full ring-1 ring-line-strong text-ink"><twig:ux:icon name="lucide:minus" class="size-3" /></span>
+                                                        <span class="amount w-3 text-center text-xs font-semibold text-ink">{{ item.qty }}</span>
+                                                        <span class="grid size-6 place-items-center rounded-full bg-sage-dark text-white"><twig:ux:icon name="lucide:plus" class="size-3" /></span>
+                                                    </span>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <div class="mt-4 flex items-center justify-between gap-2 rounded-full bg-sage-dark py-2 pr-2 pl-4 text-white">
+                                        <span class="amount text-sm font-semibold">16,90 €</span>
+                                        <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Je commande</span>
+                                    </div>
+                                    <p class="mt-2 text-center text-[0.65rem] text-ink-soft">Tu règles sur place, à la livraison.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <figcaption class="mt-4 text-center text-sm text-ink-soft lg:text-right">Ce que voient les clients de Léa, boulangère, et ce qu'elle cuit dimanche.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        {# A territorial instance: its own words, its carrier, its sponsorship (docs/INSTANCE.md). #}
+        {{ include('instance/_home_welcome.html.twig') }}
+
+        {# Before / after: the WhatsApp thread the tool replaces, and the list Léa gets instead. #}
+        <section aria-labelledby="avant-apres" class="border-y border-line-soft bg-white">
+            <div class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+                <div class="max-w-2xl">
+                    <h2 id="avant-apres" class="font-display text-3xl leading-tight font-semibold text-balance text-ink sm:text-[2.75rem]">Fini le fil de messages à recopier le jeudi soir</h2>
+                    <p class="mt-4 text-lg leading-relaxed text-ink-soft">Chaque client remplit sa commande lui-même, jusqu'à ta date limite. Toi, tu reçois la liste, déjà additionnée.</p>
+                </div>
+
+                <div class="mt-12 grid items-stretch gap-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-4" data-before-after>
+                    <figure class="flex flex-col rounded-[1.75rem] bg-sage-soft p-5 sm:p-6">
+                        <figcaption class="font-display text-xl font-semibold text-ink">Avant</figcaption>
+                        <p class="sr-only">Une conversation de groupe où les commandes changent, se répètent et arrivent après la date limite.</p>
+                        <ol class="mt-4 flex flex-col gap-2.5 text-sm" aria-hidden="true">
+                            {% for message in [
+                                {who: 'Martine', text: 'Coucou Léa, 2 levains pour lundi stp'},
+                                {who: 'Karim', text: 'Pareil pour moi, et une brioche s\'il en reste'},
+                                {who: 'Martine', text: 'Ah non, 3 levains finalement'},
+                                {who: 'Sophie', text: 'Il reste des brioches ??'},
+                                {who: 'Karim', text: 'Je peux passer mardi plutôt ?'},
+                                {who: 'Paul', text: 'Pas trop tard pour 1 épeautre ? (samedi 23 h)'},
+                            ] %}
+                                <li class="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-3.5 py-2 shadow-[0_1px_1px_rgb(31_42_36/0.06)] {{ loop.index is even ? 'ml-6' : '' }}">
+                                    <span class="block text-xs font-semibold text-sage-dark">{{ message.who }}</span>
+                                    <span class="text-ink">{{ message.text }}</span>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    </figure>
+
+                    <div class="flex items-center justify-center text-sage" aria-hidden="true">
+                        <twig:ux:icon name="lucide:arrow-right" class="size-8 rotate-90 lg:rotate-0" />
+                    </div>
+
+                    <figure class="flex flex-col rounded-[1.75rem] bg-cream p-5 ring-1 ring-line sm:p-6">
+                        <figcaption class="font-display text-xl font-semibold text-ink">Avec {{ instance.name }}</figcaption>
+                        <p class="sr-only">La liste des commandes de la vente du lundi, par client, avec le total par produit.</p>
+                        <div class="mt-4 flex flex-1 flex-col rounded-2xl bg-white p-4 shadow-card ring-1 ring-line-soft" aria-hidden="true">
+                            <div class="flex items-baseline justify-between gap-3">
+                                <p class="font-semibold text-ink">Vente du lundi</p>
+                                <span class="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium whitespace-nowrap text-sage-deep">Close vendredi, 20 h</span>
+                            </div>
+                            <ul class="mt-3 divide-y divide-line-soft text-sm">
+                                {% for row in [
+                                    {who: 'Martine L.', what: '3 levains'},
+                                    {who: 'Karim B.', what: '2 levains, 1 brioche'},
+                                    {who: 'Sophie R.', what: '1 brioche'},
+                                    {who: 'Paul M.', what: 'Trop tard : vente close'},
+                                ] %}
+                                    <li class="flex items-baseline justify-between gap-3 py-2.5">
+                                        <span class="font-medium text-ink">{{ row.who }}</span>
+                                        <span class="text-right {{ loop.last ? 'text-ink-soft italic' : 'text-ink' }}">{{ row.what }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="mt-auto flex flex-wrap gap-2 border-t border-line pt-3 text-sm">
+                                <span class="font-semibold text-ink">À produire :</span>
+                                <span class="amount rounded-full bg-wheat-soft px-2.5 py-0.5 font-medium text-wheat-ink">5 levains</span>
+                                <span class="amount rounded-full bg-wheat-soft px-2.5 py-0.5 font-medium text-wheat-ink">2 brioches</span>
+                            </div>
+                        </div>
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        {# The week of the running example: a real sequence, hence the numbers and the days. #}
+        <section aria-labelledby="fonctionnement" class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+            <div class="max-w-2xl">
+                <h2 id="fonctionnement" class="font-display text-3xl leading-tight font-semibold text-balance text-ink sm:text-[2.75rem]">Une semaine au fournil</h2>
+                <p class="mt-4 text-lg leading-relaxed text-ink-soft">Léa cuit le dimanche et livre le lundi soir sur la place du village. Une dizaine de familles commandent chaque semaine.</p>
+            </div>
+            <ol class="relative mt-12 grid gap-10 border-l-2 border-sage-mist pl-6 md:grid-cols-5 md:gap-5 md:border-t-2 md:border-l-0 md:pt-8 md:pl-0" data-steps>
+                {% set steps = [
+                    {day: 'Une fois pour toutes', title: 'Elle règle sa vente', text: 'Ses produits, son point de livraison, et une récurrence : livraison le lundi, commandes jusqu\'au vendredi 20 h.', icon: 'lucide:repeat', chip: 'Tous les lundis, 18 h'},
+                    {day: 'Mardi', title: 'La vente s\'ouvre seule', text: 'Ses clients reçoivent un e-mail s\'ils l\'ont demandé. Elle partage aussi le lien sur WhatsApp.', icon: 'lucide:mail', chip: 'La vente est ouverte'},
+                    {day: 'Jusqu\'à vendredi 20 h', title: 'Ses clients commandent', text: 'Sans mot de passe. Les quantités limitées ne sont jamais dépassées.', icon: 'lucide:shopping-basket', chip: 'Martine : 3 levains'},
+                    {day: 'Dimanche', title: 'Elle cuit le compte juste', text: 'Le total par produit est prêt dès la clôture, avec un PDF à imprimer.', icon: 'lucide:printer', chip: '14 levains, 6 épeautres'},
+                    {day: 'Lundi, 18 h', title: 'Elle livre et coche', text: 'La feuille de livraison sur son téléphone, même sans réseau. Chacun règle sur place, comme au marché.', icon: 'lucide:list-checks', chip: '9 clients sur 11 servis'},
+                ] %}
+                {% for step in steps %}
+                    <li class="relative">
+                        <span class="absolute top-1 -left-[2.1rem] grid size-5 place-items-center rounded-full bg-sage text-[0.65rem] font-semibold text-white md:-top-[2.6rem] md:left-0" aria-hidden="true">{{ loop.index }}</span>
+                        <p class="font-display text-base text-sage-dark italic">{{ step.day }}</p>
+                        <h3 class="mt-1 text-lg font-semibold text-ink"><span class="sr-only">Étape {{ loop.index }} : </span>{{ step.title }}</h3>
+                        <p class="mt-2 leading-relaxed text-ink-soft">{{ step.text }}</p>
+                        <p class="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-ink shadow-card ring-1 ring-line-soft" aria-hidden="true">
+                            <twig:ux:icon name="{{ step.icon }}" class="size-4 shrink-0 text-sage-dark" />
+                            {{ step.chip }}
+                        </p>
+                    </li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        {# The prices on the slate, the way a market stall shows them: the one bold moment of the page. #}
+        <section aria-labelledby="tarifs" class="px-4 pb-16 sm:px-6 sm:pb-24" data-pricing="{{ instance.isSponsored() ? 'sponsored' : 'standard' }}">
+            <div class="surface-dark mx-auto w-full max-w-6xl rounded-[2rem] bg-sage-deep p-2 text-white sm:p-3">
+                <div class="grid grid-cols-[minmax(0,1fr)] gap-12 rounded-[1.6rem] border border-white/15 px-5 py-10 sm:px-10 sm:py-14 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-16">
+                    <div>
+                        <h2 id="tarifs" class="font-display text-4xl leading-tight font-medium text-wheat italic sm:text-5xl">Les prix, à l'ardoise</h2>
+                        <p class="mt-3 max-w-md leading-relaxed text-white/80">Ventes, clients et commandes sans limite, exports pour ta production et ta comptabilité. Tu arrêtes quand tu veux.</p>
+
+                        {% set leader = '<span class="mx-1 min-w-6 flex-1 -translate-y-1.5 border-b-2 border-dotted border-white/30" aria-hidden="true"></span>' %}
+                        <dl class="mt-10 flex flex-col gap-6" data-plans>
+                            {% if instance.isSponsored() %}
+                                <div data-plan="sponsored">
+                                    <div class="flex items-end">
+                                        <dt class="text-lg font-semibold">{{ instance.sponsorshipMention() }}</dt>
+                                        {{ leader|raw }}
+                                        <dd class="amount font-display text-3xl font-semibold sm:text-4xl text-wheat">0 €</dd>
+                                    </div>
+                                    <p class="mt-1 text-sm text-white/70">Pour toi : sans carte bancaire, sans essai qui se termine.</p>
+                                </div>
+                            {% else %}
+                                <div data-plan="monthly">
+                                    <div class="flex items-end">
+                                        <dt class="text-lg font-semibold">Au mois</dt>
+                                        {{ leader|raw }}
+                                        <dd class="amount font-display text-3xl font-semibold sm:text-4xl text-wheat">10 €</dd>
+                                    </div>
+                                    <p class="mt-1 text-sm text-white/70">Sans engagement.</p>
+                                </div>
+                                <div data-plan="yearly">
+                                    <div class="flex items-end">
+                                        <dt class="text-lg font-semibold">À l'année</dt>
+                                        {{ leader|raw }}
+                                        <dd class="amount font-display text-3xl font-semibold sm:text-4xl text-wheat">100 €</dd>
+                                    </div>
+                                    <p class="mt-1 text-sm text-white/70">Deux mois offerts.</p>
+                                </div>
+                                <div data-plan="solidarity">
+                                    <div class="flex items-end">
+                                        <dt class="text-lg font-semibold">Solidaire, prix libre</dt>
+                                        {{ leader|raw }}
+                                        <dd class="amount font-display text-3xl font-semibold sm:text-4xl whitespace-nowrap text-wheat">0 à 10 €</dd>
+                                    </div>
+                                    <details class="group mt-1 text-sm text-white/70">
+                                        <summary class="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 font-medium text-white underline decoration-white/40 underline-offset-4 hover:decoration-wheat [&::-webkit-details-marker]:hidden">
+                                            Par mois, 5 € suggérés. Qui peut le choisir ?
+                                            <twig:ux:icon name="lucide:chevron-down" class="size-4 transition-transform group-open:rotate-180" />
+                                        </summary>
+                                        <p class="mt-1">Les mêmes fonctions, sans justificatif : une déclaration sur l'honneur suffit, pour 12 mois renouvelables, si tu es dans l'une de ces situations :</p>
+                                        <ul class="mt-2 flex flex-col gap-1.5 text-white/90" data-solidarity-criteria>
+                                            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-wheat" /><span>installé·e depuis moins de 3 ans ;</span></li>
+                                            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-wheat" /><span>moins de 300 € de précommandes retirées par mois ;</span></li>
+                                            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-wheat" /><span>première saison ;</span></li>
+                                            <li class="flex gap-2"><twig:ux:icon name="lucide:check" class="mt-0.5 size-4 shrink-0 text-wheat" /><span>épicerie solidaire ou aide alimentaire.</span></li>
+                                        </ul>
+                                    </details>
+                                </div>
+                            {% endif %}
+                            <div data-plan="commission">
+                                <div class="flex items-end">
+                                    <dt class="text-lg font-semibold">Commission sur tes ventes</dt>
+                                    {{ leader|raw }}
+                                    <dd class="amount font-display text-3xl font-semibold sm:text-4xl text-wheat">0 €</dd>
+                                </div>
+                                <p class="mt-1 text-sm text-white/70">Tes clients te paient en direct : espèces, chèque, virement, Wero.</p>
+                            </div>
+                        </dl>
+
+                        <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <twig:Button as="a" href="{{ register_path }}" variant="on-dark" size="lg">
+                                {{ instance.isSponsored() ? 'Créer ma boutique' : 'Commencer l\'essai gratuit' }}
+                                <twig:ux:icon name="lucide:arrow-right" />
+                            </twig:Button>
+                            {% if not instance.isSponsored() %}
+                                <p class="text-sm text-white/75">30 jours sans carte bancaire, tu choisis ta formule ensuite.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-10 lg:border-l lg:border-white/15 lg:pl-12">
+                        <h3 class="sr-only">Nos promesses</h3>
+                        <ul class="flex flex-col gap-7" data-promises>
+                            {% if instance.isSponsored() %}
+                                <li>
+                                    <p class="font-display text-2xl font-semibold">Offert.</p>
+                                    <p class="mt-1.5 leading-relaxed text-white/80">{{ instance.carrierName }} prend en charge ton abonnement : ventes, clients et commandes sans limite.</p>
+                                </li>
+                            {% endif %}
+                            <li>
+                                <p class="font-display text-2xl font-semibold">Zéro commission.</p>
+                                <p class="mt-1.5 leading-relaxed text-white/80">On ne touche pas à tes ventes : 100&nbsp;% du prix va dans ta poche.</p>
+                            </li>
+                            <li>
+                                <p class="font-display text-2xl font-semibold">Tes clients restent les tiens.</p>
+                                <p class="mt-1.5 leading-relaxed text-white/80">Pas de panier partagé avec d'autres vendeurs. Tu gardes tes données et tu les exportes quand tu veux.</p>
+                            </li>
+                            <li>
+                                <p class="font-display text-2xl font-semibold">Logiciel libre.</p>
+                                <p class="mt-1.5 leading-relaxed text-white/80">Le code est ouvert (licence AGPL) : tout le monde peut voir comment ça marche.</p>
+                            </li>
+                        </ul>
+
+                        {# Concrete proof: what a commission would cost on a month of sales (nothing to compare when sponsored). #}
+                        {% if not instance.isSponsored() %}
+                            <div class="rounded-2xl bg-white/[0.07] p-5" data-comparison>
+                                <p class="font-semibold">Sur 500 € de ventes par mois</p>
+                                <dl class="mt-4 flex flex-col gap-4 text-sm">
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-3">
+                                            <dt>Avec {{ instance.name }}, tu paies</dt>
+                                            <dd class="amount font-display text-xl font-semibold text-wheat">10 €</dd>
+                                        </div>
+                                        <div class="mt-1.5 h-2.5 rounded-full bg-white/10" aria-hidden="true"><div class="h-2.5 w-[10%] rounded-full bg-wheat"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-3">
+                                            <dt>Avec une commission de 20&nbsp;%</dt>
+                                            <dd class="amount font-display text-xl font-semibold">100 €</dd>
+                                        </div>
+                                        <div class="mt-1.5 h-2.5 rounded-full bg-white/10" aria-hidden="true"><div class="h-2.5 w-full rounded-full bg-white/45"></div></div>
+                                    </div>
+                                </dl>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# Questions, with the commitments next to them. #}
+        <section aria-labelledby="questions" class="border-t border-line-soft bg-white">
+            <div class="mx-auto grid w-full max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+                <div>
+                    <h2 id="questions" class="font-display text-3xl leading-tight font-semibold text-ink sm:text-[2.75rem]">Questions fréquentes</h2>
+                    <p class="mt-4 max-w-sm leading-relaxed text-ink-soft">Pas de commission, aucun paiement encaissé à ta place, un annuaire où l'on n'apparaît que si on le choisit, sans mise en avant payée. C'est écrit noir sur blanc.</p>
+                    <a href="{{ safe_path('legal_commitments', '/engagements') }}" class="mt-4 inline-flex min-h-11 items-center gap-2 font-semibold text-sage-dark underline decoration-sage underline-offset-4 hover:decoration-sage-dark" data-commitments-link>
+                        Lire nos engagements
+                        <twig:ux:icon name="lucide:arrow-right" class="size-4" />
+                    </a>
+                </div>
+                {% set faq = [
+                    {q: 'Comment mes clients me paient-ils ?', a: 'Directement, comme d\'habitude : espèces, chèque, Wero, virement, monnaie locale ou chèques alimentaires. Tu indiques ce que tu acceptes, ' ~ instance.name ~ ' n\'encaisse rien.'},
+                    {q: 'Mes clients doivent-ils créer un compte ?', a: 'Non. Ils commandent avec leur e-mail et reçoivent un lien pour retrouver leur commande, sans mot de passe à retenir.'},
+                    {q: 'Est-ce que j\'apparais quelque part sans le vouloir ?', a: 'Non. Ta boutique est accessible par ton lien. L\'annuaire des producteurs est facultatif : tu choisis d\'y apparaître dans tes réglages.'},
+                    {q: 'Et si j\'arrête ?', a: 'Les ventes en cours vont à leur terme, tes données restent consultables et exportables. Aucune pénalité.'},
+                    instance.isSponsored()
+                        ? {q: 'Il faut une carte bancaire ?', a: 'Non. ' ~ instance.sponsorshipMention() ~ ' : aucune carte, aucun essai qui se termine.'}
+                        : {q: 'Il faut une carte bancaire pour essayer ?', a: 'Non. L\'essai dure 30 jours, sans carte. Tu choisis ensuite le mois ou l\'année.'},
+                ] %}
+                <div class="divide-y divide-line border-y border-line" data-faq>
+                    {% for item in faq %}
+                        <details class="group py-1">
+                            <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 text-lg font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                                {{ item.q }}
+                                <twig:ux:icon name="lucide:plus" class="size-5 shrink-0 text-sage-dark transition-transform group-open:rotate-45" />
+                            </summary>
+                            <p class="max-w-prose pb-4 leading-relaxed text-ink-soft">{{ item.a }}</p>
+                        </details>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        {# Last call, then the customers' way out to the directory. #}
+        <section aria-labelledby="commencer" class="relative overflow-hidden bg-sage-mist">
+            <div class="mx-auto flex w-full max-w-6xl flex-col items-start gap-8 px-4 py-16 sm:px-6 sm:py-20 md:flex-row md:items-end md:justify-between">
+                <div class="max-w-xl">
+                    <h2 id="commencer" class="font-display text-3xl leading-tight font-semibold text-balance text-sage-deep sm:text-5xl">Ta prochaine vente, en ligne ce soir</h2>
+                    <p class="mt-4 text-lg leading-relaxed text-sage-deep">Une boutique, un produit, un point de livraison : il ne t'en faut pas plus pour prendre ta première précommande.</p>
+                    <div class="mt-8">
+                        <twig:Button as="a" href="{{ register_path }}" variant="sage" size="lg">
+                            Créer ma boutique
+                            <twig:ux:icon name="lucide:arrow-right" />
+                        </twig:Button>
+                    </div>
+                </div>
+                <twig:Illustration name="wheat" class="hidden w-40 shrink-0 text-sage md:block" />
+            </div>
+        </section>
+
+        <aside class="border-t border-line-soft bg-cream" aria-labelledby="cherche-producteur" data-directory-teaser>
+            <div class="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-10 sm:px-6 md:flex-row md:items-center md:gap-8">
+                <twig:Illustration name="basket" class="w-24 shrink-0" />
+                <div class="min-w-0 flex-1">
+                    <h2 id="cherche-producteur" class="font-display text-xl font-semibold text-ink">Tu cherches un producteur près de chez toi ?</h2>
+                    <p class="mt-1 text-ink-soft" data-account-teaser>
+                        L'annuaire liste ceux qui prennent leurs précommandes ici, du plus proche au plus éloigné.
+                        {% if app.user and is_granted('ROLE_CUSTOMER') %}
+                            <a href="{{ safe_path('customer_account', '/mon-compte') }}" class="link">Mon compte</a> : tes commandes et tes producteurs.
+                        {% else %}
+                            Déjà commandé ? <a href="{{ safe_path('customer_login', '/connexion') }}" class="link">Retrouve tes commandes</a>, sans mot de passe.
+                        {% endif %}
+                    </p>
+                </div>
+                <twig:Button as="a" href="{{ path('producer_directory') }}" variant="secondary">
+                    <twig:ux:icon name="lucide:map-pin" />
+                    Trouver un producteur
+                </twig:Button>
+            </div>
+        </aside>
+    </main>
+{% endblock %}

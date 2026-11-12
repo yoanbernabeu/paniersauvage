@@ -1,0 +1,68 @@
+# FrankenPHP / Caddy configuration of the production image.
+#
+# SERVER_NAME drives HTTPS:
+#   SERVER_NAME=boutique.example.fr   -> automatic Let's Encrypt certificate + HTTP->HTTPS redirect
+#   SERVER_NAME=:80                   -> plain HTTP (behind another reverse proxy, or for a local test)
+{
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+
+		# Worker mode: the Symfony kernel stays booted between requests.
+		worker {
+			file /app/public/index.php
+			{$FRANKENPHP_WORKER_CONFIG}
+		}
+	}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+{$SERVER_NAME:localhost} {
+	root /app/public
+
+	log {
+		output stderr
+		format json
+	}
+
+	encode zstd br gzip
+
+	header {
+		-Server
+		-X-Powered-By
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# geolocation=(self): the "Autour de moi" button of the producer search (home page), first party only.
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self), interest-cohort=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		# Content-Security-Policy: set by the application (App\Shared\Security\ContentSecurityPolicy),
+		# because the import map is an inline script allowed by a per-request nonce.
+	}
+
+	# Uploaded files opened directly are never allowed to run anything (an SVG with a script, say).
+	@uploads path /uploads/*
+	header @uploads Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox"
+
+	# AssetMapper files are fingerprinted: cache them for a year.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	# Uploaded files are data, never code.
+	@uploadedCode path_regexp (?i)^/uploads/.*\.(php\d?|phtml|phar)$
+	respond @uploadedCode 403
+
+	# Hidden files (.env, .git...) are never served, except ACME challenges.
+	@hidden {
+		path */.*
+		not path /.well-known/*
+	}
+	respond @hidden 404
+
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+	php_server
+}

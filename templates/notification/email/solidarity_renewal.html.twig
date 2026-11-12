@@ -1,0 +1,22 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Il se termine le {{ ends_at|date_long(true) }} : une nouvelle déclaration suffit pour continuer.{% endblock %}
+
+{% block title %}Ton palier solidaire arrive à échéance{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if producer.firstName %} {{ producer.firstName }}{% endif %},</p>
+    <p style="{{ p_css }}">
+        Le palier solidaire gratuit de {{ shop.name }} se termine le
+        <strong style="font-weight:600;">{{ ends_at|date_long(true) }}</strong>.
+        Ensuite, tes ventes en cours iront à leur terme, mais aucune nouvelle vente ne pourra s'ouvrir.
+    </p>
+    <p style="{{ p_css }}">
+        Si ta situation n'a pas changé, il suffit de renouveler ta déclaration sur l'honneur : c'est reparti pour 12 mois,
+        toujours sans justificatif. Tu peux aussi choisir un autre montant, entre 0 et 10 € par mois.
+    </p>
+
+    {{ include('notification/_button.html.twig', {url: billing_url, label: 'Renouveler ma déclaration'}) }}
+{% endblock %}
+
+{% block footer %}<p style="margin:0;">Tu reçois cet e-mail parce que tu gères la boutique {{ shop.name }}.</p>{% endblock %}

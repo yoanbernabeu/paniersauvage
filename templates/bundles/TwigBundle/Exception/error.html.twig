@@ -1,0 +1,26 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}Un souci est survenu{% endblock %}
+
+{% block flashes %}{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col items-center py-6 text-center sm:py-12">
+        <twig:Illustration name="wheat" class="w-36" />
+        <p class="mt-8 text-sm font-semibold tracking-widest text-sage-dark uppercase">Erreur {{ status_code }}</p>
+        <h1 class="mt-2 text-3xl leading-tight font-semibold text-balance text-ink sm:text-4xl">
+            {% if status_code == 403 %}Cette page ne t'est pas ouverte{% else %}Quelque chose a mal tourné{% endif %}
+        </h1>
+        <p class="mt-4 max-w-md leading-relaxed text-ink-soft">
+            {% if status_code == 403 %}
+                Tu n'as pas accès à cette page avec ce compte.
+            {% else %}
+                Ce n'est pas de ta faute. Réessaie dans un instant ; si ça continue, préviens ton producteur.
+            {% endif %}
+        </p>
+        <twig:Button as="a" href="{{ path('home') }}" variant="secondary" class="mt-8">
+            <twig:ux:icon name="lucide:arrow-left" />
+            Revenir à l'accueil
+        </twig:Button>
+    </div>
+{% endblock %}

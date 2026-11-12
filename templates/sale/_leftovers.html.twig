@@ -1,0 +1,54 @@
+{#
+    Leftovers of a closed sale and its last-minute sale (SPEC §21, App\Sale\Service\LastMinuteSale).
+    Variables: sale (closed), leftovers (limited offers with something left), last_minute_open (bool),
+               last_minute_refusal (why it cannot be opened, or null).
+#}
+<twig:Card data-leftovers>
+    <twig:Card:Header>
+        <twig:Card:Title>{{ sale.isLastMinute() ? 'Vente de dernière minute' : 'Invendus' }}</twig:Card:Title>
+        <twig:Card:Description>
+            {% if last_minute_open %}
+                <twig:Badge variant="default" class="me-1" data-last-minute-open>En cours</twig:Badge>
+                Tes clients commandent jusqu'au {{ sale.lastMinuteUntil|datetime_long }}.
+            {% elseif sale.isLastMinute() %}
+                Terminée le {{ sale.lastMinuteUntil|datetime_long }}.
+            {% elseif leftovers is empty %}
+                Tout est parti : aucun produit limité n'a de reste.
+            {% else %}
+                Ce qu'il reste des produits limités, une fois les commandes closes.
+            {% endif %}
+        </twig:Card:Description>
+    </twig:Card:Header>
+    <twig:Card:Content class="flex flex-col gap-3">
+        {% if leftovers is not empty %}
+            <ul class="flex flex-col gap-1.5 text-sm" aria-label="Reste disponible">
+                {% for offer in leftovers %}
+                    <li class="flex items-baseline justify-between gap-3" data-leftover="{{ offer.id }}">
+                        <span class="min-w-0 text-ink">{{ offer.product.name }}{% if sale.isLastMinute() and not offer.lastMinute %} <span class="text-ink-soft">(pas remis en vente)</span>{% endif %}</span>
+                        <span class="amount shrink-0 font-semibold text-ink">{{ offer.remaining|quantity(offer.product.unit) }}<span class="font-normal text-ink-soft"> sur {{ offer.maxQty|quantity(offer.product.unit) }}</span></span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if last_minute_open %}
+            <form method="post" action="{{ path('pro_sale_last_minute_end', {id: sale.id}) }}" data-last-minute-end
+                  data-turbo-confirm="Plus personne ne pourra commander en ligne. Les commandes déjà passées restent."
+                  data-confirm-title="Arrêter la vente de dernière minute ?" data-confirm-label="Arrêter">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('sale-last-minute-end') }}">
+                <twig:Button type="submit" variant="outline">
+                    <twig:ux:icon name="lucide:ban" />
+                    Arrêter maintenant
+                </twig:Button>
+            </form>
+        {% elseif last_minute_refusal is null %}
+            <p class="text-sm text-ink-soft">Remets tes invendus en vente pour quelques heures, sur les mêmes points de livraison. Tes abonnés qui acceptent tes e-mails sont prévenus une fois.</p>
+            <twig:Button as="a" href="{{ path('pro_sale_last_minute', {id: sale.id}) }}" variant="sage" class="self-start" data-last-minute-link>
+                <twig:ux:icon name="lucide:shopping-basket" />
+                Ouvrir une vente de dernière minute
+            </twig:Button>
+        {% elseif not sale.isLastMinute() %}
+            <p class="text-sm text-ink-soft" data-last-minute-refusal>{{ last_minute_refusal }}</p>
+        {% endif %}
+    </twig:Card:Content>
+</twig:Card>

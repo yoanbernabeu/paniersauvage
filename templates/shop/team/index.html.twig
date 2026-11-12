@@ -1,0 +1,84 @@
+{#
+    The accounts of the current shop. Variables: members (users, owner first; `shop` comes from the layout), invitations
+    (pending ShopInvitation), form (InvitationType), me (the signed-in User).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+{% set is_owner = is_granted('ROLE_SHOP_OWNER') %}
+
+{% block title %}Mon équipe{% endblock %}
+{% block page_title %}Mon équipe{% endblock %}
+{% block page_subtitle %}Les personnes qui gèrent {{ shop.name }} avec toi.{% endblock %}
+
+{% block content %}
+    <section class="rounded-xl bg-white shadow-card ring-1 ring-line" aria-labelledby="team-members" data-team-members>
+        <h2 id="team-members" class="px-4 pt-4 text-base font-semibold text-ink sm:px-6">Membres</h2>
+        <ul class="mt-2 divide-y divide-line-soft">
+            {% for member in members %}
+                <li class="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6" data-team-member="{{ member.email }}">
+                    <div class="min-w-0 flex-1">
+                        <p class="flex flex-wrap items-center gap-2 font-medium text-ink">
+                            {{ member.fullName }}
+                            <twig:Badge variant="{{ member.shopOwner ? 'secondary' : 'muted' }}">{{ member.shopRole.label }}</twig:Badge>
+                            {% if member == me %}<span class="text-sm font-normal text-ink-soft">(toi)</span>{% endif %}
+                        </p>
+                        <p class="truncate text-sm text-ink-soft">{{ member.email }}</p>
+                    </div>
+                    {% if is_owner and not member.shopOwner %}
+                        <form method="post" action="{{ path('pro_team_member_remove', {id: member.id}) }}"
+                              data-turbo-confirm="{{ member.fullName }} n'aura plus accès à ta boutique. Ses actions passées restent." data-confirm-title="Retirer {{ member.fullName }} de l'équipe ?" data-confirm-label="Retirer" data-confirm-danger>
+                            <input type="hidden" name="_token" value="{{ csrf_token('pro_team_member_remove_' ~ member.id) }}">
+                            <twig:Button type="submit" variant="outline" size="sm">
+                                <twig:ux:icon name="lucide:x" />
+                                Retirer<span class="sr-only"> {{ member.fullName }}</span>
+                            </twig:Button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="mt-6 rounded-xl bg-white p-4 text-sm text-ink-soft shadow-card ring-1 ring-line sm:p-6" aria-labelledby="team-roles">
+        <h2 id="team-roles" class="mb-2 text-base font-semibold text-ink">Qui fait quoi</h2>
+        <p>Les membres font tout comme toi au quotidien : ventes, produits, commandes, clients, livraisons, comptabilité.</p>
+        <p class="mt-1">Seul le propriétaire gère l'abonnement et l'équipe. Un compte ne sert qu'une boutique : invite chaque personne avec son adresse à elle.</p>
+    </section>
+
+    {% if is_owner %}
+        <section class="mt-6 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="team-invite" data-team-invite>
+            <h2 id="team-invite" class="mb-4 text-base font-semibold text-ink">Inviter une personne</h2>
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {{ form_errors(form) }}
+                {{ form_row(form.email) }}
+                <twig:Button type="submit" class="w-full sm:w-auto">
+                    <twig:ux:icon name="lucide:user-round-plus" />
+                    Envoyer l'invitation
+                </twig:Button>
+            {{ form_end(form) }}
+        </section>
+
+        {% if invitations is not empty %}
+            <section class="mt-6 rounded-xl bg-white shadow-card ring-1 ring-line" aria-labelledby="team-pending" data-team-invitations>
+                <h2 id="team-pending" class="px-4 pt-4 text-base font-semibold text-ink sm:px-6">Invitations en attente</h2>
+                <ul class="mt-2 divide-y divide-line-soft">
+                    {% for invitation in invitations %}
+                        <li class="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6" data-team-invitation="{{ invitation.email }}">
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate font-medium text-ink">{{ invitation.email }}</p>
+                                <p class="text-sm text-ink-soft">Lien valable jusqu'au {{ invitation.expiresAt|datetime_long }}</p>
+                            </div>
+                            <form method="post" action="{{ path('pro_team_invitation_cancel', {id: invitation.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('pro_team_invitation_cancel_' ~ invitation.id) }}">
+                                <twig:Button type="submit" variant="ghost" size="sm">
+                                    Annuler<span class="sr-only"> l'invitation de {{ invitation.email }}</span>
+                                </twig:Button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    {% endif %}
+{% endblock %}

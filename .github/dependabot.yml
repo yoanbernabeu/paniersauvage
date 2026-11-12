@@ -1,0 +1,27 @@
+# Weekly dependency updates, grouped to keep the noise low. JavaScript vendors live in the import
+# map (importmap.php): Dependabot does not read it, `php bin/console importmap:outdated` does.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      symfony:
+        patterns: ['symfony/*']
+      dev-tools:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly

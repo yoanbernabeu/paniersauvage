@@ -1,0 +1,28 @@
+{# What a subscriber receives at each delivery. Variables: recurring_order, plan, shop, today. #}
+<h2 style="{{ h2_css }}">À chaque livraison, le {{ plan.weekdayName }}</h2>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+    {% if plan.basket %}
+        <tr>
+            <td colspan="2" style="padding:0 0 6px 0;{{ font_text }}font-size:16px;line-height:22px;font-weight:600;color:#1F2A24;">{{ recurring_order.shares }} × {{ plan.title }}</td>
+        </tr>
+    {% endif %}
+    {% for entry in recurring_order.wantedQuantities %}
+        <tr>
+            <td style="padding:6px 0;border-bottom:1px solid #ECE8DE;{{ font_text }}font-size:16px;line-height:22px;color:#1F2A24;">{{ entry[1]|line_quantity(entry[0].unit) }} {{ entry[0].name }}</td>
+        </tr>
+    {% endfor %}
+    <tr>
+        <td style="padding:12px 0 0 0;{{ font_text }}font-size:16px;line-height:22px;color:#2F4337;">
+            Environ <strong style="font-weight:600;">{{ recurring_order.estimatedPriceCents|money }}</strong> par livraison, à régler à chaque retrait.
+        </td>
+    </tr>
+</table>
+<p style="{{ p_css }}">Retrait : <strong style="font-weight:600;">{{ recurring_order.deliveryPoint.name }}</strong>{% if recurring_order.deliveryAddress %} ({{ recurring_order.deliveryAddress }}){% endif %}.</p>
+{% if plan.season and recurring_order.endsOn %}
+    {% set remaining = recurring_order.remainingDeliveryCount(today) %}
+    <p style="{{ p_css }}">
+        Contrat de saison jusqu'au <strong style="font-weight:600;">{{ recurring_order.endsOn|date_long(true) }}</strong> :
+        {{ remaining }} livraison{{ remaining > 1 ? 's' }} à venir, soit environ {{ recurring_order.remainingTotalCents(today)|money }} au total, à titre indicatif.
+    </p>
+{% endif %}
+<p style="{{ muted_css }}">Rien n'est payé en ligne : tu règles chaque livraison directement à {{ shop.name }}{% if shop.paymentSummary %} ({{ shop.paymentSummary }}){% endif %}.</p>

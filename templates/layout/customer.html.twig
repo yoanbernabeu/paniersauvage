@@ -1,0 +1,65 @@
+{#
+    Customer-side layout: warm and airy, cream background, logo and account link.
+
+    Blocks: title, meta_description, header (whole header), header_nav (right side of the header),
+            flashes, main (whole <main>, to go full-width), content (inside the centred column),
+            footer, plus those of base.html.twig (head_extra, stylesheets, javascripts, body_class).
+    Variable: content_width — Tailwind max-width class of the column (default "max-w-3xl").
+#}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="flex min-h-dvh flex-col">
+        {% block header %}
+            <header class="border-b border-line-soft bg-cream/90 backdrop-blur supports-[backdrop-filter]:bg-cream/75">
+                <div class="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+                    <a href="{{ path('home') }}" class="-mx-1 rounded-lg px-1 py-1" aria-label="{{ instance.name }}, accueil">
+                        <twig:Logo />
+                    </a>
+                    <nav aria-label="Compte" class="flex items-center gap-1">
+                        {% block header_nav %}
+                            {% if app.user and is_granted('ROLE_CUSTOMER') %}
+                                <a href="{{ safe_path('customer_account', '/mon-compte') }}" class="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-sage-dark hover:bg-sage-soft">
+                                    <twig:ux:icon name="lucide:user" class="size-5" />
+                                    <span>Mon compte</span>
+                                </a>
+                            {% else %}
+                                <a href="{{ safe_path('customer_login', '/connexion') }}" class="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-sage-dark hover:bg-sage-soft">
+                                    <twig:ux:icon name="lucide:user" class="size-5" />
+                                    <span>Se connecter</span>
+                                </a>
+                            {% endif %}
+                        {% endblock %}
+                    </nav>
+                </div>
+            </header>
+        {% endblock %}
+
+        {% block main %}
+            <main id="contenu" class="mx-auto w-full {{ content_width|default('max-w-3xl') }} flex-1 px-4 py-8 sm:px-6 sm:py-12">
+                {% block flashes %}{{ include('layout/_flashes.html.twig') }}{% endblock %}
+                {% block content %}{% endblock %}
+            </main>
+        {% endblock %}
+
+        {% block footer %}
+            <footer class="border-t border-line-soft">
+                <div class="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-ink-soft sm:flex-row sm:px-6">
+                    <p>Fait avec soin pour les producteurs et leurs voisins.{{ include('instance/_carrier.html.twig', {prefix: ' Un service porté par '}) }}</p>
+                    <p class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                        <a href="{{ path('home') }}" class="link">{{ instance.name }}</a>
+                        <span aria-hidden="true">·</span>
+                        <a href="{{ path('producer_directory') }}" class="link" data-footer-link="directory">Trouver un producteur</a>
+                        <span aria-hidden="true">·</span>
+                        <a href="{{ safe_path('pro_login', '/pro/connexion') }}" class="link" data-footer-link="pro-login">Espace producteur</a>
+                        <span aria-hidden="true">·</span>
+                        {{ include('instance/_powered_by.html.twig', {default_text: 'logiciel libre (AGPL)'}) }}
+                    </p>
+                </div>
+                <nav aria-label="Informations légales" class="mx-auto w-full max-w-5xl px-4 pb-6 text-sm text-ink-soft sm:px-6">
+                    {{ include('legal/_footer_links.html.twig') }}
+                </nav>
+            </footer>
+        {% endblock %}
+    </div>
+{% endblock %}

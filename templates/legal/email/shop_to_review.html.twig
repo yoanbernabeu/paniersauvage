@@ -1,0 +1,18 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}{{ shop.name }} : code d'activité {{ verification.nafCode ?? 'inconnu' }}, à vérifier.{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">La boutique <a href="{{ shop_url }}" style="{{ link_css }}">{{ shop.name }}</a> a un SIRET actif, mais son activité n'est ni agricole ni alimentaire. Elle reste hors de l'annuaire tant que tu n'as pas décidé.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;{{ font_text }}font-size:15px;line-height:22px;color:#1F2A24;" data-review-details>
+        <tr><td style="padding:4px 12px 4px 0;color:#56635B;">SIRET</td><td>{{ verification.siret }}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#56635B;">Entreprise</td><td>{{ verification.companyName ?? '-' }}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#56635B;">Code NAF</td><td>{{ verification.nafCode ?? '-' }}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#56635B;">Slug</td><td>{{ shop.slug }}</td></tr>
+    </table>
+    <p style="{{ p_css }}">Vérifie l'entreprise sur <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/{{ verification.siret }}" style="{{ link_css }}">l'Annuaire des entreprises</a>, puis sur le serveur :</p>
+    <p style="{{ box_css }}{{ font_text }}font-size:14px;line-height:21px;color:#2F4337;">
+        php bin/console app:shops:review --approve={{ shop.slug }}<br>
+        php bin/console app:shops:review --reject={{ shop.slug }} --note="…"
+    </p>
+{% endblock %}

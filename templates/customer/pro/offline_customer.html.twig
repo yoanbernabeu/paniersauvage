@@ -1,0 +1,69 @@
+{#
+    A customer without e-mail of the current shop: contact details, orders, address to add, erasure.
+    Variables: customer, orders (list of Order, latest first), form (OfflineCustomerType).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+
+{% block title %}Client sans e-mail{% endblock %}
+{% block page_title %}{{ customer.anonymized ? 'Client effacé' : customer.displayName }}{% endblock %}
+{% block page_subtitle %}Client sans e-mail, connu de ta boutique seulement{% endblock %}
+
+{% block content %}
+    <twig:Alert variant="info" class="mb-6" data-offline-notice>
+        <twig:ux:icon name="lucide:phone" />
+        <twig:Alert:Description class="text-current">
+            Ce client n'a pas d'adresse e-mail : il ne reçoit aucun message (confirmation, rappel, annulation) et ne peut pas se connecter. Préviens-le toi-même, par exemple par téléphone.
+        </twig:Alert:Description>
+    </twig:Alert>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-6'}}) }}
+        {{ form_errors(form) }}
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="offline-contact">
+            <h2 id="offline-contact" class="mb-4 text-base font-semibold text-ink">Coordonnées</h2>
+            <div class="grid gap-x-4 sm:grid-cols-2">
+                {{ form_row(form.firstName) }}
+                {{ form_row(form.lastName) }}
+            </div>
+            {{ form_row(form.phone) }}
+            {{ form_row(form.email, {row_attr: {class: 'mb-0'}}) }}
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+            <twig:Button type="submit" class="w-full sm:w-auto">Enregistrer</twig:Button>
+        </div>
+    {{ form_end(form) }}
+
+    <section class="mt-8 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6" aria-labelledby="offline-orders" data-offline-orders>
+        <h2 id="offline-orders" class="mb-3 text-base font-semibold text-ink">Ses commandes</h2>
+        {% if orders is empty %}
+            <p class="text-sm text-ink-soft">Aucune commande.</p>
+        {% else %}
+            <ul class="divide-y divide-line-soft">
+                {% for order in orders %}
+                    <li class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2.5 text-sm">
+                        <a href="{{ safe_path('pro_sale_show', '/pro/ventes/' ~ order.sale.id, {id: order.sale.id}) }}" class="link font-medium">{{ order.sale.title }}</a>
+                        <span class="text-ink-soft">
+                            <span class="amount">{{ order.reference }}</span> · {{ order.status.label }} · <span class="amount font-semibold text-ink">{{ order.totalCents|money }}</span>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    {% if not customer.anonymized %}
+        <twig:Separator class="my-8" />
+        <form method="post" action="{{ path('pro_offline_customer_erase', {id: customer.id}) }}" class="flex flex-wrap items-center justify-between gap-3"
+              data-turbo-confirm="Son nom, son téléphone, ses adresses et ses notes sont effacés. Ses commandes restent dans ta comptabilité, sans nom." data-confirm-title="Effacer les données de ce client ?" data-confirm-label="Effacer ses données" data-confirm-danger>
+            <p class="text-sm text-ink-soft">Ce client te demande d'effacer ses données ? Ses commandes passées restent, sans nom.</p>
+            <input type="hidden" name="_token" value="{{ csrf_token('pro_offline_customer_erase_' ~ customer.id) }}">
+            <twig:Button type="submit" variant="destructive" size="sm">
+                <twig:ux:icon name="lucide:trash-2" />
+                Effacer ses données
+            </twig:Button>
+        </form>
+    {% endif %}
+{% endblock %}

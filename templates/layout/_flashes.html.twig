@@ -1,0 +1,31 @@
+{#
+    Flash messages. Types: success, error (or danger), warning, info (or notice), plus "onboarding"
+    (next first step, see App\Shop\Service\OnboardingNudge).
+    $this->addFlash('success', 'C\'est enregistré.');
+#}
+{%- set flash_styles = {
+    success: {variant: 'success', icon: 'lucide:circle-check'},
+    error: {variant: 'destructive', icon: 'lucide:circle-alert'},
+    danger: {variant: 'destructive', icon: 'lucide:circle-alert'},
+    warning: {variant: 'warning', icon: 'lucide:triangle-alert'},
+    info: {variant: 'info', icon: 'lucide:info'},
+    notice: {variant: 'info', icon: 'lucide:info'},
+} -%}
+{%- set flashes = app.session is not null and app.request is not null and app.request.hasPreviousSession ? app.flashes : {} -%}
+{%- if flashes is not empty -%}
+    <div class="flex flex-col gap-2 {{ class|default('mb-6') }}" data-flashes>
+        {%- for type, messages in flashes -%}
+            {%- if type == 'onboarding' -%}
+                {{ include('shop/onboarding/_nudge.html.twig') }}
+            {%- else -%}
+            {%- set flash_style = flash_styles[type] ?? flash_styles.info -%}
+            {%- for message in messages -%}
+                <twig:Alert variant="{{ flash_style.variant }}" data-flash="{{ type }}">
+                    <twig:ux:icon name="{{ flash_style.icon }}" />
+                    <twig:Alert:Description class="text-current font-medium">{{ message }}</twig:Alert:Description>
+                </twig:Alert>
+            {%- endfor -%}
+            {%- endif -%}
+        {%- endfor -%}
+    </div>
+{%- endif -%}

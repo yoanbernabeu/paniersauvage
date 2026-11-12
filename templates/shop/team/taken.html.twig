@@ -1,0 +1,23 @@
+{#
+    The invited address already has a producer account: one account serves one shop.
+    Variables: invitation, same_shop (bool: the account is already in this team).
+#}
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Invitation{% endblock %}
+{% block auth_title %}{{ same_shop ? 'Tu fais déjà partie de l\'équipe' : 'Cette adresse a déjà son espace producteur' }}{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-3 text-sm text-ink" data-invitation-taken>
+        {% if same_shop %}
+            <p>Ton compte {{ invitation.email }} gère déjà {{ invitation.shop.name }}. Connecte-toi avec ton mot de passe habituel.</p>
+        {% else %}
+            <p>L'adresse {{ invitation.email }} sert déjà à un autre espace producteur sur Panier Sauvage.</p>
+            <p><strong class="font-semibold">Un compte ne sert qu'une seule boutique.</strong> Pour aider {{ invitation.shop.name }}, demande une invitation avec une autre adresse e-mail.</p>
+        {% endif %}
+        <twig:Button as="a" href="{{ path('pro_login') }}" class="mt-2 w-full">
+            Me connecter
+            <twig:ux:icon name="lucide:arrow-right" />
+        </twig:Button>
+    </div>
+{% endblock %}

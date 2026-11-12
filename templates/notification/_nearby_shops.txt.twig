@@ -1,0 +1,11 @@
+{# Text version of notification/_nearby_shops.html.twig. Variables: nearby_shops. #}
+{% if nearby_shops is not empty %}
+
+D'AUTRES PRODUCTEURS PRÈS DE CE POINT DE RETRAIT
+{% for result in nearby_shops %}
+{% set sale = result.nextSale %}
+- {{ result.shop.name }}, {{ result.distanceLabel() }} : {% if sale and sale.isOpen() %}commandes ouvertes jusqu'au {{ sale.deadlineAt|datetime_long }}{% elseif sale %}prochaine vente le {{ sale.opensAt|date_long }}{% else %}pas de vente prévue pour l'instant{% endif %}
+
+  {{ url('shop_show', {slug: result.shop.slug, via: 'croise'}) }}
+{% endfor %}
+{% endif %}

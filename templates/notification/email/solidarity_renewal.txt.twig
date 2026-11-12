@@ -1,0 +1,15 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if producer.firstName %} {{ producer.firstName }}{% endif %},
+
+Le palier solidaire gratuit de {{ shop.name }} se termine le {{ ends_at|date_long(true) }}. Ensuite, tes ventes en cours iront à leur terme, mais aucune nouvelle vente ne pourra s'ouvrir.
+
+Si ta situation n'a pas changé, il suffit de renouveler ta déclaration sur l'honneur : c'est reparti pour 12 mois, toujours sans justificatif. Tu peux aussi choisir un autre montant, entre 0 et 10 € par mois.
+
+Renouveler ma déclaration : {{ billing_url }}
+{% endblock %}
+
+{% block footer %}
+Tu reçois cet e-mail parce que tu gères la boutique {{ shop.name }}.
+{% endblock %}

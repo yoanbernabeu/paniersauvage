@@ -1,0 +1,36 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if producer.firstName %} {{ producer.firstName }}{% endif %},
+
+{% if summary.orderCount == 0 %}
+La vente « {{ sale.title }} » est close. Aucune commande cette fois-ci pour la livraison du {{ sale.deliveryDate|date_long }}.
+{% else %}
+La vente « {{ sale.title }} » est close. Tu as {{ summary.orderCount }} commande{{ summary.orderCount > 1 ? 's' }} à préparer pour le {{ sale.deliveryDate|date_long }}, pour un total de {{ summary.totalCents|money }}.
+
+À PRODUIRE
+{% for item in summary.production %}
+- {{ item.label }} : {{ item.quantity|quantity(item.unit) }}
+{% endfor %}
+{% for group in summary.groups %}
+{% set delivery = group.delivery %}
+
+{{ delivery.deliveryPoint.name }} · {{ time_range(delivery.startsAt, delivery.endsAt) }}
+{% for order in group.orders %}
+- {{ order.customerDisplayName }}{% if order.customerPhone %} ({{ order.customerPhone }}){% endif %} : {% for line in order.lines %}{{ line.quantity|line_quantity(line.unit) }} {{ line.label }}{{ not loop.last ? ', ' }}{% endfor %} — {{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}
+{% if delivery.home and order.deliveryAddress %}
+  Adresse : {{ order.deliveryAddress }}
+{% endif %}
+{% if order.note %}
+  Note : {{ order.note }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+Voir la vente : {{ sale_url }}
+{% endblock %}
+
+{% block footer %}
+Tu reçois cet e-mail parce que tu gères la boutique {{ shop.name }}.
+{% endblock %}

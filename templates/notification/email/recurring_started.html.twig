@@ -1,0 +1,31 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Ta commande sera créée toute seule à chaque vente de {{ shop.name }}.{% endblock %}
+
+{% block title %}C'est parti 🧺{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},</p>
+    <p style="{{ p_css }}">Ton abonnement « {{ plan.title }} » chez {{ shop.name }} est enregistré. À chaque vente, ta commande est créée toute seule et tu reçois un e-mail pour la vérifier.</p>
+
+    {{ include('notification/_recurring_summary.html.twig') }}
+
+    {% if upcoming is not empty %}
+        <h2 style="{{ h2_css }}">Tes prochaines livraisons</h2>
+        <ul style="{{ font_text }}margin:0 0 16px 0;padding-left:20px;font-size:16px;line-height:24px;color:#1F2A24;">
+            {% for delivery in upcoming %}
+                <li>{{ delivery.date|date_long }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <p style="{{ p_css }}">Absent une semaine ? Mets la livraison en pause depuis ton compte, avant la date limite de commande.</p>
+    {{ include('notification/_button.html.twig', {url: recurring_url, label: 'Gérer mon abonnement'}) }}
+
+    {% if plan.conditions %}
+        <h2 style="{{ h2_css }}">Conditions de {{ shop.name }}</h2>
+        <p style="{{ muted_css }}">{{ plan.conditions|nl2br }}</p>
+    {% endif %}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_recurring_footer.html.twig') }}{% endblock %}

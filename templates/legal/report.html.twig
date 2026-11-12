@@ -1,0 +1,47 @@
+{#
+    Report of a shop (shop_report). Variables: shop, form (ShopReportType).
+#}
+{% extends 'layout/customer.html.twig' %}
+
+{% set content_width = 'max-w-2xl' %}
+
+{% block title %}Signaler {{ shop.name }}{% endblock %}
+{% block meta_description %}Signaler un problème avec la boutique {{ shop.name }} sur {{ instance.name }}.{% endblock %}
+
+{% block content %}
+    <a href="{{ safe_path('shop_show', '/' ~ shop.slug, {slug: shop.slug}) }}" class="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-sage-dark">
+        <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+        Retour à {{ shop.name }}
+    </a>
+
+    <h1 class="text-3xl leading-tight font-semibold text-ink">Signaler cette boutique</h1>
+    <p class="mt-3 text-base text-ink-soft">
+        Tu penses que <strong class="font-semibold text-ink">{{ shop.name }}</strong> n'est pas tenue par un vrai producteur,
+        ou qu'elle ne respecte pas nos <a href="{{ path('legal_terms') }}" class="link">conditions d'utilisation</a> ?
+        Dis-le-nous : l'équipe de {{ instance.name }} examine chaque signalement. Pour un souci avec ta commande,
+        écris d'abord au producteur, en répondant à son e-mail.
+    </p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'mt-8 rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6', 'data-report-form': ''}}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.reason) }}
+        {{ form_row(form.message) }}
+        {{ form_row(form.email) }}
+
+        {# Honeypot: off screen and out of the tab order, only bots fill it in. #}
+        <div class="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+            {{ form_label(form.website) }}
+            {{ form_widget(form.website) }}
+        </div>
+
+        <twig:Button type="submit" class="w-full sm:w-auto">
+            <twig:ux:icon name="lucide:flag" />
+            Envoyer le signalement
+        </twig:Button>
+    {{ form_end(form) }}
+
+    <p class="mt-6 text-sm text-ink-soft">
+        Ton signalement est envoyé à l'équipe de {{ instance.name }}, jamais au producteur. On ne garde ton e-mail que pour te répondre
+        (<a href="{{ path('legal_privacy') }}" class="link">confidentialité</a>).
+    </p>
+{% endblock %}

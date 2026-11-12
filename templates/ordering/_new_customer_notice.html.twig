@@ -1,0 +1,21 @@
+{#
+    What a new customer of the shop is told (App\Ordering\Service\NewCustomerPolicy): the cap of a
+    first order (sale page only) and the deposit asked outside the platform. Never a payment record.
+    Variables: shop, customer (Customer or null for a visitor), with_cap (bool, default false).
+#}
+{% set deposit = new_customer_deposit(shop, customer) %}
+{% set cap = with_cap|default(false) ? first_order_cap(shop, customer) : null %}
+{% if deposit or cap %}
+    <div class="flex items-start gap-3 rounded-xl border border-line bg-white p-4 text-sm text-ink-soft {{ class|default('') }}" data-new-customer-notice>
+        <twig:ux:icon name="lucide:hand-coins" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+        <div class="flex flex-col gap-1">
+            <p class="font-semibold text-ink">{{ customer ? 'Première commande chez ' ~ shop.name : 'Nouveau client chez ' ~ shop.name ~ ' ?' }}</p>
+            {% if cap %}
+                <p data-first-order-cap>Une première commande en ligne va jusqu'à <span class="amount font-semibold text-ink">{{ cap|money }}</span>. Pour plus, contacte {{ shop.name }}{% if shop.phone %} au <a href="tel:{{ shop.phone|replace({' ': ''}) }}" class="link">{{ shop.phone }}</a>{% endif %}.</p>
+            {% endif %}
+            {% if deposit %}
+                <p data-new-customer-deposit>Acompte demandé : <span class="font-semibold text-ink">{{ deposit }}</span>. Il se règle directement avec {{ shop.name }}, hors de Panier Sauvage.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

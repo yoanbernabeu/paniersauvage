@@ -1,0 +1,8 @@
+{#
+    "Signaler cette boutique" link, for the public page of a shop (included by the shop page).
+    Variables: shop.
+#}
+<a href="{{ path('shop_report', {slug: shop.slug}) }}" class="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-sm text-ink-soft underline-offset-2 hover:text-sage-dark hover:underline" data-report-link rel="nofollow">
+    <twig:ux:icon name="lucide:flag" class="size-4" />
+    Signaler cette boutique
+</a>

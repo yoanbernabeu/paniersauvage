@@ -1,0 +1,8 @@
+{#
+    Discreet "2 absences" next to a customer's name on the producer's screens (App\Customer\Service\AbsenceHistory):
+    orders of this shop not picked up in the last six months, the current sale left out. Variables: order, class (optional).
+#}
+{% set absences = recent_absences(order) %}
+{% if absences > 0 %}
+    <twig:Badge variant="muted" class="font-normal {{ class|default('') }}" title="Pas venu {{ absences }} fois chercher sa commande chez toi ces 6 derniers mois" aria-label="{{ absences }} absence{{ absences > 1 ? 's' }} ces 6 derniers mois" data-absences="{{ absences }}">{{ absences }} absence{{ absences > 1 ? 's' }}</twig:Badge>
+{% endif %}

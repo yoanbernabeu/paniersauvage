@@ -1,0 +1,32 @@
+{#
+    Fields shared by the subscription form and its changes: pick-up point, home address, baskets or
+    quantities. Variables: form (RecurringOrderType view), plan.
+#}
+{% if form.vars.errors|length > 0 %}
+    <twig:Alert variant="destructive" class="mb-5">
+        <twig:ux:icon name="lucide:circle-alert" />
+        <twig:Alert:Description class="font-medium text-current">
+            {% for error in form.vars.errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}
+        </twig:Alert:Description>
+    </twig:Alert>
+{% endif %}
+
+{{ form_row(form.deliveryPoint) }}
+{% if plan.schedule.deliveryPoints|filter(p => p.home and not p.archived) is not empty %}
+    {{ form_row(form.deliveryAddress, {help: 'Seulement pour une livraison à domicile.'}) }}
+{% else %}
+    {% do form.deliveryAddress.setRendered %}
+{% endif %}
+
+{% if form.shares is defined %}
+    {{ form_row(form.shares, {row_attr: {class: 'sm:max-w-xs'}}) }}
+{% else %}
+    <fieldset class="mb-5">
+        <legend class="mb-2 text-sm font-medium text-ink">Tes quantités à chaque livraison</legend>
+        <div class="grid gap-x-4 sm:grid-cols-2">
+            {% for field in form.quantities %}
+                {{ form_row(field) }}
+            {% endfor %}
+        </div>
+    </fieldset>
+{% endif %}

@@ -1,0 +1,26 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}Voici ton récapitulatif à jour. À régler à la livraison : {{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}.{% endblock %}
+
+{% block title %}Ta commande a changé{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},</p>
+    {% if actor == 'producer' %}
+        <p style="{{ p_css }}">{{ shop.name }} a modifié ta commande. Voici le récapitulatif à jour.</p>
+    {% elseif actor == 'customer' %}
+        <p style="{{ p_css }}">Tu as modifié ta commande chez {{ shop.name }}. Voici le récapitulatif à jour.</p>
+    {% else %}
+        <p style="{{ p_css }}">Ta commande chez {{ shop.name }} a été mise à jour. Voici le récapitulatif.</p>
+    {% endif %}
+
+    {{ include('notification/_order_summary.html.twig') }}
+
+    <h2 style="{{ h2_css }}">Livraison</h2>
+    {{ include('notification/_delivery.html.twig') }}
+
+    {{ include('notification/_edit_info.html.twig') }}
+    {{ include('notification/_button.html.twig', {url: order_url, label: 'Voir ma commande'}) }}
+{% endblock %}
+
+{% block footer %}{{ include('notification/_customer_footer.html.twig') }}{% endblock %}

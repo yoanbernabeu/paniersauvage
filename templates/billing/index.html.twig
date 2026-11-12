@@ -1,0 +1,127 @@
+{#
+    The producer's SaaS subscription.
+    Variables: subscription (ShopSubscription or null), now, can_subscribe, returned_from ('succes', 'abandon' or ''),
+    solidarity_form (declaration of the solidarity plan), solidarity (min, max, suggested, months).
+#}
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+{% set status = subscription ? subscription.status.value : 'none' %}
+{% set allows_new_sales = subscription ? subscription.allowsNewSales(now) : false %}
+{% set free_solidarity = subscription and subscription.isFreeSolidarity() %}
+
+{% block title %}Abonnement{% endblock %}
+{% block page_title %}Abonnement{% endblock %}
+{% block page_subtitle %}Ton abonnement à Panier Sauvage : 10 € par mois ou 100 € par an, ou le palier solidaire à prix libre.{% endblock %}
+
+{% block content %}
+    {% if returned_from == 'succes' %}
+        <twig:Alert variant="success" class="mb-5" data-billing-return="succes">
+            <twig:ux:icon name="lucide:circle-check" />
+            <twig:Alert:Title>Merci, c'est enregistré !</twig:Alert:Title>
+            <twig:Alert:Description class="text-current">Ton abonnement s'active dans quelques instants. Recharge la page si le statut n'a pas encore changé.</twig:Alert:Description>
+        </twig:Alert>
+    {% elseif returned_from == 'abandon' %}
+        <twig:Alert variant="info" class="mb-5" data-billing-return="abandon">
+            <twig:ux:icon name="lucide:info" />
+            <twig:Alert:Description class="text-current font-medium">Le paiement n'a pas été finalisé : rien n'a changé. Tu peux reprendre quand tu veux.</twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    <section aria-labelledby="statut" class="rounded-2xl border border-line bg-white p-4 sm:p-5" data-billing-status="{{ status }}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="statut" class="text-base font-semibold text-ink">Où tu en es</h2>
+            {% if not subscription %}
+                <twig:Badge variant="muted">Pas d'abonnement</twig:Badge>
+            {% elseif status == 'trialing' and not allows_new_sales %}
+                <twig:Badge variant="destructive">Essai terminé</twig:Badge>
+            {% elseif status == 'trialing' %}
+                <twig:Badge>Essai gratuit</twig:Badge>
+            {% elseif status == 'active' and not allows_new_sales %}
+                <twig:Badge variant="destructive">Palier solidaire échu</twig:Badge>
+            {% elseif status == 'active' %}
+                <twig:Badge variant="secondary">Actif · {{ subscription.plan.label|lower }}</twig:Badge>
+            {% elseif status == 'past_due' %}
+                <twig:Badge variant="destructive">En retard</twig:Badge>
+            {% else %}
+                <twig:Badge variant="muted">Résilié</twig:Badge>
+            {% endif %}
+        </div>
+
+        <p class="mt-3 text-base text-ink" data-billing-summary>
+            {% if not subscription %}
+                Tu n'as pas encore d'abonnement.
+            {% elseif status == 'trialing' and allows_new_sales %}
+                {% set days = subscription.trialDaysLeft(now) %}
+                Tu profites de l'essai gratuit : il te reste <strong class="font-semibold">{{ days }} jour{{ days > 1 ? 's' }}</strong>, jusqu'au {{ subscription.trialEndsAt|date_long(true) }}.
+            {% elseif status == 'trialing' %}
+                Ton essai gratuit est terminé{% if subscription.trialEndsAt %} depuis le {{ subscription.trialEndsAt|date_long(true) }}{% endif %}.
+            {% elseif status == 'active' and free_solidarity and allows_new_sales %}
+                Ton palier solidaire gratuit est actif jusqu'au <strong class="font-semibold">{{ subscription.currentPeriodEnd|date_long(true) }}</strong>.
+                Tu n'as rien à payer. Pour le prolonger, renouvelle ta déclaration ci-dessous.
+            {% elseif status == 'active' and free_solidarity %}
+                Ton palier solidaire gratuit est arrivé à échéance{% if subscription.currentPeriodEnd %} le {{ subscription.currentPeriodEnd|date_long(true) }}{% endif %}.
+                Renouvelle ta déclaration ci-dessous pour continuer.
+            {% elseif status == 'active' and subscription.isSolidarity() %}
+                Ton abonnement solidaire est actif{% if subscription.amountCents is not null %}, à <strong class="font-semibold">{{ subscription.amountCents|money }} par mois</strong>{% endif %}.
+                {% if subscription.currentPeriodEnd %}Prochaine échéance le <strong class="font-semibold">{{ subscription.currentPeriodEnd|date_long(true) }}</strong>.{% endif %}
+            {% elseif status == 'active' %}
+                Ton abonnement {{ subscription.plan.label|lower }} est actif.
+                {% if subscription.currentPeriodEnd %}Prochaine échéance le <strong class="font-semibold">{{ subscription.currentPeriodEnd|date_long(true) }}</strong>.{% endif %}
+            {% elseif status == 'past_due' %}
+                Le dernier prélèvement de ton abonnement n'a pas abouti.
+                {% if allows_new_sales and subscription.currentPeriodEnd %}
+                    Mets à jour ton moyen de paiement avant le <strong class="font-semibold">{{ subscription.currentPeriodEnd.modify('+' ~ constant('App\\Billing\\Entity\\ShopSubscription::PAST_DUE_GRACE_DAYS') ~ ' days')|date_long(true) }}</strong> pour continuer sans interruption.
+                {% else %}
+                    Ton abonnement est suspendu tant que ton moyen de paiement n'est pas mis à jour.
+                {% endif %}
+            {% else %}
+                Ton abonnement est résilié{% if subscription.currentPeriodEnd %} depuis le {{ subscription.currentPeriodEnd|date_long(true) }}{% endif %}.
+            {% endif %}
+        </p>
+
+        <p class="mt-2 text-sm text-ink-soft" data-billing-consequence>
+            Sans abonnement actif, tes ventes en cours vont à leur terme, mais aucune nouvelle vente ne s'ouvre ni ne se crée ; tes données restent consultables et exportables.
+        </p>
+
+        {% if subscription and subscription.stripeCustomerId %}
+            <form method="post" action="{{ path('pro_billing_portal') }}" class="mt-4" data-turbo="false">
+                <input type="hidden" name="_token" value="{{ csrf_token('billing_portal') }}">
+                <twig:Button type="submit" variant="{{ status == 'past_due' ? 'default' : 'secondary' }}" class="w-full sm:w-auto">
+                    <twig:ux:icon name="lucide:credit-card" />
+                    {{ status == 'past_due' ? 'Mettre à jour mon moyen de paiement' : 'Gérer mon abonnement' }}
+                </twig:Button>
+                <p class="mt-2 text-xs text-ink-soft">Moyen de paiement, factures et résiliation se gèrent sur l'espace sécurisé de Stripe.</p>
+            </form>
+        {% endif %}
+    </section>
+
+    {% if can_subscribe %}
+        <section aria-labelledby="formules" class="mt-5">
+            <h2 id="formules" class="text-base font-semibold text-ink">Choisis ta formule</h2>
+            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                {% for plan in [
+                    {value: 'monthly', name: 'Mensuel', price: '10 €', unit: 'par mois', detail: 'Sans engagement : tu arrêtes quand tu veux.', variant: 'default'},
+                    {value: 'yearly', name: 'Annuel', price: '100 €', unit: 'par an', detail: 'Un seul règlement par an : deux mois offerts.', variant: 'secondary'},
+                ] %}
+                    <form method="post" action="{{ path('pro_billing_checkout') }}" class="flex flex-col rounded-2xl border border-line bg-white p-4 sm:p-5" data-turbo="false" data-billing-plan="{{ plan.value }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('billing_checkout') }}">
+                        <input type="hidden" name="plan" value="{{ plan.value }}">
+                        <h3 class="text-sm font-semibold tracking-wide text-ink-soft uppercase">{{ plan.name }}</h3>
+                        <p class="mt-1 text-ink">
+                            <span class="amount font-display text-2xl font-semibold text-sage-deep">{{ plan.price }}</span>
+                            {% if plan.unit %}<span class="text-sm text-ink-soft">{{ plan.unit }}</span>{% endif %}
+                        </p>
+                        <p class="mt-1 mb-4 flex-1 text-sm text-ink-soft">{{ plan.detail }}</p>
+                        <twig:Button type="submit" variant="{{ plan.variant }}" class="w-full">
+                            Choisir {{ plan.value == 'monthly' ? 'le mensuel' : 'l\'annuel' }}
+                        </twig:Button>
+                    </form>
+                {% endfor %}
+            </div>
+            <p class="mt-3 text-xs text-ink-soft">Le règlement se fait sur la page sécurisée de Stripe. Panier Sauvage ne voit jamais ta carte.</p>
+        </section>
+    {% endif %}
+
+    {{ include('billing/_solidarity.html.twig') }}
+{% endblock %}

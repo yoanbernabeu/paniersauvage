@@ -1,0 +1,83 @@
+{# Printable delivery sheet of a sale. Variable: sheet (App\Accounting\Model\DeliverySheet). #}
+{% extends 'accounting/pdf/_base.html.twig' %}
+
+{% set sale = sheet.sale %}
+{% set shop_name = sale.shop.name %}
+
+{% block title %}Feuille de livraison – {{ sale.title }}{% endblock %}
+{% block kicker %}Feuille de livraison{% endblock %}
+{% block heading %}{{ sale.title }}{% endblock %}
+
+{% block meta %}
+    <p>Livraison : <span class="strong">{{ sale.deliveryDate|date_long(true) }}</span></p>
+    <p>{{ sheet.orderCount }} commande{{ sheet.orderCount > 1 ? 's' }} · {{ sheet.totalCents|money }} à régler au total</p>
+    <p>Vente {{ sale.code }}</p>
+{% endblock %}
+
+{% block content %}
+    {% if sheet.groups is empty %}
+        <p class="empty">Aucune commande à livrer pour cette vente.</p>
+    {% endif %}
+
+    {% for group in sheet.groups %}
+        {% set point = group.delivery.deliveryPoint %}
+        <table class="group">
+            <tr>
+                <td>
+                    <span class="strong" style="font-size: 11.5pt;">{{ point.name }}</span>
+                    <span class="small">{% if point.type.label != point.name %} · {{ point.type.label }}{% endif %} · {{ time_range(group.delivery.startsAt, group.delivery.endsAt) }}</span>
+                    {% if point.address and not group.delivery.home %}
+                        <br><span class="small">{{ point.address|replace({"\r": '', "\n": ', '}) }}</span>
+                    {% endif %}
+                </td>
+                <td class="right small nowrap" style="width: 34%;">
+                    {{ group.orders|length }} commande{{ group.orders|length > 1 ? 's' }} · {{ group.totalCents|money }}
+                </td>
+            </tr>
+        </table>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th class="center" style="width: 8%;">Livrée</th>
+                    <th style="width: 26%;">Client</th>
+                    <th>Articles</th>
+                    <th class="right" style="width: 15%;">À régler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in group.orders %}
+                    <tr>
+                        <td class="center"><div class="box-check" style="margin: 1pt auto 0 auto;"></div></td>
+                        <td>
+                            <span class="strong">{{ order.customerLastName ? (order.customerLastName ~ ' ' ~ order.customerFirstName)|trim : order.customerDisplayName }}</span>
+                            {% if order.customerPhone %}<br><span class="nowrap">Tél. {{ order.customerPhone }}</span>{% endif %}
+                            <br><span class="small muted">{{ order.reference }}</span>
+                        </td>
+                        <td>
+                            {% for line in order.lines %}
+                                <span class="strong">{{ line.quantity|line_quantity(line.unit) }}</span> {{ line.label }}{% if line.actualQuantity is not null %} · pesé {{ line.actualQuantity|quantity(line.unit) }}{% endif %}{% if not loop.last %}<br>{% endif %}
+                            {% endfor %}
+                            {% if group.delivery.home and order.deliveryAddress %}
+                                <p class="small" style="margin-top: 4pt;"><span class="strong">Adresse :</span> {{ order.deliveryAddress|nl2br }}</p>
+                            {% endif %}
+                            {% if order.containsAlcohol() %}
+                                <p class="small strong" style="margin-top: 4pt;" data-age-check-reminder>Alcool : vérifie l'âge au retrait.</p>
+                            {% endif %}
+                            {% if order.note %}
+                                <p class="small" style="margin-top: 4pt;"><span class="strong">Note :</span> {{ order.note|nl2br }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="right strong nowrap">{{ order.estimated ? 'environ ' }}{{ order.totalCents|money }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+    {% if sale.shop.vatExempt %}
+        <p class="note" data-vat-mention>{{ constant('App\\Shop\\Enum\\VatRegime::FRANCHISE_MENTION') }}.</p>
+    {% endif %}
+    {% if sale.shop.paymentSummary and sheet.groups is not empty %}
+        <p class="note"><span class="strong">Moyens de paiement acceptés :</span> {{ sale.shop.paymentSummary }}</p>
+    {% endif %}
+{% endblock %}

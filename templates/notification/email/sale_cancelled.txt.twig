@@ -1,0 +1,17 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if orders[0].customerFirstName ?? false %} {{ orders[0].customerFirstName }}{% endif %},
+
+{{ shop.name }} a dû annuler la livraison du {{ sale.deliveryDate|date_long }}.
+{% if orders|length > 1 %}
+Tes commandes {{ orders|map(o => o.reference)|join(', ', ' et ') }} sont donc annulées.
+{% else %}
+Ta commande {{ orders|map(o => o.reference)|join(', ') }} est donc annulée.
+{% endif %}
+Tu n'as rien à régler ni à venir chercher.
+
+Une question ? Contacte directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.
+
+Les prochaines ventes sont ici : {{ shop_url }}
+{% endblock %}

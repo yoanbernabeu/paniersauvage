@@ -1,0 +1,5 @@
+{% if editable_until %}
+Un changement de programme ? Tu peux modifier ou annuler ta commande jusqu'au {{ editable_until|datetime_long }}.
+{% else %}
+Pour changer ta commande, contacte directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.
+{% endif %}

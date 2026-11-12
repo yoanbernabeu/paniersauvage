@@ -1,0 +1,12 @@
+{#
+    Credit of a renamed instance (docs/INSTANCE.md): « Propulsé par Panier Sauvage, logiciel libre
+    (AGPL) », linked to the source code this instance runs (LEGAL_SOURCE_CODE_URL, AGPL-3.0 § 13).
+    Always shown on a renamed instance; Panier Sauvage itself shows default_text instead.
+    Variables: default_text (optional, nothing by default), tag (optional, 'span' by default), class (optional).
+#}
+{% set tag = tag|default('span') %}
+{% if instance.isRenamed() %}
+    <{{ tag }} class="{{ class|default('') }}" data-powered-by>Propulsé par <a href="{{ legal_publisher().sourceCodeUrl }}" class="link" rel="noopener" data-source-code-link>{{ constant('App\\Instance\\InstanceSettings::SOFTWARE_NAME') }}</a>, logiciel libre (AGPL)</{{ tag }}>
+{% elseif default_text|default('') is not empty %}
+    <{{ tag }}{% if class|default('') is not empty %} class="{{ class }}"{% endif %}>{{ default_text }}</{{ tag }}>
+{% endif %}

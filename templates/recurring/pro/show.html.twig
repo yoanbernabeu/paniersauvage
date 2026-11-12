@@ -1,0 +1,122 @@
+{% extends 'layout/pro.html.twig' %}
+
+{# Variables: recurring_order, plan, today. #}
+
+{% set customer = recurring_order.customer %}
+{% set content_width = 'max-w-4xl' %}
+
+{% block title %}{{ customer.displayName }} · {{ plan.title }}{% endblock %}
+{% block page_title %}{{ customer.displayName }}{% endblock %}
+{% block page_subtitle %}Abonné à « {{ plan.title }} » depuis le {{ recurring_order.createdAt|date_long(true) }}.{% endblock %}
+
+{% block page_actions %}
+    <twig:Button as="a" href="{{ path('pro_recurring_index') }}" variant="ghost">
+        <twig:ux:icon name="lucide:arrow-left" />
+        Paniers récurrents
+    </twig:Button>
+{% endblock %}
+
+{% block content %}
+    <div class="grid gap-5 lg:grid-cols-3">
+        <twig:Card class="lg:col-span-2" data-subscription-summary>
+            <twig:Card:Header>
+                <twig:Card:Title class="flex flex-wrap items-center gap-2">
+                    À chaque livraison
+                    <twig:Badge variant="{{ recurring_order.status.badge }}" data-recurring-status>{{ recurring_order.ending ? 'Résilié' : recurring_order.status.label }}</twig:Badge>
+                </twig:Card:Title>
+            </twig:Card:Header>
+            <twig:Card:Content>
+                <ul class="divide-y divide-line-soft text-sm">
+                    {% if plan.basket %}<li class="py-1.5 font-medium text-ink">{{ recurring_order.shares }} × {{ plan.title }}</li>{% endif %}
+                    {% for entry in recurring_order.wantedQuantities %}
+                        <li class="py-1.5 text-ink">{{ entry[1]|line_quantity(entry[0].unit) }} {{ entry[0].name }}</li>
+                    {% endfor %}
+                </ul>
+                <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+                    <div><dt class="text-ink-soft">Montant estimé</dt><dd class="amount font-medium text-ink">{{ recurring_order.estimatedPriceCents|money }}</dd></div>
+                    <div><dt class="text-ink-soft">Retrait</dt><dd class="text-ink">{{ recurring_order.deliveryPoint.name }}{% if recurring_order.deliveryAddress %}<br>{{ recurring_order.deliveryAddress|nl2br }}{% endif %}</dd></div>
+                    <div><dt class="text-ink-soft">Première livraison couverte</dt><dd class="text-ink">{{ recurring_order.startsOn|date_long(true) }}</dd></div>
+                    <div><dt class="text-ink-soft">Dernière livraison</dt><dd class="text-ink">{{ recurring_order.endsOn ? recurring_order.endsOn|date_long(true) : 'Sans fin prévue' }}</dd></div>
+                    {% if recurring_order.pausedDates is not empty %}
+                        <div class="sm:col-span-2"><dt class="text-ink-soft">Livraisons en pause</dt><dd class="text-ink" data-paused-dates>{% for day in recurring_order.pausedDates %}{{ date(day)|date_short }}{{ not loop.last ? ', ' }}{% endfor %}</dd></div>
+                    {% endif %}
+                    {% if recurring_order.adultCertifiedAt %}
+                        <div class="sm:col-span-2"><dt class="text-ink-soft">Majorité</dt><dd class="text-ink">Certifiée le {{ recurring_order.adultCertifiedAt|date_short }} (vérifie l'âge au retrait)</dd></div>
+                    {% endif %}
+                    {% if recurring_order.endReason %}
+                        <div class="sm:col-span-2"><dt class="text-ink-soft">Fin</dt><dd class="text-ink">{{ recurring_order.endReason.label }}</dd></div>
+                    {% endif %}
+                </dl>
+            </twig:Card:Content>
+        </twig:Card>
+
+        <twig:Card>
+            <twig:Card:Header><twig:Card:Title>Contact</twig:Card:Title></twig:Card:Header>
+            <twig:Card:Content class="flex flex-col gap-2 text-sm">
+                <p class="flex items-center gap-2 break-all text-ink"><twig:ux:icon name="lucide:mail" class="size-4 shrink-0 text-sage-dark" /><a href="mailto:{{ customer.email }}" class="link">{{ customer.email }}</a></p>
+                {% if customer.phone %}
+                    <p class="flex items-center gap-2 text-ink"><twig:ux:icon name="lucide:phone" class="size-4 shrink-0 text-sage-dark" /><a href="tel:{{ customer.phone|replace({' ': ''}) }}" class="link">{{ customer.phone }}</a></p>
+                {% endif %}
+            </twig:Card:Content>
+            {% if not recurring_order.ended %}
+                <twig:Card:Footer class="flex flex-col items-stretch gap-2">
+                    {% if recurring_order.active %}
+                        <form method="post" action="{{ path('pro_recurring_order_suspend', {id: recurring_order.id}) }}">
+                            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                            <twig:Button type="submit" variant="secondary" class="w-full">Suspendre</twig:Button>
+                        </form>
+                    {% elseif recurring_order.suspended %}
+                        <form method="post" action="{{ path('pro_recurring_order_resume', {id: recurring_order.id}) }}">
+                            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                            <twig:Button type="submit" variant="sage" class="w-full">Reprendre l'abonnement</twig:Button>
+                        </form>
+                    {% endif %}
+                    <form method="post" action="{{ path('pro_recurring_order_end', {id: recurring_order.id}) }}">
+                        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('submit') }}">
+                        <twig:Button type="submit" variant="ghost" class="w-full text-danger">Mettre fin à l'abonnement</twig:Button>
+                    </form>
+                    <p class="text-xs text-ink-soft">L'abonné est prévenu par e-mail. Les commandes déjà créées restent dans tes ventes.</p>
+                </twig:Card:Footer>
+            {% endif %}
+        </twig:Card>
+    </div>
+
+    <section aria-labelledby="commandes-generees" class="mt-8">
+        <h2 id="commandes-generees" class="mb-3 text-base font-semibold text-ink">Commandes créées par l'abonnement</h2>
+        {% if recurring_order.occurrences is empty %}
+            <p class="rounded-xl border border-dashed border-line bg-white p-5 text-sm text-ink-soft">Aucune pour l'instant : la première sera créée à l'ouverture de la prochaine vente.</p>
+        {% else %}
+            <twig:Table data-occurrences>
+                <twig:Table:Header>
+                    <twig:Table:Row>
+                        <twig:Table:Head>Livraison</twig:Table:Head>
+                        <twig:Table:Head>Résultat</twig:Table:Head>
+                        <twig:Table:Head>Commande</twig:Table:Head>
+                    </twig:Table:Row>
+                </twig:Table:Header>
+                <twig:Table:Body>
+                    {% for occurrence in recurring_order.occurrences %}
+                        {% set order = occurrence.order %}
+                        <twig:Table:Row data-occurrence="{{ occurrence.id }}">
+                            <twig:Table:Cell class="text-ink">{{ occurrence.deliveryDate|date_long }}</twig:Table:Cell>
+                            <twig:Table:Cell class="whitespace-normal">
+                                <twig:Badge variant="{{ occurrence.outcome.badge }}">{{ occurrence.outcome.label }}</twig:Badge>
+                                {% for item in occurrence.missingItems %}
+                                    <span class="mt-1 block text-xs text-ink-soft">{{ include('recurring/_missing_item.txt.twig') }}</span>
+                                {% endfor %}
+                            </twig:Table:Cell>
+                            <twig:Table:Cell>
+                                {% if order %}
+                                    <a href="{{ path('pro_sale_show', {id: occurrence.sale.id}) }}" class="link">{{ order.reference }}</a>
+                                    <span class="block text-xs text-ink-soft">{{ order.status.label }} · <span class="amount">{{ order.totalCents|money }}</span></span>
+                                {% else %}
+                                    <span class="text-ink-soft">—</span>
+                                {% endif %}
+                            </twig:Table:Cell>
+                        </twig:Table:Row>
+                    {% endfor %}
+                </twig:Table:Body>
+            </twig:Table>
+        {% endif %}
+    </section>
+{% endblock %}

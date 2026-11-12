@@ -1,0 +1,212 @@
+{#
+    Customer-side order form body: products with quantity steppers first (what people come for),
+    then the delivery cards, then the free note. The page adds the contact details after it.
+    Must sit inside a <form data-controller="order-form">.
+
+    Variables: form (OrderFormType view), sale, data (OrderFormData), order (Order being edited, or null),
+               stock_messages (list of strings shown after a stock refusal), offers (optional: the
+               offers to show, by default all of the sale's; the leftovers during a last-minute sale),
+               cap_message (refusal of a first order above the shop's cap, or null).
+#}
+{% set order = order|default(null) %}
+{% set offers = offers|default(sale.offers) %}
+{% set low_stock_threshold = 5 %}
+{% set max_quantity = constant('App\\Ordering\\Form\\OrderFormType::MAX_QUANTITY') %}
+
+{% if stock_messages|default([]) is not empty %}
+    <twig:Alert variant="warning" class="mb-6" data-stock-alert>
+        <twig:ux:icon name="lucide:triangle-alert" />
+        <twig:Alert:Title>Oups, il n'y en a plus assez</twig:Alert:Title>
+        <twig:Alert:Description class="text-current">
+            <ul class="list-disc ps-4">
+                {% for message in stock_messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            <p class="mt-1">On a ajusté ton panier. Vérifie-le, puis valide à nouveau.</p>
+        </twig:Alert:Description>
+    </twig:Alert>
+{% endif %}
+
+{% if cap_message|default(null) %}
+    <twig:Alert variant="warning" class="mb-6" data-first-order-refusal>
+        <twig:ux:icon name="lucide:hand-coins" />
+        <twig:Alert:Title>Une première commande a un plafond ici</twig:Alert:Title>
+        <twig:Alert:Description class="text-current">{{ cap_message }}</twig:Alert:Description>
+    </twig:Alert>
+{% endif %}
+
+{% if form.vars.errors|length > 0 %}
+    <twig:Alert variant="destructive" class="mb-6">
+        <twig:ux:icon name="lucide:circle-alert" />
+        <twig:Alert:Description class="font-medium text-current">
+            {% for error in form.vars.errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}
+        </twig:Alert:Description>
+    </twig:Alert>
+{% endif %}
+
+{# ---- Products -------------------------------------------------------------------------- #}
+{% set groups = [
+    {title: 'La gamme', id: 'gamme', offers: offers|filter(o => o.product.permanent)|sort((a, b) => a.product.position <=> b.product.position)},
+    {title: 'Du moment', id: 'du-moment', offers: offers|filter(o => o.product.seasonal)|sort((a, b) => a.product.position <=> b.product.position)},
+] %}
+{% for group in groups %}
+    {% if group.offers is not empty %}
+        <section aria-labelledby="titre-{{ group.id }}" class="mb-10">
+            <h2 id="titre-{{ group.id }}" class="font-display mb-4 flex items-center gap-2 text-2xl font-semibold text-ink">
+                {{ group.title }}
+                {% if group.id == 'du-moment' %}<twig:ux:icon name="lucide:sparkles" class="size-5 text-sage" />{% endif %}
+            </h2>
+            <ul class="flex flex-col gap-3">
+                {% for offer in group.offers %}
+                    {% set product = offer.product %}
+                    {% set weighed = product.unit.weighed %}
+                    {% set field = form.quantities[offer.id] %}
+                    {% set own = order and order.lineFor(offer) ? order.lineFor(offer).quantity : 0 %}
+                    {% set available = offer.remaining is null ? null : offer.remaining + own %}
+                    {% set quantity = data.quantities[offer.id] ?? 0 %}
+                    {% set sold_out = available is not null and available < product.minQuantity %}
+                    {% set max = available is null ? max_quantity * 1000 : min(available, max_quantity * 1000) %}
+                    {% set step_label = weighed ? product.quantityStep|quantity(product.unit) ~ ' de ' : '1 × ' %}
+                    <li class="group flex gap-3 rounded-xl border border-line bg-white p-3 transition-colors data-selected:border-sage sm:gap-4 sm:p-4 {{ sold_out ? 'opacity-60' }}"
+                        data-order-form-row data-offer="{{ offer.id }}" {% if quantity > 0 %}data-selected{% endif %}>
+                        <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sage-soft text-sage sm:size-24">
+                            {% if product.photoPath %}
+                                <img src="{{ product.photoPath|image_url }}" alt="" loading="lazy" class="size-full object-cover {{ sold_out ? 'grayscale' }}">
+                            {% else %}
+                                <twig:ux:icon name="lucide:wheat" class="size-8" />
+                            {% endif %}
+                        </div>
+                        <div class="flex min-w-0 flex-1 flex-col">
+                            <label for="{{ field.vars.id }}" class="font-display text-lg leading-snug font-semibold text-ink">{{ product.name }}</label>
+                            {% if product.description %}
+                                <p class="mt-0.5 line-clamp-2 text-sm text-ink-soft">{{ product.description }}</p>
+                            {% endif %}
+                            {% if product.labels is not empty %}
+                                <ul class="mt-1 flex flex-wrap gap-1" aria-label="Labels" data-product-labels>
+                                    {% for label in product.labels %}<li><twig:Badge variant="outline">{{ label }}</twig:Badge></li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if product.allergens %}
+                                <p class="mt-0.5 text-xs text-ink-soft">Allergènes : {{ product.allergens }}</p>
+                            {% endif %}
+                            {% if not product.perishable %}
+                                <p class="mt-0.5 text-xs text-ink-soft" data-withdrawable>Se conserve : rétractation 14 jours</p>
+                            {% endif %}
+                            {% if product.alcoholic %}
+                                <p class="mt-0.5 text-xs font-medium text-wheat-ink" data-alcohol-warning>L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</p>
+                            {% endif %}
+                            {% if weighed %}
+                                <p class="mt-0.5 text-xs text-ink-soft" id="{{ field.vars.id }}_help" data-weighed-help>
+                                    Par {{ product.quantityStep|quantity(product.unit) }}{% if product.minQuantity > product.quantityStep %}, {{ product.minQuantity|quantity(product.unit) }} au moins{% endif %}. Montant estimé, ajusté au poids réel à la livraison.
+                                </p>
+                            {% endif %}
+                            <div class="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pt-2">
+                                <p class="text-ink">
+                                    <span class="amount font-semibold">{{ offer.priceCents|money }}</span>
+                                    <span class="text-sm text-ink-soft">/ {{ product.unit.short }}</span>
+                                </p>
+                                {% if sold_out %}
+                                    <twig:Badge variant="muted" data-sold-out>Épuisé</twig:Badge>
+                                    {% do field.setRendered %}
+                                {% else %}
+                                    <div class="flex flex-col items-end gap-1">
+                                        <div class="inline-flex items-center rounded-full border border-line bg-white group-data-selected:border-sage">
+                                            <button type="button" data-action="order-form#decrement" aria-label="Retirer {{ step_label }}{{ product.name }}"
+                                                    class="flex size-11 items-center justify-center rounded-full text-sage-dark hover:bg-sage-soft disabled:text-ink-soft/40 disabled:hover:bg-transparent">
+                                                <twig:ux:icon name="lucide:minus" class="size-5" />
+                                            </button>
+                                            <input type="number"
+                                                   id="{{ field.vars.id }}"
+                                                   name="{{ field_name(field) }}"
+                                                   value="{{ quantity|quantity_input }}"
+                                                   min="0"
+                                                   max="{{ max|quantity_input }}"
+                                                   step="{{ product.quantityStep|quantity_input }}"
+                                                   inputmode="{{ weighed ? 'decimal' : 'numeric' }}"
+                                                   {% if weighed %}aria-describedby="{{ field.vars.id }}_help"{% endif %}
+                                                   data-order-form-target="quantity"
+                                                   data-price-cents="{{ own > 0 ? order.lineFor(offer).unitPriceCents : offer.priceCents }}"
+                                                   data-step="{{ product.quantityStep }}"
+                                                   data-minimum="{{ product.minQuantity }}"
+                                                   {% if weighed %}data-weighed{% endif %}
+                                                   data-action="input->order-form#refresh"
+                                                   class="amount h-11 {{ weighed ? 'w-14' : 'w-10' }} [appearance:textfield] bg-transparent text-center text-base font-semibold text-ink outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+                                            {% if weighed %}<span class="-ms-1 text-sm font-medium text-ink-soft" aria-hidden="true">kg</span>{% endif %}
+                                            <button type="button" data-action="order-form#increment" aria-label="Ajouter {{ step_label }}{{ product.name }}"
+                                                    class="flex size-11 items-center justify-center rounded-full text-sage-dark hover:bg-sage-soft disabled:text-ink-soft/40 disabled:hover:bg-transparent">
+                                                <twig:ux:icon name="lucide:plus" class="size-5" />
+                                            </button>
+                                        </div>
+                                        {% if available is not null and available <= low_stock_threshold * product.quantityStep %}
+                                            <span class="text-xs font-semibold text-wheat-ink" data-low-stock>Plus que {{ available|quantity(product.unit) }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% do field.setRendered %}
+                                {% endif %}
+                            </div>
+                            {{ form_errors(field) }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+{% endfor %}
+{% do form.quantities.setRendered %}
+
+{# ---- Delivery -------------------------------------------------------------------------- #}
+<section aria-labelledby="titre-livraison" class="mb-10">
+    <h2 id="titre-livraison" class="font-display mb-4 text-2xl font-semibold text-ink">Où récupères-tu ta commande ?</h2>
+    <div role="radiogroup" aria-labelledby="titre-livraison" class="flex flex-col gap-3">
+        {% for delivery in sale.deliveries %}
+            {% set point = delivery.deliveryPoint %}
+            <label class="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-line bg-white p-4 transition-colors has-checked:border-sage has-checked:bg-sage-soft has-focus-visible:ring-2 has-focus-visible:ring-sage-dark">
+                <input type="radio"
+                       name="{{ field_name(form.delivery) }}"
+                       value="{{ delivery.id }}"
+                       class="mt-0.5 size-5 shrink-0 accent-sage-dark"
+                       data-order-form-target="delivery"
+                       data-home="{{ delivery.home ? 'true' : 'false' }}"
+                       data-action="order-form#toggleAddress"
+                       required
+                       {% if data.delivery and data.delivery.id == delivery.id %}checked{% endif %}>
+                <span class="min-w-0 flex-1">
+                    <span class="flex items-center gap-2 font-semibold text-ink">
+                        <twig:ux:icon name="{{ delivery.home ? 'lucide:home' : 'lucide:map-pin' }}" class="size-4 shrink-0 text-sage-dark" />
+                        {{ point.name }}
+                    </span>
+                    <span class="mt-0.5 block text-sm text-ink-soft">
+                        <span class="inline-block first-letter:uppercase">{{ delivery.startsAt|date_long }}</span>, {{ time_range(delivery.startsAt, delivery.endsAt) }}
+                    </span>
+                    {% if not delivery.home and point.address %}
+                        <span class="block text-sm text-ink-soft">{{ point.address }}</span>
+                    {% endif %}
+                    {% if point.instructions %}
+                        <span class="mt-1 block text-sm text-ink-soft">{{ point.instructions }}</span>
+                    {% endif %}
+                </span>
+            </label>
+        {% else %}
+            <p class="text-ink-soft">Aucun point de livraison n'est encore prévu pour cette vente.</p>
+        {% endfor %}
+    </div>
+    {{ form_errors(form.delivery) }}
+    {% do form.delivery.setRendered %}
+
+    {% set has_home = sale.deliveries|filter(d => d.home)|length > 0 %}
+    {% if has_home %}
+        <div class="mt-4" data-order-form-target="address">
+            <label for="{{ form.deliveryAddress.vars.id }}" class="mb-1.5 block text-sm font-medium text-ink">Ton adresse, pour la livraison à domicile</label>
+            {{ form_widget(form.deliveryAddress, {attr: {'data-order-form-target': 'addressInput'}}) }}
+            {{ form_errors(form.deliveryAddress) }}
+        </div>
+    {% else %}
+        {% do form.deliveryAddress.setRendered %}
+    {% endif %}
+</section>
+
+{# ---- Note ------------------------------------------------------------------------------ #}
+<section class="mb-10">
+    {{ form_row(form.note) }}
+</section>

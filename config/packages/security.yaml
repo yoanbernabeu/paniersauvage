@@ -1,0 +1,85 @@
+security:
+    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        producer_provider:
+            entity:
+                class: App\Shop\Entity\User
+                property: email
+        customer_provider:
+            entity:
+                class: App\Customer\Entity\Customer
+                property: email
+
+    firewalls:
+        dev:
+            # Ensure dev tools and static assets are always allowed
+            pattern: ^/(_profiler(/|$)|(_wdt|assets|build)/)
+            security: false
+
+        # Producer area: e-mail + password. Its token lives under its own session key,
+        # so a producer session and a customer session can coexist in the same browser.
+        producer:
+            pattern: ^/pro(/|$)
+            lazy: true
+            provider: producer_provider
+            form_login:
+                login_path: pro_login
+                check_path: pro_login
+                enable_csrf: true
+                default_target_path: /pro
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+            logout:
+                path: pro_logout
+                target: pro_login
+                # POST only (route) with a CSRF token: a third-party page cannot log the producer out.
+                enable_csrf: true
+
+        # Rest of the site: customers, passwordless (magic link sent by e-mail).
+        main:
+            lazy: true
+            provider: customer_provider
+            entry_point: App\Customer\Security\CustomerEntryPoint
+            login_link:
+                check_route: customer_login_check
+                # A GET on the link only shows a confirmation page (SecurityController::check); the
+                # sign-in is the POST of that page, CSRF-checked (LoginLinkCsrfSubscriber). Mail
+                # scanners that open links therefore never consume them.
+                check_post_only: true
+                # lastLoginAt changes at every sign-in (LastLoginSubscriber): a link works once,
+                # and every older link dies with it. Stored in the database, so it holds across
+                # deployments and containers, unlike a `max_uses` counter kept in a cache pool.
+                signature_properties: [id, email, lastLoginAt]
+                lifetime: 900
+                login_path: /connexion
+                failure_path: /connexion
+                default_target_path: /mon-compte
+            logout:
+                path: customer_logout
+                target: home
+                enable_csrf: true
+
+    role_hierarchy:
+        ROLE_PRODUCER: ROLE_USER
+        ROLE_CUSTOMER: ROLE_USER
+
+    # Note: Only the *first* matching rule is applied
+    access_control:
+        - { path: ^/pro/(connexion|inscription|mot-de-passe-oublie(/envoye)?|mot-de-passe/nouveau(/[A-Za-z0-9_-]+)?|invitation(/[A-Za-z0-9_-]+)?)$, roles: PUBLIC_ACCESS }
+        - { path: ^/pro(/|$), roles: ROLE_PRODUCER }
+        - { path: ^/(mon-compte|mes-commandes)(/|$), roles: ROLE_CUSTOMER }
+
+when@test:
+    security:
+        password_hashers:
+            # Password hashers are resource-intensive by design to ensure security.
+            # In tests, it's safe to reduce their cost to improve performance.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon

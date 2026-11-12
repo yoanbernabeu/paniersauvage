@@ -1,0 +1,6 @@
+{# Until when the customer can change the order. Variables: editable_until (nullable), shop. #}
+{% if editable_until %}
+    <p style="{{ p_css }}">Un changement de programme ? Tu peux modifier ou annuler ta commande jusqu'au <strong style="font-weight:600;">{{ editable_until|datetime_long }}</strong>.</p>
+{% else %}
+    <p style="{{ p_css }}">Pour changer ta commande, contacte directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.</p>
+{% endif %}

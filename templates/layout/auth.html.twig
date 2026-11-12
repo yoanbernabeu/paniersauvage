@@ -1,0 +1,33 @@
+{#
+    Centred card for sign-in / sign-up screens (producer and customer).
+
+    Blocks: title, auth_title (the <h1>), auth_intro (sentence under the title), flashes,
+            content (the form), auth_footer (links under the card).
+#}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="flex min-h-dvh flex-col items-center px-4 py-10 sm:py-16">
+        {# Every screen leads back to the home page (the presentation of Panier Sauvage). #}
+        <a href="{{ path('home') }}" class="rounded-lg px-1 py-1" aria-label="{{ instance.name }}, accueil">
+            <twig:Logo />
+        </a>
+        <main id="contenu" class="mt-8 w-full max-w-md">
+            <div class="rounded-xl bg-white p-6 shadow-card ring-1 ring-line sm:p-8">
+                <h1 class="text-2xl leading-tight font-semibold text-ink">{% block auth_title %}{% endblock %}</h1>
+                <p class="mt-2 text-sm text-ink-soft empty:hidden">{% block auth_intro %}{% endblock %}</p>
+                <div class="mt-6">
+                    {% block flashes %}{{ include('layout/_flashes.html.twig', {class: 'mb-5'}) }}{% endblock %}
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+            <div class="mt-6 text-center text-sm text-ink-soft">
+                {% block auth_footer %}{% endblock %}
+            </div>
+        </main>
+        <nav aria-label="Informations légales" class="mt-10 w-full max-w-md text-sm text-ink-soft">
+            {{ include('legal/_footer_links.html.twig') }}
+            {{ include('instance/_powered_by.html.twig', {tag: 'p', class: 'mt-2 text-center'}) }}
+        </nav>
+    </div>
+{% endblock %}

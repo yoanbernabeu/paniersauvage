@@ -1,0 +1,30 @@
+{# Shop page: the plans open to subscription. Variables: shop. #}
+{% set plans = recurring_plans(shop) %}
+{% if plans is not empty %}
+    <section aria-labelledby="paniers-recurrents" class="mb-12" data-section="recurring-plans">
+        <h2 id="paniers-recurrents" class="font-display mb-1 text-2xl font-semibold text-ink">Chaque semaine, sans y penser</h2>
+        <p class="mb-4 text-sm text-ink-soft">Abonne-toi : ta commande est créée toute seule à chaque livraison. Tu la règles au retrait.</p>
+        <ul class="flex flex-col gap-3">
+            {% for plan in plans %}
+                <li class="rounded-xl bg-white p-5 shadow-card ring-1 ring-line sm:p-6" data-recurring-plan="{{ plan.id }}">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <twig:Badge variant="sage">{{ plan.term.label }}</twig:Badge>
+                        {% set places_left = recurring_places_left(plan) %}
+                        {% if places_left is not null %}
+                            <twig:Badge variant="{{ places_left > 0 ? 'secondary' : 'destructive' }}">{{ places_left > 0 ? places_left ~ ' place' ~ (places_left > 1 ? 's') : 'Complet' }}</twig:Badge>
+                        {% endif %}
+                    </div>
+                    <h3 class="font-display mt-2 text-xl leading-snug font-semibold text-ink">{{ plan.title }}</h3>
+                    <p class="mt-1 text-sm text-ink-soft">
+                        Chaque {{ plan.weekdayName }}{% if plan.basket %} · environ {{ plan.basketPriceCents|money }} le panier{% endif %}
+                        {% if plan.season %} · du {{ plan.seasonStartsOn|date_short }} au {{ plan.seasonEndsOn|date_short }}{% endif %}
+                    </p>
+                    <twig:Button as="a" href="{{ path('recurring_plan_show', {slug: shop.slug, id: plan.id}) }}" variant="secondary" class="mt-4 w-full sm:w-auto">
+                        Découvrir le panier
+                        <twig:ux:icon name="lucide:arrow-right" />
+                    </twig:Button>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

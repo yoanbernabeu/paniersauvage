@@ -1,0 +1,28 @@
+{#
+    "Other producers near this pick-up point" (App\Shop\Search\CrossDiscovery): a neighbourly hint,
+    shops of the directory only, ranked by distance. Variables: nearby_shops (list of NearbyShop).
+#}
+{% if nearby_shops is not empty %}
+    <h2 style="{{ h2_css }}">D'autres producteurs près de ce point de retrait</h2>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;" data-nearby-shops>
+        {% for result in nearby_shops %}
+            {% set sale = result.nextSale %}
+            <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #ECE8DE;{{ font_text }}font-size:15px;line-height:21px;color:#1F2A24;">
+                    <a href="{{ url('shop_show', {slug: result.shop.slug, via: 'croise'}) }}" style="{{ link_css }}font-weight:600;">{{ result.shop.name }}</a>
+                    <span style="color:#56635B;">, {{ result.distanceLabel() }}</span><br>
+                    <span style="font-size:14px;color:#56635B;">
+                        {%- if sale and sale.isOpen() -%}
+                            Commandes ouvertes jusqu'au {{ sale.deadlineAt|datetime_long }}
+                        {%- elseif sale -%}
+                            Prochaine vente le {{ sale.opensAt|date_long }}
+                        {%- else -%}
+                            Pas de vente prévue pour l'instant
+                        {%- endif -%}
+                    </span>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <p style="{{ muted_css }}">Des producteurs qui utilisent {{ instance.name }} et ont choisi d'apparaître dans l'annuaire, classés par distance.</p>
+{% endif %}

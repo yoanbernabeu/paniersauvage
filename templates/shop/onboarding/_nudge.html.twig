@@ -1,0 +1,5 @@
+{# Shown once after a first-step screen saved something (App\Shop\Service\OnboardingNudge). #}
+{%- set progress = onboarding_progress() -%}
+{%- if progress -%}
+    {{ include('shop/onboarding/_progress.html.twig', {progress: progress, compact: true}) }}
+{%- endif -%}

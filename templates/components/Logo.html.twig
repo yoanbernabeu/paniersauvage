@@ -1,0 +1,37 @@
+{#
+    Panier Sauvage logo: line-drawn basket + "Panier Sauvage" wordmark in Fraunces. A renamed instance
+    shows its own name (INSTANCE_NAME), with its own logo when INSTANCE_LOGO is set.
+    <twig:Logo />                              sage on light backgrounds
+    <twig:Logo tone="light" />                 cream on the dark sage producer header
+    <twig:Logo :wordmark="false" class="size-10" />   symbol only
+#}
+{%- props
+    ## 'dark'|'light' Dark sage on light backgrounds, or cream on dark backgrounds.
+    tone = 'dark',
+    ## boolean Whether to show the "Panier Sauvage" wordmark next to the symbol.
+    wordmark = true,
+    ## 'sm'|'md'|'lg' Overall size.
+    size = 'md'
+-%}
+{%- set sizes = {
+    sm: {symbol: 'size-7', logo: 'h-7', text: 'text-lg'},
+    md: {symbol: 'size-8', logo: 'h-8', text: 'text-xl'},
+    lg: {symbol: 'size-11', logo: 'h-11', text: 'text-3xl'},
+} -%}
+{%- set s = sizes[size] ?? sizes.md -%}
+<span {{ attributes.defaults({class: ('inline-flex items-center gap-2 ' ~ (tone == 'light' ? 'text-cream' : 'text-sage-dark'))|tailwind_classes}) }}>
+    {%- if instance.logoPath -%}
+        {# Logo of the instance (INSTANCE_LOGO, in public/): on a white tile over dark backgrounds. #}
+        <img src="{{ asset(instance.logoPath) }}" alt="" class="{{ s.logo }} w-auto max-w-40 shrink-0 object-contain {{ tone == 'light' ? 'rounded-md bg-white p-0.5' : '' }}">
+    {%- else -%}
+        {{ include('illustration/_logo_symbol.svg.twig', {class: s.symbol ~ ' shrink-0'}) }}
+    {%- endif -%}
+    {%- if instance.isRenamed() -%}
+        {# A renamed instance (docs/INSTANCE.md): its name, which may be long, may wrap. #}
+        <span class="{{ wordmark ? 'font-display ' ~ s.text ~ ' leading-tight font-semibold tracking-tight text-balance ' ~ (tone == 'light' ? 'text-white' : 'text-ink') : 'sr-only' }}" data-instance-name>{{ instance.name }}</span>
+    {%- elseif wordmark -%}
+        <span class="font-display {{ s.text }} leading-none font-semibold tracking-tight whitespace-nowrap {{ tone == 'light' ? 'text-white' : 'text-ink' }}">Panier <span class="italic font-medium {{ tone == 'light' ? 'text-wheat' : 'text-sage-dark' }}">Sauvage</span></span>
+    {%- else -%}
+        <span class="sr-only">Panier Sauvage</span>
+    {%- endif -%}
+</span>

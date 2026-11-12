@@ -1,0 +1,33 @@
+{#
+    The invited person creates their producer account. Variables: form (InvitationAcceptanceType), invitation.
+#}
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Rejoindre {{ invitation.shop.name }}{% endblock %}
+{% block auth_title %}Rejoins {{ invitation.shop.name }}{% endblock %}
+{% block auth_intro %}
+    {% if invitation.invitedBy %}{{ invitation.invitedBy.fullName }} t'invite{% else %}Tu es invité{% endif %} à gérer la boutique avec ton compte {{ invitation.email }}. Choisis ton mot de passe.
+{% endblock %}
+
+{% block content %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_errors(form) }}
+        {# Lets password managers attach the new password to the right account. #}
+        <input type="email" name="username" value="{{ invitation.email }}" autocomplete="username" class="sr-only" tabindex="-1" aria-hidden="true" readonly>
+        <div class="grid gap-x-4 sm:grid-cols-2">
+            {{ form_row(form.firstName) }}
+            {{ form_row(form.lastName) }}
+        </div>
+        {{ form_row(form.plainPassword) }}
+        {{ form_row(form.acceptTerms) }}
+        <twig:Button type="submit" class="mt-1 w-full">
+            Rejoindre l'équipe
+            <twig:ux:icon name="lucide:arrow-right" />
+        </twig:Button>
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block auth_footer %}
+    Tu as déjà un compte ?
+    <a href="{{ path('pro_login') }}" class="link">Connecte-toi</a>
+{% endblock %}

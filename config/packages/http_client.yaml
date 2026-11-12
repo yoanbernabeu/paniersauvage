@@ -1,0 +1,38 @@
+framework:
+    http_client:
+        scoped_clients:
+            # API Adresse of the French State (Base Adresse Nationale), used by App\Delivery\Geocoding\BanGeocoder.
+            # Free and keyless. Generic User-Agent: no e-mail, no name. Short timeouts: a slow answer
+            # must never hold the page of a visitor or the form of a producer for long.
+            ban.client:
+                base_uri: 'https://api-adresse.data.gouv.fr'
+                headers:
+                    Accept: 'application/json'
+                    User-Agent: 'PanierSauvage-Geocoder/1.0'
+                timeout: 2.5
+                max_duration: 4
+            # API Recherche d'entreprises of the French State (INSEE Sirene register), used by
+            # App\Legal\Verification\CompanyRegistry. Free and keyless; only a SIRET is sent.
+            company_registry.client:
+                base_uri: 'https://recherche-entreprises.api.gouv.fr'
+                headers:
+                    Accept: 'application/json'
+                    User-Agent: 'PanierSauvage-Verifier/1.0'
+                timeout: 2.5
+                max_duration: 4
+
+when@test:
+    # No network call in tests: every request of ban.client is answered by App\Tests\Delivery\Support\FakeBan.
+    services:
+        App\Tests\Delivery\Support\FakeBan: ~
+        App\Tests\Legal\Support\FakeCompanyRegistry: ~
+
+    framework:
+        http_client:
+            scoped_clients:
+                ban.client:
+                    base_uri: 'https://api-adresse.data.gouv.fr'
+                    mock_response_factory: App\Tests\Delivery\Support\FakeBan
+                company_registry.client:
+                    base_uri: 'https://recherche-entreprises.api.gouv.fr'
+                    mock_response_factory: App\Tests\Legal\Support\FakeCompanyRegistry

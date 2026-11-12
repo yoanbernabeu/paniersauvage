@@ -1,0 +1,38 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}{{ shop.name }}, livraison {{ sale.deliveryDate|date_long }}{% endblock %}
+
+{% block content %}
+    {{ include('ordering/_shop_header.html.twig') }}
+
+    <twig:Empty class="rounded-xl border border-line bg-white py-10" data-sale-unavailable="{{ sale.status.value }}">
+        <twig:Empty:Media>
+            <twig:Illustration name="herbs" class="w-40" />
+        </twig:Empty:Media>
+        <twig:Empty:Header>
+            {% if sale.cancelled %}
+                <h1 class="text-2xl font-semibold text-ink">Cette vente est annulée</h1>
+                <p class="mt-2 text-ink-soft">La livraison {{ sale.deliveryDate|date_long }} n'aura pas lieu. Désolé pour le contretemps.</p>
+            {% elseif sale.done %}
+                <h1 class="text-2xl font-semibold text-ink">Cette vente est terminée</h1>
+                <p class="mt-2 text-ink-soft">La livraison {{ sale.deliveryDate|date_long }} est passée. Rendez-vous à la prochaine !</p>
+            {% elseif sale.scheduled %}
+                <h1 class="text-2xl font-semibold text-ink">Les commandes ne sont pas encore ouvertes</h1>
+                <p class="mt-2 text-ink-soft">
+                    Elles ouvrent {{ sale.opensAt|datetime_long }}, pour une livraison {{ sale.deliveryDate|date_long }}. Reviens à ce moment-là !
+                </p>
+            {% else %}
+                <h1 class="text-2xl font-semibold text-ink">Les commandes sont closes</h1>
+                <p class="mt-2 text-ink-soft">
+                    La date limite était {{ sale.deadlineAt|datetime_long }}, pour la livraison {{ sale.deliveryDate|date_long }}.
+                    {% if shop.phone %}Un oubli ? Appelle {{ shop.name }} au <a href="tel:{{ shop.phone|replace({' ': ''}) }}" class="link">{{ shop.phone }}</a>.{% endif %}
+                </p>
+            {% endif %}
+        </twig:Empty:Header>
+        <twig:Empty:Content>
+            <twig:Button as="a" variant="secondary" href="{{ safe_path('shop_show', '/' ~ shop.slug, {slug: shop.slug}) }}">
+                Voir les prochaines ventes
+            </twig:Button>
+        </twig:Empty:Content>
+    </twig:Empty>
+{% endblock %}

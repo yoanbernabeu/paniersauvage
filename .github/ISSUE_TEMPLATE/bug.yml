@@ -1,0 +1,55 @@
+name: Bug
+description: Quelque chose ne fonctionne pas comme prévu.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème.
+        **Une faille de sécurité ne se signale pas ici** : suis `SECURITY.md` (signalement privé).
+  - type: textarea
+    id: what
+    attributes:
+      label: Ce qui se passe
+      description: Décris le problème en quelques phrases.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. Connecte-toi à l'espace producteur
+        2. Ouvre une vente…
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ce que tu attendais
+    validations:
+      required: true
+  - type: dropdown
+    id: side
+    attributes:
+      label: Côté concerné
+      options:
+        - Espace producteur (/pro)
+        - Boutique et commande client
+        - E-mails
+        - Exports et comptabilité
+        - Installation ou déploiement
+        - Autre
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Instance et version
+      description: Instance en ligne (laquelle) ou installation locale, et commit ou date si tu les connais.
+  - type: textarea
+    id: extra
+    attributes:
+      label: Captures d'écran, journaux
+      description: Retire toute donnée personnelle (noms, e-mails, adresses de clients).

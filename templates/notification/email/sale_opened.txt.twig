@@ -1,0 +1,25 @@
+{% extends 'notification/layout.txt.twig' %}
+{% set following = true %}
+
+{% block content %}
+Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},
+
+{{ shop.name }} prend les commandes pour la livraison du {{ sale.deliveryDate|date_long }}. 🌾
+Tu as jusqu'au {{ sale.deadlineAt|datetime_long }} pour commander.
+
+Je commande : {{ sale_url }}
+{% if sale.offers is not empty %}
+
+AU PROGRAMME
+{% for offer in sale.offers %}
+- {{ offer.product.name }} : {{ offer.priceCents|money }} / {{ offer.product.unit.short }}
+{% endfor %}
+{% endif %}
+{% if sale.deliveries is not empty %}
+
+OÙ ET QUAND
+{% for delivery in sale.deliveries %}
+{{ include('notification/_delivery.txt.twig') }}
+{% endfor %}
+{% endif %}
+{% endblock %}

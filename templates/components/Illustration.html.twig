@@ -1,0 +1,24 @@
+{#
+    Line illustrations (SPEC §8): only on the home page, empty states, e-mails and the 404 page.
+    <twig:Illustration name="basket" class="w-72" />
+    Available names: basket (bread basket), wheat (ears of wheat), herbs (wild grass).
+#}
+{%- props
+    ## 'basket'|'wheat'|'herbs' The drawing to render.
+    name
+-%}
+{%- set boxes = {basket: '0 0 320 250', wheat: '0 0 160 180', herbs: '0 0 240 120'} -%}
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="{{ boxes[name] }}"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+    focusable="false"
+    {{ attributes.defaults({class: 'h-auto max-w-full text-sage-dark'|tailwind_classes}) }}
+>
+    {{- include('illustration/' ~ name ~ '.svg.twig') -}}
+</svg>

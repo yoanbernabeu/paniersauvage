@@ -1,0 +1,15 @@
+À CHAQUE LIVRAISON, LE {{ plan.weekdayName|upper }}
+{% if plan.basket %}
+{{ recurring_order.shares }} × {{ plan.title }}
+{% endif %}
+{% for entry in recurring_order.wantedQuantities %}
+- {{ entry[1]|line_quantity(entry[0].unit) }} {{ entry[0].name }}
+{% endfor %}
+Environ {{ recurring_order.estimatedPriceCents|money }} par livraison, à régler à chaque retrait.
+
+Retrait : {{ recurring_order.deliveryPoint.name }}{% if recurring_order.deliveryAddress %} ({{ recurring_order.deliveryAddress }}){% endif %}.
+{% if plan.season and recurring_order.endsOn %}
+{% set remaining = recurring_order.remainingDeliveryCount(today) %}
+Contrat de saison jusqu'au {{ recurring_order.endsOn|date_long(true) }} : {{ remaining }} livraison{{ remaining > 1 ? 's' }} à venir, soit environ {{ recurring_order.remainingTotalCents(today)|money }} au total, à titre indicatif.
+{% endif %}
+Rien n'est payé en ligne : tu règles chaque livraison directement à {{ shop.name }}{% if shop.paymentSummary %} ({{ shop.paymentSummary }}){% endif %}.

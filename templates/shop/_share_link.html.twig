@@ -1,0 +1,18 @@
+{#
+    Public link of the shop, with "copy" and "share on WhatsApp" buttons.
+    Variables: public_url (absolute URL of /{slug}), share_url (the same, marked ?via=lien: what
+    the button copies), whatsapp_url (https://wa.me/?text=…).
+#}
+<div data-controller="clipboard" data-clipboard-text-value="{{ share_url|default(public_url) }}" data-share-link>
+    <p class="break-all rounded-lg border border-line bg-sage-soft px-3.5 py-2.5 text-sm font-medium text-sage-deep" data-public-url>{{ public_url }}</p>
+    <div class="mt-3 flex flex-wrap gap-2">
+        <twig:Button variant="secondary" size="sm" class="h-11" data-action="clipboard#copy">
+            <twig:ux:icon name="lucide:copy" />
+            <span data-clipboard-target="label" aria-live="polite">Copier le lien</span>
+        </twig:Button>
+        <twig:Button as="a" variant="secondary" size="sm" class="h-11" href="{{ whatsapp_url }}" target="_blank" rel="noopener">
+            <twig:ux:icon name="lucide:message-circle" />
+            Partager sur WhatsApp
+        </twig:Button>
+    </div>
+</div>

@@ -1,0 +1,9 @@
+<div
+    data-slot="empty-title"
+    {{ attributes.defaults({
+        class: 'text-lg font-semibold text-ink'|tailwind_classes,
+    }) }}
+>
+    {##- The title text of the empty state. -#}
+    {%- block content %}{% endblock -%}
+</div>

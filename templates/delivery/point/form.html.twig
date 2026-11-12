@@ -1,0 +1,39 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% set content_width = 'max-w-3xl' %}
+{% set is_new = point.id is null %}
+
+{% block title %}{{ is_new ? 'Nouveau point de livraison' : 'Modifier le point de livraison' }}{% endblock %}
+{% block page_title %}{{ is_new ? 'Nouveau point de livraison' : 'Modifier le point de livraison' }}{% endblock %}
+
+{% block content %}
+    <p class="mb-4">
+        <a href="{{ path('pro_delivery_point_index') }}" class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-sage-dark hover:underline">
+            <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+            Tous les points de livraison
+        </a>
+    </p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', class: 'flex flex-col gap-6'}}) }}
+        {{ form_errors(form) }}
+
+        <section class="rounded-xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6">
+            {{ form_row(form.type) }}
+            {{ form_row(form.name) }}
+            {{ form_row(form.address) }}
+            <fieldset class="mb-4 rounded-lg border border-line-soft p-3 sm:p-4" data-delivery-zone>
+                <legend class="px-1 text-sm font-semibold text-ink">Zone de livraison à domicile</legend>
+                <div class="grid gap-x-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
+                    {{ form_row(form.zoneTown) }}
+                    {{ form_row(form.zoneRadiusKm) }}
+                </div>
+            </fieldset>
+            {{ form_row(form.instructions) }}
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+            <twig:Button type="submit" class="w-full sm:w-auto">Enregistrer</twig:Button>
+            <twig:Button as="a" href="{{ path('pro_delivery_point_index') }}" variant="ghost" class="w-full sm:w-auto">Retour</twig:Button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

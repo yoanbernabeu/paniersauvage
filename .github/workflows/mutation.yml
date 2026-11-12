@@ -1,0 +1,69 @@
+name: Mutation testing
+
+# The whole code base every night (and on demand): the HTML report is kept as an artifact.
+# Pull requests only mutate their changed lines (ci.yml, job "mutation").
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  infection:
+    name: Infection (full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    services:
+      database:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -d app -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://app:ci_password@127.0.0.1:5432/app?serverVersion=18&charset=utf8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype, gd, iconv, intl, mbstring, pdo_pgsql, zip
+          coverage: pcov
+          tools: composer:v2
+
+      - uses: ramsey/composer-install@v3
+
+      - name: JavaScript and CSS vendors
+        run: |
+          php bin/console importmap:install
+          php bin/console tailwind:build
+
+      - name: Test databases
+        run: composer mutation:databases
+
+      # Thresholds of infection.json5 (minMsi, minCoveredMsi): raise them, never lower them.
+      - name: Infection
+        run: php -d memory_limit=1G vendor/bin/infection --threads=4 --no-progress
+
+      - name: Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: infection-report
+          path: var/infection/
+          if-no-files-found: ignore

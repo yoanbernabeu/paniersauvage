@@ -1,0 +1,87 @@
+{% extends 'legal/_page.html.twig' %}
+
+{% block title %}Mentions légales{% endblock %}
+{% block meta_description %}Mentions légales de Panier Sauvage : éditeur, directeur de la publication, hébergeur, propriété intellectuelle.{% endblock %}
+{% block legal_title %}Mentions légales{% endblock %}
+{% block legal_intro %}Qui édite et héberge Panier Sauvage, et comment nous joindre.{% endblock %}
+
+{% block legal_content %}
+    <h2 id="editeur">Éditeur</h2>
+    <p>Le site Panier Sauvage est édité par :</p>
+    <dl data-legal-publisher>
+        <dt>Nom ou dénomination</dt>
+        <dd>{{ publisher.name }}</dd>
+        <dt>Forme juridique</dt>
+        <dd>{{ publisher.legalForm }}</dd>
+        <dt>Adresse</dt>
+        <dd class="whitespace-pre-line">{{ publisher.address }}</dd>
+        {% if publisher.siret %}
+            <dt>SIRET</dt>
+            <dd>{{ publisher.siret }}</dd>
+        {% endif %}
+        <dt>Téléphone</dt>
+        <dd>{{ publisher.phone }}</dd>
+        <dt>E-mail</dt>
+        <dd><a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a></dd>
+        <dt>Directeur ou directrice de la publication</dt>
+        <dd>{{ publisher.publicationDirector }}</dd>
+    </dl>
+
+    {% if instance.hasCarrier() %}
+        <h2 id="porteur">Organisme porteur</h2>
+        <p data-legal-carrier>
+            Ce service est porté par {{ include('instance/_carrier.html.twig', {suffix: ''}) }}{% if instance.isSponsored() %}, qui prend en charge l'abonnement des producteurs de son territoire{% endif %}.
+        </p>
+    {% endif %}
+
+    <h2 id="hebergeur">Hébergeur</h2>
+    <dl data-legal-host>
+        <dt>Nom</dt>
+        <dd>{{ publisher.hostName }}</dd>
+        <dt>Adresse</dt>
+        <dd class="whitespace-pre-line">{{ publisher.hostAddress }}</dd>
+        {% if publisher.hostPhone %}
+            <dt>Téléphone</dt>
+            <dd>{{ publisher.hostPhone }}</dd>
+        {% endif %}
+    </dl>
+
+    <h2 id="role">Ce que fait Panier Sauvage</h2>
+    <p>
+        Panier Sauvage est un logiciel en ligne qui permet à des producteurs de prendre des précommandes
+        et d'organiser leurs livraisons. <strong>Panier Sauvage ne vend rien</strong> : chaque producteur
+        vend ses propres produits, fixe ses prix, encaisse lui-même le paiement à la livraison et reste
+        seul responsable de ses ventes. Son identité est rappelée sur sa page de vente et dans chaque e-mail
+        de confirmation. Panier Sauvage ne prend aucune commission et n'encaisse aucun paiement pour le
+        compte des producteurs.
+    </p>
+
+    <h2 id="propriete">Propriété intellectuelle et code source</h2>
+    <p>
+        Le logiciel Panier Sauvage est libre, publié sous licence
+        <a href="https://www.gnu.org/licenses/agpl-3.0.fr.html" rel="noopener">GNU Affero General Public License v3</a>.
+        Son code source est consultable et réutilisable : <a href="{{ publisher.sourceCodeUrl }}" rel="noopener" data-source-code-link>{{ publisher.sourceCodeUrl }}</a>.
+    </p>
+    <p>
+        Les textes, photos et logos publiés par les producteurs leur appartiennent : ils ne peuvent pas être
+        réutilisés sans leur accord. Les fonds de carte sont fournis par des tiers, dont l'attribution est
+        affichée sur la carte.
+    </p>
+
+    <h2 id="signalement">Signaler un contenu</h2>
+    <p>
+        Tu penses qu'une boutique n'est pas tenue par un vrai producteur, ou qu'un contenu est illicite ?
+        Utilise le lien « Signaler cette boutique » de sa page, ou écris à
+        <a href="mailto:{{ publisher.contactEmail }}">{{ publisher.contactEmail }}</a> en précisant l'adresse
+        de la page et la raison du signalement. Nous examinons chaque signalement et retirons promptement
+        les contenus manifestement illicites.
+    </p>
+
+    <h2 id="donnees">Données personnelles</h2>
+    <p>
+        Ce que nous faisons de tes données, et comment exercer tes droits, est expliqué dans notre
+        <a href="{{ path('legal_privacy') }}">politique de confidentialité</a>. Le site ne dépose aucun cookie
+        publicitaire ni de mesure d'audience : seul un cookie de session, nécessaire à la connexion et à la
+        commande, est utilisé.
+    </p>
+{% endblock %}

@@ -1,0 +1,30 @@
+{
+    // Mutation testing: https://infection.github.io/guide/
+    // Locally: composer mutation (see AGENTS.md, « Qualité »). In CI: mutants of the changed lines
+    // on every pull request, the whole code base every night.
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": ["src"],
+        "excludes": [
+            // Demo data and wiring: no behaviour worth mutating.
+            "DataFixtures",
+        ],
+    },
+    // Each thread gets its own test database (TEST_TOKEN, config/packages/doctrine.yaml):
+    // composer mutation:databases creates them.
+    "threads": 4,
+    "timeout": 30,
+    "tmpDir": "var/infection",
+    "logs": {
+        "text": "var/infection/infection.log",
+        "html": "var/infection/infection.html",
+        "summary": "var/infection/summary.log",
+    },
+    "mutators": {
+        "@default": true,
+    },
+    "testFrameworkOptions": "--no-progress",
+    // Whole code base (nightly run): 89 % on 10 November 2026 (9 727 mutants). Raise, never lower.
+    "minMsi": 88,
+    "minCoveredMsi": 88,
+}

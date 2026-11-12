@@ -1,0 +1,29 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if customer.firstName %} {{ customer.firstName }}{% endif %},
+
+Ton abonnement « {{ plan.title }} » chez {{ shop.name }} est enregistré. 🧺
+À chaque vente, ta commande est créée toute seule et tu reçois un e-mail pour la vérifier.
+
+{{ include('notification/_recurring_summary.txt.twig') }}
+{% if upcoming is not empty %}
+
+TES PROCHAINES LIVRAISONS
+{% for delivery in upcoming %}
+- {{ delivery.date|date_long }}
+{% endfor %}
+{% endif %}
+
+Absent une semaine ? Mets la livraison en pause depuis ton compte, avant la date limite de commande.
+Gérer mon abonnement : {{ recurring_url }}
+{% if plan.conditions %}
+
+CONDITIONS DE {{ shop.name|upper }}
+{{ plan.conditions }}
+{% endif %}
+{% endblock %}
+
+{% block footer %}Tu reçois cet e-mail parce que tu es abonné à « {{ plan.title }} » chez {{ shop.name }} ({{ shop_url }}).
+Une question ? Réponds simplement à cet e-mail, {{ shop.name }} le recevra.
+{% endblock %}

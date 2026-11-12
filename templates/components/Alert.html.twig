@@ -1,0 +1,34 @@
+{#
+    <twig:Alert variant="success">
+        <twig:ux:icon name="lucide:circle-check" />
+        <twig:Alert:Title>C'est noté !</twig:Alert:Title>
+        <twig:Alert:Description>Ta commande est enregistrée.</twig:Alert:Description>
+    </twig:Alert>
+#}
+{%- props
+    ## 'default'|'success'|'warning'|'info'|'destructive' The visual style variant.
+    variant = 'default'
+-%}
+{%- set style = html_cva(
+    base: "group/alert relative grid w-full gap-0.5 rounded-xl border px-4 py-3 text-start text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pe-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-3 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4.5",
+    variants: {
+        variant: {
+            default: 'border-line bg-white text-ink',
+            success: 'border-sage/30 bg-sage-soft text-sage-deep',
+            info: 'border-sage/30 bg-sage-soft text-sage-deep',
+            warning: 'border-wheat/60 bg-wheat-soft text-wheat-ink',
+            destructive: 'border-danger/25 bg-danger-soft text-danger',
+        },
+    },
+) -%}
+
+<div
+    data-slot="alert"
+    role="{{ variant in ['destructive', 'warning'] ? 'alert' : 'status' }}"
+    {{ attributes.defaults({
+        class: style.apply({variant: variant})|tailwind_classes,
+    }) }}
+>
+    {##- The alert content, typically includes `Alert:Title` and `Alert:Description`. -#}
+    {%- block content %}{% endblock -%}
+</div>

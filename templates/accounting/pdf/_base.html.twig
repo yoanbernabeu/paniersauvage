@@ -1,0 +1,61 @@
+{#
+    Base of every PDF (dompdf): tables only, no flexbox, no grid, DejaVu Sans (embedded by dompdf).
+    Blocks: title, kicker, heading, meta (rows of the right-hand box), content.
+    Variable: shop_name.
+#}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{{ instance.name }}{% endblock %}</title>
+    <style>
+        @page { margin: 16mm 14mm 18mm 14mm; }
+        body { font-family: "DejaVu Sans", sans-serif; font-size: 10pt; color: #1F2A24; line-height: 1.35; }
+        table { width: 100%; border-collapse: collapse; }
+        h1 { font-size: 18pt; margin: 0 0 2pt 0; color: #2F4337; font-weight: bold; }
+        h2 { font-size: 12pt; margin: 14pt 0 5pt 0; color: #2F4337; font-weight: bold; }
+        p { margin: 0 0 4pt 0; }
+        .kicker { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #46604F; margin: 0 0 3pt 0; }
+        .muted { color: #56635B; }
+        .small { font-size: 8.5pt; }
+        .right { text-align: right; }
+        .center { text-align: center; }
+        .nowrap { white-space: nowrap; }
+        .strong { font-weight: bold; }
+        .head td { vertical-align: top; padding: 0; }
+        .head { border-bottom: 2pt solid #5B7B6A; margin-bottom: 10pt; }
+        .head .box { padding-bottom: 8pt; }
+        .data th { background-color: #E3EBE5; color: #2F4337; font-size: 8.5pt; text-align: left; padding: 5pt 6pt; border-bottom: 1pt solid #5B7B6A; }
+        .data td { padding: 6pt 6pt; border-bottom: 0.5pt solid #D9D4C7; vertical-align: top; }
+        .data th.right, .data td.right { text-align: right; }
+        .data th.center, .data td.center { text-align: center; }
+        .data tr.total td { background-color: #F1F5F2; font-weight: bold; border-top: 1pt solid #5B7B6A; border-bottom: none; }
+        .data tr { page-break-inside: avoid; }
+        .data tr.total { page-break-before: avoid; }
+        .figures td { width: 25%; padding: 7pt 8pt; background-color: #F1F5F2; border: 3pt solid #ffffff; }
+        .figures .label { font-size: 8pt; color: #46604F; text-transform: uppercase; letter-spacing: 0.5pt; }
+        .figures .value { font-size: 14pt; font-weight: bold; color: #2F4337; }
+        .group { background-color: #46604F; color: #ffffff; padding: 6pt 8pt; margin-top: 12pt; }
+        .group .small { color: #E3EBE5; }
+        .box-check { width: 13pt; height: 13pt; border: 1.2pt solid #2F4337; }
+        .note { margin-top: 12pt; padding: 7pt 9pt; background-color: #F1F5F2; border-left: 3pt solid #5B7B6A; font-size: 8.5pt; color: #2F4337; }
+        .empty { margin-top: 20pt; padding: 14pt; background-color: #F1F5F2; text-align: center; color: #2F4337; }
+        {% block styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <table class="head">
+        <tr>
+            <td class="box">
+                <p class="kicker">{% block kicker %}{% endblock %}</p>
+                <h1>{% block heading %}{% endblock %}</h1>
+                <p class="muted">{{ shop_name }}</p>
+            </td>
+            <td class="box right small muted" style="width: 42%;">
+                {% block meta %}{% endblock %}
+            </td>
+        </tr>
+    </table>
+    {% block content %}{% endblock %}
+</body>
+</html>

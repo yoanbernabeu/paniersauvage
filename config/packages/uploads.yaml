@@ -1,0 +1,8 @@
+# Images uploaded by producers (shop logo, product photos) are stored under
+# "<app.uploads.public_dir>/uploads/" and served as static files.
+parameters:
+    app.uploads.public_dir: '%kernel.project_dir%/public'
+
+when@test:
+    parameters:
+        app.uploads.public_dir: '%kernel.project_dir%/var/test-public'

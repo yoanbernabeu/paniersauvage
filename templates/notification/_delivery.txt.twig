@@ -1,0 +1,12 @@
+{% set point = delivery.deliveryPoint %}
+{{ delivery.startsAt|date_long|capitalize }}, {{ time_range(delivery.startsAt, delivery.endsAt) }}
+{% if delivery.home %}
+Livraison à domicile{% if order is defined and order.deliveryAddress %} : {{ order.deliveryAddress }}{% endif %}
+
+{% else %}
+{{ point.name }}{% if point.address %} — {{ point.address }}{% endif %}
+
+{% endif %}
+{% if point.instructions %}
+{{ point.instructions }}
+{% endif %}

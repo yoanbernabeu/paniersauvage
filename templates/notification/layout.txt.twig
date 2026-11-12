@@ -1,0 +1,23 @@
+{% block content %}{% endblock %}
+
+--
+{% block footer %}{% if shop_url is defined %}{% if following|default(false) %}
+Tu reçois cet e-mail parce que tu suis {{ shop.name }}.
+{% if unsubscribe_url is defined %}
+Pour ne plus recevoir ses annonces : {{ unsubscribe_url }}
+Sa page : {{ shop_url }}
+{% else %}
+Pour ne plus recevoir ses annonces, rends-toi sur sa page : {{ shop_url }}
+{% endif %}
+{% else %}
+Tu reçois cet e-mail parce que tu as une commande chez {{ shop.name }}.
+Gère tes notifications sur la page de {{ shop.name }} : {{ shop_url }}
+{% endif %}
+Une question ? Réponds simplement à cet e-mail, {{ shop.name }} le recevra.
+{% endif %}{% endblock %}
+{{ instance.name }} · les précommandes des producteurs près de chez toi.
+{% if instance.isRenamed() %}
+{% if instance.hasCarrier() %}Un service porté par {{ instance.carrierName }}. {% endif %}Propulsé par Panier Sauvage, logiciel libre (AGPL) : {{ legal_publisher().sourceCodeUrl }}
+{% endif %}
+Mentions légales : {{ url('legal_notice') }}
+CGU : {{ url('legal_terms') }} · Confidentialité : {{ url('legal_privacy') }}

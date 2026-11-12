@@ -1,0 +1,65 @@
+{# Variables: points (list of DeliveryPoint, all of the current shop). #}
+<ul class="divide-y divide-line-soft overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-line">
+    {% for point in points %}
+        <li class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3 sm:px-4" data-delivery-point="{{ point.id }}">
+            <span class="flex size-11 shrink-0 items-center justify-center rounded-lg bg-sage-soft text-sage-dark" aria-hidden="true">
+                <twig:ux:icon name="lucide:{{ point.type.icon }}" class="size-5" />
+            </span>
+
+            <div class="min-w-0 flex-1 basis-40">
+                <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="font-medium {{ point.archived ? 'text-ink-soft' : 'text-ink' }}">{{ point.name }}</span>
+                    <twig:Badge variant="secondary">{{ point.type.label }}</twig:Badge>
+                </p>
+                {% if point.address %}
+                    <p class="mt-0.5 text-sm text-ink-soft">{{ point.address }}</p>
+                {% endif %}
+                {% if not point.home and not point.archived %}
+                    {% if point.hasCoordinates() %}
+                        <p class="mt-1 flex items-center gap-1.5 text-xs text-sage-dark" data-geocoding="located">
+                            <twig:ux:icon name="lucide:map-pin-check" class="size-3.5 shrink-0" />
+                            Adresse localisée pour l'annuaire des producteurs
+                        </p>
+                    {% else %}
+                        <p class="mt-1 flex items-center gap-1.5 text-xs text-wheat-ink" data-geocoding="missing">
+                            <twig:ux:icon name="lucide:map-pin-x" class="size-3.5 shrink-0" />
+                            {{ point.address ? 'Adresse pas encore localisée : précise la rue, le code postal et la commune' : 'Ajoute une adresse pour apparaître dans l\'annuaire des producteurs' }}
+                        </p>
+                    {% endif %}
+                {% endif %}
+                {% if point.home and not point.archived %}
+                    {% if point.hasDeliveryZone() and point.hasCoordinates() %}
+                        <p class="mt-1 flex items-center gap-1.5 text-xs text-sage-dark" data-geocoding="zone">
+                            <twig:ux:icon name="lucide:map-pin-check" class="size-3.5 shrink-0" />
+                            Zone visible dans l'annuaire : {{ point.zoneRadiusKm }} km autour de {{ point.zoneTown }}
+                        </p>
+                    {% elseif point.hasDeliveryZone() %}
+                        <p class="mt-1 flex items-center gap-1.5 text-xs text-wheat-ink" data-geocoding="zone-missing">
+                            <twig:ux:icon name="lucide:map-pin-x" class="size-3.5 shrink-0" />
+                            Commune de ta zone pas encore localisée : vérifie son nom
+                        </p>
+                    {% else %}
+                        <p class="mt-1 text-xs text-ink-soft" data-geocoding="no-zone">Indique une zone (commune et rayon) pour que les clients du coin te trouvent dans l'annuaire</p>
+                    {% endif %}
+                {% endif %}
+                {% if point.instructions %}
+                    <p class="mt-0.5 text-sm text-ink-soft">{{ point.instructions }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex shrink-0 items-center gap-1">
+                <twig:Button as="a" href="{{ path('pro_delivery_point_edit', {id: point.id}) }}" variant="ghost" size="sm" class="h-11" aria-label="Modifier {{ point.name }}">
+                    <twig:ux:icon name="lucide:pencil" />
+                    Modifier
+                </twig:Button>
+                <form method="post" action="{{ path('pro_delivery_point_archive', {id: point.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delivery_point_archive_' ~ point.id) }}">
+                    <twig:Button type="submit" variant="ghost" size="sm" class="h-11" aria-label="{{ point.archived ? 'Désarchiver' : 'Archiver' }} {{ point.name }}">
+                        <twig:ux:icon name="lucide:archive" />
+                        {{ point.archived ? 'Désarchiver' : 'Archiver' }}
+                    </twig:Button>
+                </form>
+            </div>
+        </li>
+    {% endfor %}
+</ul>

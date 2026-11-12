@@ -1,0 +1,19 @@
+{% set producer = shop.owner %}
+TON VENDEUR
+{{ shop.name }}{% if producer %} ({{ producer.fullName }}){% endif %}{% if shop.siret %} · SIRET {{ shop.siret }}{% endif %}
+
+{% if shop.address %}{{ shop.address|replace({"\n": ', '}) }}
+{% endif %}
+{% if shop.phone %}{{ shop.phone }}
+{% endif %}
+{% if producer %}{{ shop.publicEmail() }}
+{% endif %}
+Prix toutes taxes comprises. Ta commande est conclue avec {{ shop.name }} : tu le règles directement au retrait, {{ instance.name }} ne voit passer aucun paiement.
+{% if order.hasWithdrawableItems() %}
+Droit de rétractation : les denrées périssables en sont exclues. Pour les produits qui se conservent ({{ order.lines|filter(l => not l.saleOffer.product.perishable)|map(l => l.label)|join(', ') }}), tu as 14 jours après le retrait pour te rétracter : préviens {{ shop.name }} en répondant à cet e-mail (formulaire type : {{ url('legal_terms') }}#formulaire-retractation), rends-lui le produit non ouvert, il te rembourse sous 14 jours.
+{% else %}
+Denrées périssables : pas de droit de rétractation (article L221-28 du Code de la consommation).
+{% endif %}
+{% if order.containsAlcohol() %}
+L'abus d'alcool est dangereux pour la santé, à consommer avec modération. Une pièce d'identité peut t'être demandée au retrait.
+{% endif %}

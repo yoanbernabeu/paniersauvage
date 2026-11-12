@@ -1,0 +1,320 @@
+{% extends 'layout/customer.html.twig' %}
+
+{#
+    Public page of a shop. Variables: shop, open_sales, scheduled_sales, next_sale (open, else
+    scheduled, or null), permanent_products, seasonal_products (catalogue shown even without a sale),
+    labels (labels of its products, without duplicates), fixed_points and home_points (active
+    delivery points), points_map (App\Shop\Search\PointsMap, or null), nearby_shops (CrossDiscovery),
+    follower, via (where the visitor came from, passed on to the order links, or null).
+#}
+
+{% block title %}{{ shop.name }}{% endblock %}
+{% block meta_description %}{{ shop.description ? shop.description|slice(0, 150) : 'Précommande en ligne chez ' ~ shop.name ~ ' avec ' ~ instance.name ~ '.' }}{% endblock %}
+
+{% block stylesheets %}
+    {# Leaflet's stylesheet first, so that app.css restyles it (.ps-map-*); linked, never imported from JS (CSP). #}
+    {% if points_map %}<link rel="stylesheet" href="{{ asset('vendor/leaflet/dist/leaflet.min.css') }}">{% endif %}
+    {{ parent() }}
+{% endblock %}
+
+{% block content %}
+    <header class="mb-10 flex flex-col items-center text-center" data-shop-header>
+        {% if shop.logoPath %}
+            {% set logo_url = shop.logoPath|image_url %}
+            <img src="{{ logo_url }}" alt="" width="96" height="96" class="size-24 rounded-full bg-white object-cover shadow-card ring-1 ring-line">
+        {% else %}
+            <span class="flex size-24 items-center justify-center rounded-full bg-sage-mist ring-1 ring-sage/20" data-shop-emblem>
+                <twig:Illustration name="wheat" class="h-16 w-auto text-sage-dark" />
+            </span>
+        {% endif %}
+        <h1 class="mt-5 text-4xl leading-[1.1] font-semibold text-balance text-ink sm:text-5xl">{{ shop.name }}</h1>
+        {{ include('shop/_verified_badge.html.twig', {shop: shop}, ignore_missing = true) }}
+        {% if shop.categories is not empty %}
+            <p class="mt-3 text-base font-medium text-sage-dark" data-shop-categories>{{ shop.categories|map(category => category.label)|join(' · ') }}</p>
+        {% endif %}
+        {% if shop.description %}
+            <p class="mt-4 max-w-xl text-lg leading-relaxed text-pretty text-ink-soft">{{ shop.description|nl2br }}</p>
+        {% endif %}
+        {% if labels is not empty %}
+            <ul class="mt-4 flex flex-wrap justify-center gap-1.5" aria-label="Labels de ses produits" data-shop-labels>
+                {% for label in labels %}
+                    <li><twig:Badge variant="outline">{{ label }}</twig:Badge></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </header>
+
+    <section aria-labelledby="suivre" class="mb-12 rounded-xl bg-sage-soft p-5 sm:p-6" data-section="follow">
+        {% if follower %}
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 id="suivre" class="font-display flex items-center gap-2 text-xl font-semibold text-sage-deep">
+                        <twig:ux:icon name="lucide:heart" class="size-5" />
+                        Tu suis {{ shop.name }}
+                    </h2>
+                    <p class="mt-1 text-sm text-sage-deep">
+                        {{ follower.hasEmailConsent ? 'Tu reçois un e-mail à chaque ouverture de vente.' : 'Sans e-mail : tu retrouves ce producteur dans ton compte.' }}
+                    </p>
+                </div>
+                <form method="post" action="{{ path('shop_unfollow', {slug: shop.slug}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                    <twig:Button type="submit" variant="outline" class="w-full sm:w-auto">Ne plus suivre</twig:Button>
+                </form>
+            </div>
+        {% else %}
+            <h2 id="suivre" class="font-display text-xl font-semibold text-sage-deep">Ne rate pas la prochaine vente</h2>
+            <p class="mt-1 text-sm text-sage-deep">Suis {{ shop.name }} pour le retrouver d'un geste dans ton compte.</p>
+            <form method="post" action="{{ path('shop_follow', {slug: shop.slug}) }}" class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                <label class="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium text-sage-deep">
+                    <twig:Checkbox name="email_consent" value="1" />
+                    Préviens-moi par e-mail quand une vente ouvre
+                </label>
+                <twig:Button type="submit" variant="secondary" class="w-full bg-white sm:w-auto">
+                    <twig:ux:icon name="lucide:heart" />
+                    Suivre
+                </twig:Button>
+            </form>
+        {% endif %}
+    </section>
+
+    <section aria-labelledby="ventes-ouvertes" class="mb-12" data-section="open-sales">
+        <h2 id="ventes-ouvertes" class="{{ open_sales is empty ? 'sr-only' : 'font-display mb-4 text-2xl font-semibold text-ink' }}">Tu peux commander</h2>
+        {% if open_sales is empty %}
+            <twig:Empty class="border border-line bg-white/60 py-10" data-empty-sales>
+                <twig:Empty:Media><twig:Illustration name="basket" class="w-48" /></twig:Empty:Media>
+                <twig:Empty:Header>
+                    <twig:Empty:Title class="font-display text-xl">Pas de vente ouverte pour le moment</twig:Empty:Title>
+                    <twig:Empty:Description class="text-ink-soft">
+                        {% if follower %}
+                            Tu suis {{ shop.name }} : tu sauras quand la prochaine vente ouvre.
+                        {% else %}
+                            Suis {{ shop.name }} pour savoir quand la prochaine vente ouvre.
+                        {% endif %}
+                    </twig:Empty:Description>
+                </twig:Empty:Header>
+            </twig:Empty>
+        {% else %}
+            <ul class="flex flex-col gap-5">
+                {% for sale in open_sales %}
+                    <li>
+                        <article class="overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-line" data-sale="{{ sale.code }}">
+                            <div class="p-5 sm:p-6">
+                                <twig:Badge>{{ sale.isLastMinute() ? 'Dernière minute 🧺' : 'Commandes ouvertes' }}</twig:Badge>
+                                <h3 class="mt-3 font-display text-2xl leading-snug font-semibold text-ink">{{ sale.title ?: 'Livraison du ' ~ sale.deliveryDate|date_long }}</h3>
+                                <dl class="mt-4 flex flex-col gap-2.5 text-ink">
+                                    <div class="flex items-start gap-3">
+                                        <dt><twig:ux:icon name="lucide:calendar" class="mt-0.5 size-5 text-sage-dark" /><span class="sr-only">Livraison</span></dt>
+                                        <dd>Livraison <strong class="font-semibold">{{ sale.deliveryDate|date_long }}</strong></dd>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <dt><twig:ux:icon name="lucide:clock" class="mt-0.5 size-5 text-sage-dark" /><span class="sr-only">Date limite</span></dt>
+                                        <dd>Commande jusqu'au <strong class="font-semibold">{{ sale.orderDeadline|datetime_long }}</strong></dd>
+                                    </div>
+                                </dl>
+                                {% if sale.deliveries is not empty %}
+                                    <ul class="mt-4 flex flex-col gap-2 rounded-lg bg-sage-soft p-4 text-sm text-sage-deep" aria-label="Points de livraison">
+                                        {% for delivery in sale.deliveries %}
+                                            <li class="flex items-start gap-2.5">
+                                                <twig:ux:icon name="lucide:{{ delivery.deliveryPoint.type.icon }}" class="mt-0.5 size-4 shrink-0" />
+                                                <span><span class="font-semibold">{{ delivery.deliveryPoint.name }}</span>, {{ time_range(delivery.startsAt, delivery.endsAt) }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                                {# One wheat button per screen: the first open sale carries it. #}
+                                <twig:Button as="a" href="{{ path('sale_show', {slug: shop.slug, code: sale.code, via: via}) }}" variant="{{ loop.first ? 'default' : 'secondary' }}" size="lg" class="mt-5 w-full sm:w-auto">
+                                    Commander
+                                    <twig:ux:icon name="lucide:arrow-right" />
+                                </twig:Button>
+                            </div>
+                        </article>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    {{ include('recurring/_shop_plans.html.twig', {shop: shop}, ignore_missing = true) }}
+
+    {% if scheduled_sales is not empty %}
+        <section aria-labelledby="prochaines-ventes" class="mb-12" data-section="scheduled-sales">
+            <h2 id="prochaines-ventes" class="font-display mb-4 text-2xl font-semibold text-ink">Prochaines ventes</h2>
+            <ul class="divide-y divide-line-soft rounded-xl bg-white shadow-card ring-1 ring-line">
+                {% for sale in scheduled_sales %}
+                    <li class="flex items-start gap-3 p-4 sm:px-5">
+                        <twig:ux:icon name="lucide:calendar-days" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+                        <p class="text-ink">
+                            <span class="font-semibold">Livraison {{ sale.deliveryDate|date_long }}</span><br>
+                            <span class="text-sm text-ink-soft">Les commandes ouvrent {{ sale.opensAt|datetime_long }}</span>
+                        </p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% if permanent_products is not empty or seasonal_products is not empty %}
+        <section aria-labelledby="catalogue" class="mb-12" data-section="catalogue">
+            <h2 id="catalogue" class="font-display text-2xl font-semibold text-ink">Ce que {{ shop.name }} produit</h2>
+            <p class="mt-1 text-sm text-ink-soft" data-catalogue-next-sale>
+                {% if open_sales is not empty %}
+                    Les prix et les quantités disponibles de la vente en cours sont sur sa page de commande.
+                {% elseif next_sale %}
+                    Prochaine vente le {{ next_sale.opensAt|date_long }}, pour une livraison {{ next_sale.deliveryDate|date_long }}.
+                {% else %}
+                    Pas de vente prévue pour l'instant.
+                {% endif %}
+            </p>
+            {% for group in [{key: 'permanent', title: 'Toute l\'année', products: permanent_products}, {key: 'seasonal', title: 'En ce moment', products: seasonal_products}] %}
+                {% if group.products is not empty %}
+                    <h3 class="mt-6 mb-3 text-base font-semibold text-ink">{{ group.title }}</h3>
+                    <ul class="grid gap-3 sm:grid-cols-2" data-catalogue="{{ group.key }}">
+                        {% for product in group.products %}
+                            <li class="flex gap-3 rounded-xl border border-line bg-white p-3" data-product="{{ product.id }}">
+                                <div class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sage-soft text-sage">
+                                    {% if product.photoPath %}
+                                        <img src="{{ product.photoPath|image_url }}" alt="" loading="lazy" width="64" height="64" class="size-full object-cover">
+                                    {% else %}
+                                        <twig:ux:icon name="lucide:wheat" class="size-6" />
+                                    {% endif %}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-display text-lg leading-snug font-semibold text-ink">{{ product.name }}</p>
+                                    {% if product.description %}<p class="mt-0.5 line-clamp-2 text-sm text-ink-soft">{{ product.description }}</p>{% endif %}
+                                    <p class="mt-1 text-sm text-ink"><span class="amount font-semibold">{{ product.priceCents|money }}</span> <span class="text-ink-soft">/ {{ product.unit.short }}</span></p>
+                                    {% if product.labels is not empty %}
+                                        <ul class="mt-1.5 flex flex-wrap gap-1" aria-label="Labels" data-product-labels>
+                                            {% for label in product.labels %}<li><twig:Badge variant="outline">{{ label }}</twig:Badge></li>{% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    {% if product.allergens %}<p class="mt-1 text-xs text-ink-soft">Allergènes : {{ product.allergens }}</p>{% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    {% if fixed_points is not empty or home_points is not empty %}
+        <section aria-labelledby="points-retrait" class="mb-12" data-section="points">
+            <h2 id="points-retrait" class="font-display mb-4 text-2xl font-semibold text-ink">Où récupérer ta commande</h2>
+            <div class="grid gap-4 {{ points_map ? 'md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]' : '' }}"
+                {% if points_map %}
+                    data-controller="points-map"
+                    data-points-map-tiles-value="{{ points_map.tiles|json_encode }}"
+                    data-points-map-points-value="{{ points_map.points|json_encode }}"
+                {% endif %}>
+                <ul class="flex flex-col gap-3">
+                    {% for point in fixed_points %}
+                        <li class="flex items-start gap-3 rounded-xl border border-line bg-white p-4" data-point="{{ point.id }}">
+                            <twig:ux:icon name="lucide:{{ point.type.icon }}" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+                            <div class="min-w-0">
+                                <p class="font-semibold text-ink">{{ point.name }}</p>
+                                {% if point.address %}<p class="text-sm text-ink-soft">{{ point.address|nl2br }}</p>{% endif %}
+                                {% if point.instructions %}<p class="mt-1 text-sm text-ink-soft">{{ point.instructions }}</p>{% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                    {% for point in home_points %}
+                        <li class="flex items-start gap-3 rounded-xl border border-line bg-white p-4" data-point="{{ point.id }}">
+                            <twig:ux:icon name="lucide:home" class="mt-0.5 size-5 shrink-0 text-sage-dark" />
+                            <div class="min-w-0">
+                                <p class="font-semibold text-ink">{{ point.name }}</p>
+                                <p class="text-sm text-ink-soft">
+                                    {% if point.hasDeliveryZone() %}Jusqu'à {{ point.zoneRadiusKm }} km autour de {{ point.zoneTown }}.{% else %}Tu indiques ton adresse en commandant.{% endif %}
+                                </p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% if points_map %}
+                    <div class="md:h-full" data-points-map-target="frame" hidden>
+                        <div role="region" aria-label="Carte des points de retrait de {{ shop.name }}" class="overflow-hidden rounded-2xl bg-sage-soft shadow-card ring-1 ring-line md:h-full">
+                            <div class="relative h-56 md:h-full md:min-h-64" data-points-map-target="canvas"></div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if shop.paymentMethods is not empty or shop.paymentInfo %}
+        <section aria-labelledby="paiement" class="mb-12" data-section="payment-info">
+            <h2 id="paiement" class="font-display mb-3 text-2xl font-semibold text-ink">Moyens de paiement acceptés</h2>
+            <div class="rounded-xl border border-line bg-white/60 p-5">
+                {% if shop.paymentMethods is not empty %}
+                    <ul class="flex flex-wrap gap-2" data-payment-methods>
+                        {% for label in shop.paymentMethodLabels() %}
+                            <li><twig:Badge variant="secondary" class="h-auto py-1 text-sm whitespace-normal">{{ label }}</twig:Badge></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if shop.paymentInfo %}
+                    <p class="{{ shop.paymentMethods is empty ? '' : 'mt-3' }} leading-relaxed text-ink">{{ shop.paymentInfo|nl2br }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-ink-soft">Tu règles directement auprès de {{ shop.name }}, à la livraison ou comme convenu ensemble. Rien n'est payé en ligne.</p>
+            </div>
+        </section>
+    {% endif %}
+
+    {{ include('shop/_nearby_shops.html.twig', {nearby_shops: nearby_shops, point_name: (fixed_points|filter(point => point.hasCoordinates())|first).name ?? null, class: 'mb-12'}) }}
+
+    {# The seller's legal identity (consumer information), presented as a business card. #}
+    <footer aria-labelledby="vendeur" data-section="seller">
+        <h2 id="vendeur" class="font-display mb-4 text-2xl font-semibold text-ink">Le vendeur</h2>
+        <div class="grid overflow-hidden rounded-2xl border border-line bg-white md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+            <div class="flex gap-4 p-5 sm:p-6">
+                <span class="grid size-11 shrink-0 place-items-center rounded-full bg-sage-soft text-sage-dark" aria-hidden="true">
+                    <twig:ux:icon name="lucide:store" class="size-5" />
+                </span>
+                <dl class="min-w-0 text-sm text-ink-soft">
+                    <dt class="sr-only">Raison sociale</dt>
+                    <dd class="font-display text-xl leading-tight font-semibold text-ink" data-seller="name">{{ shop.legalName ?? shop.name }}</dd>
+                    {% if shop.siret %}
+                        <dt class="mt-2 inline">SIRET </dt>
+                        <dd class="inline">
+                            <span class="amount text-ink" data-seller="siret">{{ shop.siret[0:3] }} {{ shop.siret[3:3] }} {{ shop.siret[6:3] }} {{ shop.siret[9:] }}</span>
+                            {% if shop_verified(shop) %}
+                                <span class="ml-1 inline-flex items-center gap-1 font-medium text-sage-dark"><twig:ux:icon name="lucide:badge-check" class="size-4" />vérifié</span>
+                            {% endif %}
+                        </dd>
+                    {% endif %}
+                    {% if shop.address %}
+                        <dt class="sr-only">Adresse</dt>
+                        <dd class="mt-3 flex gap-2 text-ink">
+                            <twig:ux:icon name="lucide:map-pin" class="mt-0.5 size-4 shrink-0 text-sage-dark" />
+                            <span data-seller="address">{{ shop.address|nl2br }}</span>
+                        </dd>
+                    {% endif %}
+                </dl>
+            </div>
+            {% if shop.phone or shop.publicEmail %}
+                <ul class="flex flex-col justify-center gap-1 border-t border-line-soft bg-sage-soft/60 p-3 sm:p-4 md:border-t-0 md:border-l" aria-label="Contacter {{ shop.legalName ?? shop.name }}">
+                    {% if shop.phone %}
+                        <li>
+                            <a href="tel:{{ shop.phone|replace({' ': ''}) }}" class="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-ink hover:bg-white" data-seller="phone">
+                                <twig:ux:icon name="lucide:phone" class="size-5 shrink-0 text-sage-dark" />
+                                <span class="amount font-medium">{{ shop.phone }}</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if shop.publicEmail %}
+                        <li>
+                            <a href="mailto:{{ shop.publicEmail }}" class="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-ink hover:bg-white" data-seller="email">
+                                <twig:ux:icon name="lucide:mail" class="size-5 shrink-0 text-sage-dark" />
+                                <span class="min-w-0 font-medium break-all">{{ shop.publicEmail }}</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="mt-3 flex flex-col gap-1 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <p>{{ shop.legalName ?? shop.name }} vend ses produits directement&nbsp;: {{ instance.name }} lui fournit seulement l'outil de précommande.</p>
+            {{ include('shop/_report_link.html.twig', {shop: shop}, ignore_missing = true) }}
+        </div>
+    </footer>
+{% endblock %}

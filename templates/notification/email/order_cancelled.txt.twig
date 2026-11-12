@@ -1,0 +1,20 @@
+{% extends 'notification/layout.txt.twig' %}
+
+{% block content %}
+Bonjour{% if order.customerFirstName %} {{ order.customerFirstName }}{% endif %},
+
+{% if actor == 'producer' %}
+{{ shop.name }} a annulé ta commande {{ order.reference }}, prévue {{ delivery.startsAt|date_long }}.
+{% elseif actor == 'customer' %}
+Tu as annulé ta commande {{ order.reference }} chez {{ shop.name }}, prévue {{ delivery.startsAt|date_long }}.
+{% else %}
+Ta commande {{ order.reference }} chez {{ shop.name }}, prévue {{ delivery.startsAt|date_long }}, a été annulée.
+{% endif %}
+
+Tu n'as rien à régler ni à venir chercher.
+{% if actor == 'producer' %}
+Une question ? Contacte directement {{ shop.name }}{% if shop.phone %} au {{ shop.phone }}{% endif %}.
+{% endif %}
+
+Envie de recommander ? Les prochaines ventes sont ici : {{ shop_url }}
+{% endblock %}

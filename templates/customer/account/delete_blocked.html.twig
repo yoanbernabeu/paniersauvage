@@ -1,0 +1,36 @@
+{% extends 'layout/customer.html.twig' %}
+
+{% block title %}Supprimer mon compte{% endblock %}
+
+{% set content_width = 'max-w-xl' %}
+
+{% block content %}
+    <a href="{{ path('customer_account') }}" class="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-sage-dark">
+        <twig:ux:icon name="lucide:arrow-left" class="size-4" />
+        Retour à mon compte
+    </a>
+
+    <h1 class="text-3xl leading-tight font-semibold text-ink">Pas tout de suite</h1>
+    <p class="mt-3 leading-relaxed text-ink-soft">
+        Tu as {{ pending_orders|length > 1 ? 'des commandes' : 'une commande' }} à venir. Ton producteur a besoin de ton nom et de tes coordonnées pour te la remettre :
+        annule-la, ou attends la livraison, et tu pourras supprimer ton compte juste après.
+    </p>
+
+    <ul class="mt-5 flex flex-col divide-y divide-line-soft rounded-xl bg-white text-sm text-ink shadow-card ring-1 ring-line" data-pending-delivery>
+        {% for order in pending_orders %}
+            <li>
+                <a href="{{ path('customer_order_show', {reference: order.reference}) }}" class="flex min-h-14 items-center justify-between gap-3 px-5 py-3">
+                    <span>
+                        <span class="block font-semibold">{{ order.sale.shop.name }}</span>
+                        <span class="block text-ink-soft">Livraison {{ order.sale.deliveryDate|date_long }} · <span class="amount">{{ order.reference }}</span></span>
+                    </span>
+                    <twig:ux:icon name="lucide:chevron-right" class="size-4 shrink-0 text-ink-soft" />
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="mt-6">
+        <twig:Button as="a" href="{{ path('customer_account') }}" variant="secondary">Retour à mon compte</twig:Button>
+    </div>
+{% endblock %}

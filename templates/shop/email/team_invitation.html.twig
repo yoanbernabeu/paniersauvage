@@ -1,0 +1,20 @@
+{% extends 'notification/layout.html.twig' %}
+
+{% block preheader %}{{ owner_name }} t'invite à gérer {{ shop_name }}. Lien valable {{ days }} jours.{% endblock %}
+
+{% block title %}Bonjour,{% endblock %}
+
+{% block content %}
+    <p style="{{ p_css }}">{{ owner_name }} t'invite à gérer <strong>{{ shop_name }}</strong> sur Panier Sauvage : ventes, commandes, clients et livraisons.</p>
+    <p style="{{ p_css }}">Clique sur le bouton pour créer ton mot de passe et rejoindre l'équipe.</p>
+    {{ include('notification/_button.html.twig', {url: url, label: 'Rejoindre ' ~ shop_name}) }}
+    <p style="{{ p_css }}{{ box_css }}">Ce lien est valable {{ days }} jours et ne sert qu'une fois. Un compte Panier Sauvage ne sert qu'une boutique.</p>
+    <p style="{{ muted_css }}">
+        Le bouton ne marche pas ? Copie cette adresse dans ton navigateur :<br>
+        <a href="{{ url }}" style="{{ link_css }}word-break:break-all;">{{ url }}</a>
+    </p>
+{% endblock %}
+
+{% block footer %}
+    <p style="margin:0;">Tu ne connais pas {{ owner_name }} ? Ignore ce message : rien ne se passe sans toi.</p>
+{% endblock %}

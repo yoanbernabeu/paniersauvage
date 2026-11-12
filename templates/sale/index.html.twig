@@ -1,0 +1,62 @@
+{% extends 'layout/pro.html.twig' %}
+
+{% block title %}Ventes{% endblock %}
+{% block page_title %}Ventes{% endblock %}
+{% block page_subtitle %}Tes ventes ouvertes, à venir et passées.{% endblock %}
+
+{% block page_actions %}
+    <twig:Button as="a" href="{{ path('pro_schedule_index') }}" variant="secondary">
+        <twig:ux:icon name="lucide:repeat" />
+        Récurrences
+    </twig:Button>
+    {% if allows_new_sales %}
+        <twig:Button as="a" href="{{ path('pro_sale_new') }}">
+            <twig:ux:icon name="lucide:plus" />
+            Nouvelle vente
+        </twig:Button>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if not allows_new_sales %}
+        {{ include('sale/_subscription_alert.html.twig') }}
+    {% endif %}
+
+    {% if open_sales is empty and scheduled_sales is empty and closed_sales is empty and past_sales is empty %}
+        <twig:Empty class="rounded-xl border border-line bg-white py-12">
+            <twig:Empty:Media><twig:Illustration name="basket" class="w-40" /></twig:Empty:Media>
+            <twig:Empty:Header>
+                <twig:Empty:Title>Pas encore de vente</twig:Empty:Title>
+                <twig:Empty:Description>Crée une vente ponctuelle, ou une récurrence qui prépare tes ventes chaque semaine.</twig:Empty:Description>
+            </twig:Empty:Header>
+            {% if allows_new_sales %}
+                <twig:Empty:Content>
+                    <twig:Button as="a" href="{{ path('pro_sale_new') }}">Créer ma première vente</twig:Button>
+                    <twig:Button as="a" href="{{ path('pro_schedule_new') }}" variant="secondary">Créer une récurrence</twig:Button>
+                </twig:Empty:Content>
+            {% endif %}
+        </twig:Empty>
+    {% else %}
+        {% set sections = [
+            {key: 'open', title: 'Ouvertes', sales: open_sales, empty: 'Aucune vente ouverte en ce moment.'},
+            {key: 'scheduled', title: 'À venir', sales: scheduled_sales, empty: 'Aucune vente programmée.'},
+            {key: 'closed', title: 'Clôturées, à livrer', sales: closed_sales, empty: 'Aucune vente en attente de livraison.'},
+            {key: 'past', title: 'Passées', sales: past_sales, empty: 'Aucune vente passée.'},
+        ] %}
+        <div class="flex flex-col gap-8">
+            {% for section in sections %}
+                <section aria-labelledby="sales-{{ section.key }}" data-sales-section="{{ section.key }}">
+                    <h2 id="sales-{{ section.key }}" class="mb-3 flex items-center gap-2 text-base font-semibold text-ink">
+                        {{ section.title }}
+                        <span class="amount rounded-full bg-sage-mist px-2 py-0.5 text-xs font-semibold text-sage-deep">{{ section.sales|length }}</span>
+                    </h2>
+                    {% if section.sales is empty %}
+                        <p class="rounded-xl border border-dashed border-line px-4 py-4 text-sm text-ink-soft">{{ section.empty }}</p>
+                    {% else %}
+                        {{ include('sale/_sale_list.html.twig', {sales: section.sales}) }}
+                    {% endif %}
+                </section>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

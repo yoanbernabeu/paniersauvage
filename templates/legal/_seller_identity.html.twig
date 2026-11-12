@@ -1,0 +1,23 @@
+{#
+    Identity of the seller (the producer, never Panier Sauvage), required before and after a distance
+    sale (Code de la consommation, L221-5 and L111-1). Variables: shop.
+#}
+{% set producer = shop.owner %}
+<dl class="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]" data-seller-identity>
+    <dt class="font-semibold text-ink">Vendeur</dt>
+    <dd class="text-ink-soft">{{ shop.name }}{% if producer %} ({{ producer.fullName }}){% endif %}</dd>
+    {% if shop.siret %}
+        <dt class="font-semibold text-ink">SIRET</dt>
+        <dd class="amount text-ink-soft">{{ shop.siret }}</dd>
+    {% endif %}
+    {% if shop.address %}
+        <dt class="font-semibold text-ink">Adresse</dt>
+        <dd class="text-ink-soft">{{ shop.address|replace({"\n": ', '}) }}</dd>
+    {% endif %}
+    <dt class="font-semibold text-ink">Contact</dt>
+    <dd class="text-ink-soft">
+        {% if shop.phone %}<a href="tel:{{ shop.phone|replace({' ': ''}) }}" class="link">{{ shop.phone }}</a>{% endif %}
+        {% if shop.phone and producer %} · {% endif %}
+        {% if producer %}<a href="mailto:{{ shop.publicEmail() }}" class="link break-all">{{ shop.publicEmail() }}</a>{% endif %}
+    </dd>
+</dl>

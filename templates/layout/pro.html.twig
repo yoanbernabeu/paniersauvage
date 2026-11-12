@@ -1,0 +1,102 @@
+{#
+    Producer-side layout: dense and sober, dark sage header, Inter everywhere except the page title.
+
+    Blocks: title, page_header (whole title row), page_title (text of the <h1>), page_subtitle,
+            page_actions (buttons on the right of the title), flashes, content,
+            plus those of base.html.twig (head_extra, stylesheets, javascripts).
+    Variable: content_width — Tailwind max-width class of the column (default "max-w-6xl").
+
+    The navigation comes from pro_nav(): it only lists routes that exist in the router.
+#}
+{% extends 'base.html.twig' %}
+
+{% block theme_color %}{{ instance.accent.darkHex() }}{% endblock %}
+{% block body_class %}min-h-dvh bg-paper text-ink{% endblock %}
+
+{% block body %}
+    {% set nav_items = pro_nav() %}
+    {% set producer = app.user %}
+    {% set shop = producer and producer.shop is defined ? producer.shop : null %}
+    <div class="flex min-h-dvh flex-col">
+        <header class="surface-dark bg-sage-dark text-white">
+            <div class="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+                <a href="{{ safe_path('pro_dashboard', '/pro') }}" class="-mx-1 flex min-w-0 items-center gap-3 rounded-lg px-1 py-1" aria-label="{{ instance.name }}, espace producteur">
+                    <twig:Logo tone="light" size="sm" />
+                    {% if shop %}
+                        <span class="hidden min-w-0 truncate border-l border-white/25 pl-3 text-sm font-medium text-white/85 sm:inline">{{ shop.name }}</span>
+                    {% endif %}
+                </a>
+                <div class="flex shrink-0 items-center gap-1">
+                    {% if shop and route_exists('shop_show') %}
+                        <a href="{{ path('shop_show', {slug: shop.slug}) }}" class="hidden h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-white/90 hover:bg-white/10 sm:inline-flex" target="_blank" rel="noopener">
+                            <twig:ux:icon name="lucide:external-link" class="size-4" />
+                            Voir ma page
+                        </a>
+                    {% endif %}
+                    {% if producer %}
+                        <form method="post" action="{{ path('pro_logout') }}" class="contents">
+                            <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('logout') }}">
+                            <twig:Button type="submit" variant="ghost" class="h-10 gap-1.5 px-3 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white">
+                                <twig:ux:icon name="lucide:log-out" class="size-4" />
+                                <span class="sr-only sm:not-sr-only">Se déconnecter</span>
+                            </twig:Button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% if nav_items is not empty %}
+                <nav aria-label="Navigation producteur" class="hidden border-t border-white/10 sm:block">
+                    <ul class="scrollbar-none mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-2 sm:px-4">
+                        {% for item in nav_items %}
+                            <li class="shrink-0">
+                                <a href="{{ item.url }}"
+                                   {% if item.active %}aria-current="page"{% endif %}
+                                   class="inline-flex h-11 items-center gap-2 border-b-2 px-3 text-sm font-medium whitespace-nowrap transition-colors {{ item.active ? 'border-wheat text-white' : 'border-transparent text-white/75 hover:text-white' }}">
+                                    <twig:ux:icon name="{{ item.icon }}" class="size-4" />
+                                    {{ item.label }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </header>
+
+        <main id="contenu" class="mx-auto w-full {{ content_width|default('max-w-6xl') }} flex-1 px-4 pt-6 pb-6 sm:px-6 sm:py-8">
+            {{ include('billing/_banner.html.twig') }}
+            {% block flashes %}{{ include('layout/_flashes.html.twig', {class: 'mb-5'}) }}{% endblock %}
+            {% block page_header %}
+                {% set page_title = block('page_title') is defined ? block('page_title')|trim : '' %}
+                {% if page_title is not empty %}
+                    <div class="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+                        <div class="min-w-0">
+                            <h1 class="text-2xl leading-tight font-semibold text-ink sm:text-3xl">{{ page_title|raw }}</h1>
+                            {% set page_subtitle = block('page_subtitle') is defined ? block('page_subtitle')|trim : '' %}
+                            {% if page_subtitle is not empty %}
+                                <p class="mt-1 text-sm text-ink-soft">{{ page_subtitle|raw }}</p>
+                            {% endif %}
+                        </div>
+                        {% set page_actions = block('page_actions') is defined ? block('page_actions')|trim : '' %}
+                        {% if page_actions is not empty %}
+                            <div class="flex flex-wrap items-center gap-2">{{ page_actions|raw }}</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endblock %}
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="mx-auto w-full max-w-6xl px-4 {{ nav_items is not empty ? 'pb-28 sm:pb-6' : 'pb-6' }} text-sm text-ink-soft sm:px-6">
+            <nav aria-label="Informations légales" class="border-t border-line pt-4">
+                {{ include('legal/_footer_links.html.twig', {class: 'flex flex-wrap items-center gap-x-4'}) }}
+                {{ include('instance/_powered_by.html.twig', {tag: 'p', class: 'mt-1'}) }}
+            </nav>
+        </footer>
+
+        {{ include('layout/_pro_mobile_nav.html.twig') }}
+    </div>
+{% endblock %}
+
+{% block page_title %}{% endblock %}
+{% block page_subtitle %}{% endblock %}
+{% block page_actions %}{% endblock %}

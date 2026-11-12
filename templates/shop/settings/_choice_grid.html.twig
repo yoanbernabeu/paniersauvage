@@ -1,0 +1,18 @@
+{#
+    A multiple choice (checkboxes) laid out in a grid, without the "(facultatif)" marker of each
+    option. Variables: field (an expanded, multiple ChoiceType view), key (data attribute value).
+#}
+<fieldset class="mb-5" data-choice-grid="{{ key }}" {% if field.vars.help %}aria-describedby="{{ field.vars.id }}_help"{% endif %}>
+    <legend class="mb-1.5 text-sm font-medium leading-snug text-ink">{{ field.vars.label }}</legend>
+    <div class="grid gap-x-4 sm:grid-cols-2">
+        {% for child in field %}
+            <div class="flex min-h-11 items-center gap-3">
+                {{ form_widget(child) }}
+                <label for="{{ child.vars.id }}" class="text-sm leading-snug text-ink">{{ child.vars.label }}</label>
+            </div>
+        {% endfor %}
+    </div>
+    {{ form_errors(field) }}
+    {% if field.vars.help %}<p id="{{ field.vars.id }}_help" class="mt-1.5 text-sm text-ink-soft">{{ field.vars.help }}</p>{% endif %}
+</fieldset>
+{% do field.setRendered() %}

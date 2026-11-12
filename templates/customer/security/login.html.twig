@@ -1,0 +1,30 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+{% block auth_title %}Bienvenue{% endblock %}
+{% block auth_intro %}Pas de mot de passe à retenir : indique ton e-mail, on t'envoie un lien pour te connecter.{% endblock %}
+
+{% block content %}
+    {% if link_error %}
+        <twig:Alert variant="destructive" class="mb-5" data-login-link-error>
+            <twig:ux:icon name="lucide:circle-alert" />
+            <twig:Alert:Description class="text-current font-medium">
+                Ce lien n'est plus valable. Demande-en un nouveau, il arrive tout de suite.
+            </twig:Alert:Description>
+        </twig:Alert>
+    {% endif %}
+
+    {{ form_start(form, {action: path('customer_login')}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.email) }}
+        <twig:Button type="submit" class="w-full">
+            <twig:ux:icon name="lucide:mail" />
+            Recevoir mon lien
+        </twig:Button>
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block auth_footer %}
+    Première visite ? Indique ton e-mail, on t'envoie un lien pour créer ton compte.<br>
+    Tu es producteur ? <a href="{{ safe_path('pro_login', '/pro/connexion') }}" class="link">Va sur l'espace producteur</a>
+{% endblock %}
