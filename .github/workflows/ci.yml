@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -33,7 +33,7 @@ jobs:
           coverage: none
           tools: composer:v2, symfony-cli
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: Composer manifest
         run: composer validate --strict --no-check-publish
@@ -89,7 +89,7 @@ jobs:
       # The test environment appends "_test" to the database name (config/packages/doctrine.yaml).
       DATABASE_URL: postgresql://app:ci_password@127.0.0.1:5432/app?serverVersion=18&charset=utf8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -98,7 +98,7 @@ jobs:
           coverage: pcov
           tools: composer:v2
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: JavaScript and CSS vendors
         run: |
@@ -125,7 +125,7 @@ jobs:
 
       - name: Coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: var/coverage/clover.xml
@@ -153,7 +153,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://app:ci_password@127.0.0.1:5432/app?serverVersion=18&charset=utf8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -164,7 +164,7 @@ jobs:
           coverage: pcov
           tools: composer:v2
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: JavaScript and CSS vendors
         run: |
@@ -193,7 +193,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -202,7 +202,7 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: Composer audit
         run: composer audit
@@ -215,12 +215,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Build (not pushed)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: app
