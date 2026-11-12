@@ -69,6 +69,13 @@ docker build --platform linux/amd64 -t ghcr.io/OWNER/panier-sauvage:latest .
 docker push ghcr.io/OWNER/panier-sauvage:latest   # après docker login ghcr.io
 ```
 
+**Images des versions publiées.** Chaque release GitHub (étiquette `v1.2.3`) publie aussi l'image
+pour amd64 et arm64 (`.github/workflows/release.yml`), étiquetée `1.2.3`, `1.2`, `1` (à partir de
+la 1.0.0) et `stable` (dernière version hors préversion). Si tu héberges une instance sans modifier
+le code, tu peux t'en servir directement au lieu de construire la tienne :
+`APP_IMAGE=ghcr.io/yoanbernabeu/paniersauvage:1.2` (correctifs suivis automatiquement au prochain
+`dc pull`). L'étiquette `latest` désigne, elle, le dernier commit de `main`.
+
 Si le paquet GHCR est privé, le VPS doit s'authentifier une fois pour tirer l'image à la main :
 crée un jeton GitHub (classic) avec la seule permission `read:packages`, puis
 `docker login ghcr.io -u <ton-identifiant>`. Le déploiement automatique, lui, utilise un jeton
