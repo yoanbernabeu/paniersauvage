@@ -37,7 +37,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://app:ci_password@127.0.0.1:5432/app?serverVersion=18&charset=utf8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -46,7 +46,7 @@ jobs:
           coverage: pcov
           tools: composer:v2
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: JavaScript and CSS vendors
         run: |
@@ -62,7 +62,7 @@ jobs:
 
       - name: Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: infection-report
           path: var/infection/
