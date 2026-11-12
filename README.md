@@ -68,9 +68,9 @@ Pendant le développement, garde Tailwind en surveillance dans un second termina
 php bin/console tailwind:build --watch
 ```
 
-Tant que le projet n'a jamais été déployé, le schéma tient dans une seule migration initiale,
-régénérée à chaque évolution du modèle (procédure dans `AGENTS.md`, section « Migrations »). La
-base de test, elle, est simplement synchronisée avec `doctrine:schema:update --force --env=test`.
+Chaque évolution du modèle ajoute une migration Doctrine (procédure dans `AGENTS.md`, section
+« Migrations »). La base de test, elle, est simplement synchronisée avec
+`doctrine:schema:update --force --env=test`.
 
 Pour personnaliser un réglage en local (autre port de base, clés Stripe de test…), crée un fichier
 `.env.local` : il n'est pas versionné et a priorité sur `.env`.

@@ -3,7 +3,7 @@
 SaaS de précommandes pour producteurs. **Lis `docs/SPEC.md` avant toute tâche** : règles produit,
 modèle de données, noms de routes, événements de domaine et direction artistique y sont figés.
 Les conventions Symfony générales sont en fin de fichier ; en cas de conflit, les règles du projet
-qui suivent l'emportent (ex. : `doctrine:schema:update` pour la base de test, migration initiale unique).
+qui suivent l'emportent (ex. : `doctrine:schema:update` pour la base de test).
 
 ## Commandes
 
@@ -146,28 +146,25 @@ en dev au moins une fois avant `vendor/bin/phpstan analyse`.
 
 ## Migrations
 
-**Tant que le code n'a jamais été poussé sur un dépôt distant ni déployé, il n'y a qu'une seule
-migration : la migration initiale.** Toute évolution du modèle la régénère au lieu d'en ajouter une
-nouvelle (pas de migration de reprise de données : aucune base à faire évoluer).
+Le code est publié (12 novembre 2026) : **une migration par évolution du modèle**, jamais de
+modification d'une migration existante (une instance peut l'avoir déjà jouée). La première,
+`Version20261110161311` (`Initial schema`), contient tout le schéma de départ.
 
 ```bash
-rm migrations/Version*.php
-export DATABASE_URL='postgresql://app:!ChangeMe!@127.0.0.1:54329/app_squash?serverVersion=18&charset=utf8'
-php bin/console doctrine:database:create && php bin/console doctrine:migrations:diff -n
-php bin/console doctrine:migrations:migrate -n && php bin/console doctrine:schema:validate
-php bin/console doctrine:database:drop --force && unset DATABASE_URL
+php bin/console doctrine:migrations:diff -n        # génère la migration depuis les entités
+php bin/console doctrine:migrations:migrate -n
+php bin/console doctrine:schema:validate
 ```
 
-Relis la migration produite (description `Initial schema`, docblock explicatif, pas de
-`CREATE SCHEMA public` dans `down()`). Puis base de dev : `doctrine:database:drop --force`,
-`doctrine:database:create`, `doctrine:migrations:migrate -n`, `doctrine:fixtures:load -n` (ou, pour
-garder les données : `doctrine:schema:update --force`, vider `doctrine_migration_versions` et
-`doctrine:migrations:version 'DoctrineMigrations\VersionXXX' --add -n`). Dans un worktree de lot,
-régénère aussi la migration initiale : à la fusion, on la régénère une dernière fois depuis le code
-fusionné. La base de test est synchronisée avec `doctrine:schema:update --force --env=test`.
+Relis la migration produite : description en une ligne (`getDescription()`), docblock qui explique
+le pourquoi, pas de `CREATE SCHEMA public` dans `down()`. Quand une évolution touche des données
+existantes (colonne `NOT NULL` ajoutée, valeur renommée…), la migration les reprend elle-même :
+une instance en production doit pouvoir la jouer sans intervention. La base de test reste
+synchronisée avec `doctrine:schema:update --force --env=test`.
 
-Une fois le code poussé ou déployé, cette règle tombe : retour à une migration par évolution
-(`doctrine:migrations:diff`, relue, puis `doctrine:migrations:migrate -n`).
+Dans un worktree de lot, génère ta migration comme d'habitude ; si deux lots en ajoutent une, vérifie
+à la fusion qu'elles s'enchaînent (`doctrine:migrations:migrate` sur une base vide, puis
+`schema:validate`).
 
 ## Pièges connus
 

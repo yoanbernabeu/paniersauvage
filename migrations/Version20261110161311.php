@@ -8,8 +8,8 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Initial schema. Until the code is pushed to a remote repository, every model change is folded
- * back into this single migration instead of adding a new one (see AGENTS.md, « Migrations »).
+ * Initial schema, as published on 12 November 2026. Never edit it: every model change adds a new
+ * migration (see AGENTS.md, « Migrations »).
  */
 final class Version20261110161311 extends AbstractMigration
 {
