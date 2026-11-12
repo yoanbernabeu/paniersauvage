@@ -131,6 +131,12 @@ PHP 8.4+ (8.5 en production), Symfony 8.1, Doctrine ORM et PostgreSQL 18, Twig e
 Tout est décrit pas à pas dans [`docs/DEPLOY.md`](docs/DEPLOY.md) : VPS, DNS, `.env.prod`, premier
 déploiement, mises à jour automatiques par GitHub Actions, sauvegardes et restauration.
 
+Chaque [release](https://github.com/yoanbernabeu/paniersauvage/releases) publie l'image de
+production (amd64 et arm64) sur
+[`ghcr.io/yoanbernabeu/paniersauvage`](https://github.com/yoanbernabeu/paniersauvage/pkgs/container/paniersauvage) :
+`docker pull ghcr.io/yoanbernabeu/paniersauvage:<version>` (par exemple `0.1.0`), ou `:stable`
+pour la dernière version hors préversion. Les notes de chaque release donnent son étiquette exacte.
+
 ## Contribuer
 
 Toute contribution commence par une issue : pas de pull request sans issue acceptée au préalable.

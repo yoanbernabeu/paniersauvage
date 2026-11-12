@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
-      contents: read
+      contents: write # to add the image block to the release notes
       packages: write
       id-token: write
       attestations: write
@@ -97,17 +97,35 @@ jobs:
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-      - name: Summary
+      - name: Add the image to the release notes
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+          IMAGE: ${{ steps.image.outputs.name }}
+          VERSION: ${{ steps.meta.outputs.version }}
           TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.build.outputs.digest }}
+          PACKAGE_URL: ${{ github.server_url }}/${{ github.repository }}/pkgs/container/${{ github.event.repository.name }}
         run: |
+          # Idempotent: a re-run replaces the block instead of adding a second one.
+          marker='<!-- docker-image -->'
+          gh release view "$TAG" --json body -q .body | sed "/^$marker\$/,\$d" > notes.md
           {
-            echo "### Image publiée"
             echo
-            echo '```'
-            echo "$TAGS"
+            echo "$marker"
+            echo "### Image Docker"
+            echo
+            echo "\`$IMAGE:$VERSION\` (amd64, arm64) — [toutes les versions]($PACKAGE_URL)"
+            echo
+            echo '```bash'
+            echo "docker pull $IMAGE:$VERSION"
             echo '```'
             echo
-            echo "Empreinte : \`$DIGEST\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+            echo "Étiquettes publiées :"
+            echo
+            while read -r t; do [ -n "$t" ] && echo "- \`$t\`"; done <<< "$TAGS"
+            echo
+            echo "Empreinte : \`$DIGEST\` — pour une instance, \`APP_IMAGE=$IMAGE:$VERSION\` dans \`.env.prod\` (voir \`docs/DEPLOY.md\`)."
+          } >> notes.md
+          gh release edit "$TAG" --notes-file notes.md
+          cat notes.md >> "$GITHUB_STEP_SUMMARY"
